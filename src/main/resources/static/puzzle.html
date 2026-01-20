@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puzzle Themes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #eef3ff;
+      --card: #ffffff;
+      --accent: #1d72f3;
+      --text: #0e1a2a;
+      --muted: #5c6b80;
+      --stroke: #dbe4f4;
+      --shadow: 0 10px 30px rgba(0, 46, 121, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    header { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 1px solid var(--stroke); box-shadow: var(--shadow); position: sticky; top: 0; z-index: 10; }
+    .brand { font-family: 'Playfair Display', serif; font-size: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 24px; max-width: 1100px; margin: 0 auto; }
+    .card { background: var(--card); border: 1px solid var(--stroke); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease; text-decoration: none; color: inherit; }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 14px 35px rgba(0,46,121,0.18); }
+    .icon { font-size: 36px; margin-bottom: 10px; }
+    h3 { margin: 0 0 6px; font-size: 18px; }
+    .muted { color: var(--muted); font-size: 14px; }
+    .section-title { max-width: 1100px; margin: 16px auto 0; padding: 0 24px; font-size: 18px; font-weight: 600; }
+    .status { max-width: 1100px; margin: 0 auto; padding: 0 24px 16px; color: var(--muted); font-size: 14px; }
+    .controls { max-width: 1100px; margin: 0 auto; padding: 10px 24px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .controls input, .controls select {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      min-width: 0;
+    }
+    .controls button {
+      border: 1px solid var(--stroke);
+      background: var(--accent);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .badge.live { background: rgba(92, 245, 165, 0.2); color: #0a7b4f; border: 1px solid rgba(92, 245, 165, 0.5); }
+    .badge.off { background: rgba(245, 158, 11, 0.15); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.35); }
+    .card-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .card-actions button {
+      border: 1px solid var(--stroke);
+      background: rgba(29, 114, 243, 0.1);
+      color: var(--accent);
+      padding: 6px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .theme-card { text-align: left; }
+    .theme-card.selected { border-color: rgba(29, 114, 243, 0.6); box-shadow: 0 14px 35px rgba(29, 114, 243, 0.15); }
+    .theme-count { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  </style>
+  <link rel="stylesheet" href="css/theme-light.css">
+</head>
+<body class="theme-light">
+  <header>
+    <div class="brand">EduChess — Puzzle Themes</div>
+    <nav>
+      <a id="createPuzzleLink" href="puzzle-editor.html" style="color:var(--accent); text-decoration:none; font-weight:600; margin-right:12px;">Create puzzle</a>
+      <a href="dashboard.html" style="color:var(--accent); text-decoration:none; font-weight:600;">Back to dashboard</a>
+    </nav>
+  </header>
+
+  <div class="section-title">Custom puzzles</div>
+  <div class="controls" id="libraryControls">
+    <input id="filterTheme" placeholder="Theme (e.g. fork)">
+    <input id="filterDifficulty" type="number" min="0" placeholder="Difficulty">
+    <select id="sortBy">
+      <option value="difficulty">Sort: Difficulty</option>
+      <option value="title">Sort: Title</option>
+      <option value="id">Sort: ID</option>
+      <option value="theme">Sort: Theme</option>
+    </select>
+    <select id="sortDir">
+      <option value="asc">Asc</option>
+      <option value="desc">Desc</option>
+    </select>
+    <button id="applyFilters">Apply</button>
+  </div>
+  <div class="grid" id="customPuzzleGrid">
+    <div class="card"><div class="muted">Loading puzzles from the API...</div></div>
+  </div>
+  <div class="status" id="customPuzzleStatus"></div>
+
+  <div class="section-title">Theme library</div>
+  <div class="grid" id="themeGrid"></div>
+
+  <script>
+    const customGrid = document.getElementById("customPuzzleGrid");
+    const customStatus = document.getElementById("customPuzzleStatus");
+    const themeGrid = document.getElementById("themeGrid");
+    const createLink = document.getElementById("createPuzzleLink");
+    const controls = document.getElementById("libraryControls");
+    const themeFilter = document.getElementById("filterTheme");
+    const difficultyFilter = document.getElementById("filterDifficulty");
+    const sortBySelect = document.getElementById("sortBy");
+    const sortDirSelect = document.getElementById("sortDir");
+    const applyFiltersBtn = document.getElementById("applyFilters");
+
+    const storedRole = (localStorage.getItem("userRole") || "STUDENT").toUpperCase();
+    const isCoach = storedRole === "COACH" || storedRole === "ADMIN";
+    const roleHeaders = { "X-User-Role": storedRole };
+    let activeTheme = "";
+    let themeListCache = [];
+
+    if (!isCoach) {
+      if (controls) controls.style.display = "none";
+      if (createLink) createLink.style.display = "none";
+    }
+
+    const renderCustomPuzzles = (puzzles) => {
+      customGrid.innerHTML = "";
+      if (!puzzles.length) {
+        const msg = isCoach
+          ? "No puzzles found. Import the Lichess CSV dataset and try again."
+          : "No published puzzles yet. Check back later.";
+        customGrid.innerHTML = `<div class="card"><div class="muted">${msg}</div></div>`;
+        return;
+      }
+      puzzles.forEach((p) => {
+        const card = document.createElement("a");
+        card.className = "card";
+        card.href = `puzzle-play.html?id=${p.id}`;
+
+        const icon = document.createElement("div");
+        icon.className = "icon";
+        icon.textContent = "PZ";
+
+        const title = document.createElement("h3");
+        title.textContent = p.title || `Puzzle #${p.id}`;
+
+        const meta = document.createElement("div");
+        meta.className = "muted";
+        const theme = p.theme || p.topic || "-";
+        const difficulty = p.difficulty || p.level || "-";
+        const side = p.side === "b" ? "Black" : "White";
+        meta.textContent = `Theme: ${theme} | Difficulty: ${difficulty} | ${side} to move`;
+
+        const badge = document.createElement("span");
+        const published = !!p.published;
+        badge.className = `badge ${published ? "live" : "off"}`;
+        badge.textContent = published ? "Published" : "Not published";
+
+        card.appendChild(icon);
+        card.appendChild(title);
+        card.appendChild(meta);
+        card.appendChild(badge);
+
+        if (isCoach) {
+          const actions = document.createElement("div");
+          actions.className = "card-actions";
+          const toggleBtn = document.createElement("button");
+          toggleBtn.textContent = published ? "Unpublish" : "Publish";
+          toggleBtn.addEventListener("click", async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            await togglePublish(p.id, !published);
+          });
+          actions.appendChild(toggleBtn);
+          card.appendChild(actions);
+        }
+
+        customGrid.appendChild(card);
+      });
+      if (activeTheme) {
+        customStatus.textContent = `Showing theme: ${prettyThemeName(activeTheme)} (${puzzles.length} puzzles)`;
+      } else {
+        customStatus.textContent = `Showing all puzzles (${puzzles.length}).`;
+      }
+    };
+
+    const buildListUrl = () => {
+      if (!isCoach) {
+        const params = new URLSearchParams({ published: "true" });
+        if (activeTheme) params.set("theme", activeTheme);
+        return `/api/puzzles?${params.toString()}`;
+      }
+      const params = new URLSearchParams();
+      const theme = activeTheme || (themeFilter?.value || "").trim();
+      const difficulty = (difficultyFilter?.value || "").trim();
+      if (theme) params.set("theme", theme);
+      if (difficulty) params.set("difficulty", difficulty);
+      if (sortBySelect?.value) params.set("sortBy", sortBySelect.value);
+      if (sortDirSelect?.value) params.set("sortDir", sortDirSelect.value);
+      const qs = params.toString();
+      return qs ? `/api/puzzles?${qs}` : "/api/puzzles";
+    };
+
+    const prettyThemeName = (token) => {
+      if (!token) return "All puzzles";
+      return token
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (m) => m.toUpperCase());
+    };
+
+    const renderThemeLibrary = (themes) => {
+      if (!themeGrid) return;
+      themeListCache = themes;
+      if (!themes.length) {
+        themeGrid.innerHTML = '<div class="card"><div class="muted">No themes available yet.</div></div>';
+        return;
+      }
+      themeGrid.innerHTML = "";
+      const totalCount = themes.reduce((sum, t) => sum + t.count, 0);
+
+      const allCard = document.createElement("div");
+      allCard.className = "card theme-card" + (activeTheme ? "" : " selected");
+      allCard.innerHTML = `<div class="icon">PZ</div><h3>All puzzles</h3><div class="theme-count">${totalCount} puzzles</div>`;
+      allCard.addEventListener("click", () => {
+        activeTheme = "";
+        if (themeFilter) themeFilter.value = "";
+        renderThemeLibrary(themes);
+        loadCustomPuzzles();
+      });
+      themeGrid.appendChild(allCard);
+
+      themes.forEach((theme) => {
+        const card = document.createElement("div");
+        card.className = `card theme-card${activeTheme === theme.theme ? " selected" : ""}`;
+        card.innerHTML = `
+          <div class="icon">PZ</div>
+          <h3>${prettyThemeName(theme.theme)}</h3>
+          <div class="theme-count">${theme.count} puzzles</div>
+        `;
+        card.addEventListener("click", () => {
+          activeTheme = theme.theme;
+          if (themeFilter) themeFilter.value = theme.theme;
+          renderThemeLibrary(themes);
+          loadCustomPuzzles();
+        });
+        themeGrid.appendChild(card);
+      });
+    };
+
+    const loadThemeLibrary = async () => {
+      try {
+        const res = await fetch("/api/puzzles/themes", { headers: roleHeaders });
+        if (!res.ok) throw new Error("Theme API unavailable");
+        const data = await res.json();
+        renderThemeLibrary(Array.isArray(data) ? data : []);
+      } catch (err) {
+        if (themeGrid) {
+          themeGrid.innerHTML = '<div class="card"><div class="muted">Could not load themes. Try again later.</div></div>';
+        }
+      }
+    };
+
+    const togglePublish = async (id, publish) => {
+      try {
+        const res = await fetch(`/api/puzzles/${id}/publish`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...roleHeaders },
+          body: JSON.stringify({ published: publish })
+        });
+        if (!res.ok) {
+          throw new Error("Publish failed");
+        }
+        loadCustomPuzzles();
+        loadThemeLibrary();
+      } catch (err) {
+        customStatus.textContent = "Could not update publish status.";
+      }
+    };
+
+    const loadCustomPuzzles = async () => {
+      try {
+        const res = await fetch(buildListUrl(), { headers: roleHeaders });
+        if (!res.ok) throw new Error("API unavailable");
+        const data = await res.json();
+        renderCustomPuzzles(Array.isArray(data) ? data : []);
+      } catch (err) {
+        customGrid.innerHTML = '<div class="card"><div class="muted">Could not load puzzles. Is the backend running?</div></div>';
+        customStatus.textContent = "Check your Spring Boot server and reload.";
+      }
+    };
+
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener("click", () => {
+        activeTheme = (themeFilter?.value || "").trim();
+        renderThemeLibrary(themeListCache);
+        loadCustomPuzzles();
+      });
+    }
+
+    loadCustomPuzzles();
+    loadThemeLibrary();
+  </script>
+</body>
+</html>
+
+
+

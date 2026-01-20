@@ -1,0 +1,65 @@
+[
+  {
+    "id": "mate1-101",
+    "theme": "mate1",
+    "fen": "6k1/5ppp/8/8/8/3Q4/5PPP/6K1 w - - 0 1",
+    "side": "w",
+    "solution": ["d1d8"],
+    "title": "Mate in 1: back rank",
+    "rating": 1200
+  },
+  {
+    "id": "mate1-102",
+    "theme": "mate1",
+    "fen": "5rk1/5ppp/8/8/8/8/5PPP/5RK1 w - - 0 1",
+    "side": "w",
+    "solution": ["e1e8"],
+    "title": "Mate in 1: file mate",
+    "rating": 1250
+  },
+  {
+    "id": "mate1-queen-backrank",
+    "theme": "mate1",
+    "fen": "5k2/8/5K2/8/8/8/3Q4/8 w - - 0 1",
+    "side": "w",
+    "solution": ["d2d8"],
+    "title": "Mate in 1: queen mating",
+    "rating": 1100
+  },
+  {
+    "id": "pin-201",
+    "theme": "pin",
+    "fen": "rnbqkbnr/pppp1ppp/8/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 1 2",
+    "side": "b",
+    "solution": ["c8b4"],
+    "title": "Pin the knight",
+    "rating": 1350
+  },
+  {
+    "id": "fork-301",
+    "theme": "double-attack",
+    "fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/4P3/2NP1N2/PPP2PPP/R1BQKB1R w KQkq - 2 4",
+    "side": "w",
+    "solution": ["c3d5"],
+    "title": "Knight fork",
+    "rating": 1400
+  },
+  {
+    "id": "deflection-401",
+    "theme": "deflection",
+    "fen": "2r3k1/5ppp/3b4/8/4Q3/3P4/5PPP/5RK1 w - - 0 1",
+    "side": "w",
+    "solution": ["e4e8"],
+    "title": "Deflect the rook",
+    "rating": 1500
+  },
+  {
+    "id": "mate2-501",
+    "theme": "mate2",
+    "fen": "r1bq1rk1/pppp1ppp/2n2n2/2b1p3/4P3/2NP1N2/PPP2PPP/R1BQKB1R w KQ - 2 4",
+    "side": "w",
+    "solution": ["c3d5", "f6e4"],
+    "title": "Mate in 2 setup",
+    "rating": 1600
+  }
+]

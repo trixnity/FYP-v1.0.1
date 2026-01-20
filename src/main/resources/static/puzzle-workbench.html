@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puzzle Workbench</title>
+  <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+  <link rel="stylesheet" href="css/puzzle-workbench.css">
+  <link rel="stylesheet" href="css/theme-light.css">
+</head>
+<body class="theme-light">
+  <header>
+    <h1>Puzzle Workbench</h1>
+    <p>Student mode to solve puzzles, coach mode to edit existing puzzles.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Student Solve <span class="tag">Rules enforced</span></h2>
+      <div class="board-wrap">
+        <div id="solver-board" class="board" aria-label="Puzzle board"></div>
+      </div>
+      <div class="controls">
+        <input id="solver-id" type="number" min="1" placeholder="Puzzle ID (e.g. 1)">
+        <button id="solver-load" class="primary" type="button">Load Puzzle</button>
+        <button id="solver-reset" type="button">Reset</button>
+        <button id="solver-flip" type="button">Flip</button>
+      </div>
+      <div id="solver-status" class="status">Ready.</div>
+      <div class="meta">
+        <div><span class="label">Title</span><span id="solver-title">-</span></div>
+        <div><span class="label">Info</span><span id="solver-info">-</span></div>
+      </div>
+      <div id="solver-moves" class="moves">(moves appear here)</div>
+    </section>
+
+    <section class="card">
+      <h2>Coach Edit <span class="tag">Existing puzzles</span></h2>
+      <div class="board-wrap">
+        <div id="editor-board" class="board" aria-label="Editor board"></div>
+      </div>
+      <div class="form-grid">
+        <label>
+          Puzzle ID
+          <input id="edit-id" type="number" min="1" placeholder="e.g. 1">
+        </label>
+        <label>
+          Title
+          <input id="edit-title" type="text" placeholder="Puzzle title">
+        </label>
+        <label>
+          Topic
+          <input id="edit-topic" type="text" placeholder="e.g. fork">
+        </label>
+        <label>
+          Level
+          <input id="edit-level" type="number" min="1" placeholder="e.g. 1200">
+        </label>
+        <label>
+          Side to move
+          <select id="edit-side">
+            <option value="w">White</option>
+            <option value="b">Black</option>
+          </select>
+        </label>
+        <label>
+          Solution move (UCI)
+          <input id="edit-solution" type="text" placeholder="e2e4">
+        </label>
+      </div>
+      <label>
+        FEN
+        <textarea id="edit-fen" placeholder="Paste FEN here"></textarea>
+      </label>
+      <div class="controls">
+        <button id="edit-load" type="button">Load</button>
+        <button id="edit-apply-fen" type="button">Apply FEN</button>
+        <button id="edit-from-board" type="button">Use Board FEN</button>
+        <button id="edit-save" class="secondary" type="button">Save changes</button>
+      </div>
+      <div id="edit-status" class="status">Load a puzzle ID to edit.</div>
+    </section>
+  </main>
+
+  <script src="lib/chess.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script src="lib/chessboard-1.0.0.min.js"></script>
+  <script src="js/puzzle-workbench.js"></script>
+</body>
+</html>

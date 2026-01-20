@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puzzle Editor</title>
+  <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+  <style>
+    :root {
+      --bg: #0b1322;
+      --panel: #0f1a2f;
+      --text: #f6f8ff;
+      --muted: #9aa6c5;
+      --accent: #4dabff;
+      --accent-2: #5cf5a5;
+      --stroke: #22314c;
+      --shadow: 0 18px 40px rgba(3, 10, 24, 0.45);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 15% 10%, rgba(92,245,165,0.08), transparent 35%),
+                  radial-gradient(circle at 85% 0%, rgba(77,171,255,0.12), transparent 30%),
+                  linear-gradient(135deg, #060b18, #0a1024);
+      color: var(--text);
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--stroke);
+      background: rgba(6, 11, 24, 0.85);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+    }
+    header a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 12px;
+    }
+    #editorBoard { width: 100%; max-width: 520px; margin: 0 auto; }
+    label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+    input, select, textarea {
+      border: 1px solid var(--stroke);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+    }
+    textarea { min-height: 120px; resize: vertical; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.primary { background: linear-gradient(135deg, var(--accent), #73c8ff); color: #041022; border: none; }
+    button.ghost { background: rgba(255,255,255,0.04); }
+    .status { color: var(--muted); min-height: 18px; }
+    .hint { color: var(--muted); font-size: 12px; }
+  </style>
+  <link rel="stylesheet" href="css/theme-light.css">
+</head>
+<body class="theme-light">
+  <header>
+    <div>Puzzle Editor</div>
+    <nav class="row">
+      <a href="puzzle.html">Puzzle list</a>
+      <a href="dashboard.html">Dashboard</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div id="editorBoard"></div>
+      <div class="row">
+        <button class="ghost" id="btnStart">Starting position</button>
+        <button class="ghost" id="btnClear">Clear board</button>
+        <button class="ghost" id="btnFlip">Flip board</button>
+      </div>
+      <label>FEN
+        <textarea id="fenInput" placeholder="Paste a FEN or build with the board"></textarea>
+      </label>
+      <div class="row">
+        <button id="btnApplyFen">Apply FEN</button>
+        <button id="btnUseFen">Use board FEN</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="row">
+        <label>Load puzzle ID
+          <input id="puzzleId" type="number" min="1" placeholder="e.g. 1">
+        </label>
+        <button id="btnLoad">Load</button>
+        <button id="btnNew">New</button>
+      </div>
+      <label>Title<input id="titleInput" placeholder="Mate in 2"></label>
+      <label>Topic<input id="topicInput" placeholder="mate1 / pin / fork"></label>
+      <label>Difficulty<input id="difficultyInput" type="number" min="1" placeholder="1200"></label>
+      <label>Side to move
+        <select id="sideSelect">
+          <option value="w">White</option>
+          <option value="b">Black</option>
+        </select>
+      </label>
+      <label>Solution move (UCI)<input id="solutionInput" placeholder="e2e4"></label>
+      <div class="hint">Tip: solution should be the best move from the position.</div>
+      <button class="primary" id="btnSave">Create puzzle</button>
+      <div class="status" id="status"></div>
+    </section>
+  </main>
+
+  <script src="lib/chess.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script src="lib/chessboard-1.0.0.min.js"></script>
+  <script>
+    const boardEl = document.getElementById("editorBoard");
+    const fenInput = document.getElementById("fenInput");
+    const titleInput = document.getElementById("titleInput");
+    const topicInput = document.getElementById("topicInput");
+    const difficultyInput = document.getElementById("difficultyInput");
+    const sideSelect = document.getElementById("sideSelect");
+    const solutionInput = document.getElementById("solutionInput");
+    const puzzleIdInput = document.getElementById("puzzleId");
+    const statusEl = document.getElementById("status");
+    const saveBtn = document.getElementById("btnSave");
+    const storedRole = (localStorage.getItem("userRole") || "STUDENT").toUpperCase();
+    const roleHeaders = { "X-User-Role": storedRole };
+    let board;
+    let currentId = null;
+
+    const setStatus = (msg, tone = "info") => {
+      const colors = { info: "var(--muted)", success: "var(--accent-2)", warn: "#f5b841" };
+      statusEl.textContent = msg;
+      statusEl.style.color = colors[tone] || colors.info;
+    };
+
+    const pieceTheme = (piece) => `img/pieces/${piece.toLowerCase()}.svg`;
+
+    const normalizeFen = (fen, side) => {
+      const cleaned = (fen || "").trim();
+      if (!cleaned) return "";
+      const parts = cleaned.split(/\s+/);
+      if (parts.length >= 2) return cleaned;
+      const sideChar = side === "b" ? "b" : "w";
+      return `${parts[0]} ${sideChar} - - 0 1`;
+    };
+
+    const positionToFen = (position, side) => {
+      const files = "abcdefgh";
+      const ranks = [];
+      for (let r = 8; r >= 1; r -= 1) {
+        let empty = 0;
+        let row = "";
+        for (let f = 0; f < 8; f += 1) {
+          const square = `${files[f]}${r}`;
+          const piece = position[square];
+          if (!piece) {
+            empty += 1;
+            continue;
+          }
+          if (empty) {
+            row += empty;
+            empty = 0;
+          }
+          const code = piece[1];
+          row += piece[0] === "w" ? code.toUpperCase() : code.toLowerCase();
+        }
+        if (empty) row += empty;
+        ranks.push(row);
+      }
+      const sideChar = side === "b" ? "b" : "w";
+      return `${ranks.join("/")} ${sideChar} - - 0 1`;
+    };
+
+    const updateFenFromBoard = (position) => {
+      if (!fenInput) return;
+      fenInput.value = positionToFen(position || board.position(), sideSelect.value);
+    };
+
+    const updateSaveLabel = () => {
+      saveBtn.textContent = currentId ? "Update puzzle" : "Create puzzle";
+    };
+
+    const applyFenToBoard = () => {
+      const side = sideSelect.value;
+      const fen = normalizeFen(fenInput.value, side);
+      const tester = new Chess();
+      if (!tester.load(fen)) {
+        setStatus("Invalid FEN. Fix it before applying.", "warn");
+        return;
+      }
+      board.position(fen, false);
+      fenInput.value = fen;
+      setStatus("Board updated from FEN.", "success");
+    };
+
+    const validatePayload = (payload) => {
+      const tester = new Chess();
+      if (!tester.load(payload.fen)) {
+        setStatus("Invalid FEN. Please fix the position.", "warn");
+        return false;
+      }
+      if (payload.solutionMove) {
+        const move = tester.move({
+          from: payload.solutionMove.slice(0, 2),
+          to: payload.solutionMove.slice(2, 4),
+          promotion: payload.solutionMove[4]
+        });
+        if (!move) {
+          setStatus("Solution move is illegal for this FEN.", "warn");
+          return false;
+        }
+      }
+      return true;
+    };
+
+    const loadPuzzle = async (id) => {
+      if (!id) {
+        setStatus("Enter a puzzle id to load.", "warn");
+        return;
+      }
+      try {
+        setStatus(`Loading puzzle ${id}...`);
+        const res = await fetch(`/api/puzzles/${id}`, { headers: roleHeaders });
+        if (!res.ok) throw new Error("Puzzle not found");
+        const data = await res.json();
+        currentId = data.id || id;
+        puzzleIdInput.value = currentId;
+        titleInput.value = data.title || "";
+        topicInput.value = data.theme || data.topic || "";
+        difficultyInput.value = data.difficulty || data.level || "";
+        const side = data.side || (data.fen || " w ").split(" ")[1] || "w";
+        sideSelect.value = side;
+        const moves = Array.isArray(data.moves)
+          ? (typeof data.moves[0] === "string" ? data.moves : data.moves.map((m) => m.moveUci))
+          : [];
+        solutionInput.value = data.solutionMove || moves[0] || "";
+        const fen = normalizeFen(data.fen || "", side);
+        if (fen) {
+          board.position(fen, false);
+          fenInput.value = fen;
+        }
+        updateSaveLabel();
+        setStatus(`Loaded puzzle #${currentId}.`, "success");
+      } catch (err) {
+        setStatus(`Load failed: ${err.message}`, "warn");
+      }
+    };
+
+    const savePuzzle = async () => {
+      const title = titleInput.value.trim() || "Custom puzzle";
+      const theme = topicInput.value.trim() || "custom";
+      const difficulty = parseInt(difficultyInput.value || "", 10);
+      const side = sideSelect.value;
+      const solutionMove = solutionInput.value.trim().toLowerCase();
+      let fen = normalizeFen(fenInput.value, side);
+      if (!fen) fen = positionToFen(board.position(), side);
+
+      const payload = { title, theme, fen, side };
+      if (Number.isFinite(difficulty)) payload.difficulty = difficulty;
+      if (solutionMove) payload.solutionMove = solutionMove;
+
+      if (!validatePayload(payload)) return;
+
+      try {
+        const isUpdate = Boolean(currentId);
+        const url = isUpdate ? `/api/puzzles/${currentId}` : "/api/puzzles";
+        const method = isUpdate ? "PUT" : "POST";
+        setStatus(isUpdate ? "Updating puzzle..." : "Publishing puzzle...");
+        const res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json", ...roleHeaders },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error("Save failed");
+        const saved = await res.json();
+        currentId = saved.id || currentId;
+        puzzleIdInput.value = currentId || "";
+        updateSaveLabel();
+        setStatus(`Puzzle #${currentId} saved.`, "success");
+      } catch (err) {
+        setStatus(`Save failed: ${err.message}`, "warn");
+      }
+    };
+
+    board = Chessboard("editorBoard", {
+      draggable: true,
+      position: "start",
+      sparePieces: true,
+      dropOffBoard: "trash",
+      pieceTheme,
+      onChange: (_, newPos) => updateFenFromBoard(newPos)
+    });
+    updateFenFromBoard(board.position());
+
+    document.getElementById("btnStart").addEventListener("click", () => {
+      board.position("start");
+      updateFenFromBoard(board.position());
+      setStatus("Loaded starting position.", "success");
+    });
+    document.getElementById("btnClear").addEventListener("click", () => {
+      board.clear();
+      updateFenFromBoard(board.position());
+      setStatus("Board cleared.", "success");
+    });
+    document.getElementById("btnFlip").addEventListener("click", () => board.flip());
+    document.getElementById("btnApplyFen").addEventListener("click", applyFenToBoard);
+    document.getElementById("btnUseFen").addEventListener("click", () => updateFenFromBoard(board.position()));
+    document.getElementById("btnLoad").addEventListener("click", () => loadPuzzle(puzzleIdInput.value.trim()));
+    document.getElementById("btnNew").addEventListener("click", () => {
+      currentId = null;
+      puzzleIdInput.value = "";
+      titleInput.value = "";
+      topicInput.value = "";
+      difficultyInput.value = "";
+      solutionInput.value = "";
+      sideSelect.value = "w";
+      board.position("start");
+      updateFenFromBoard(board.position());
+      updateSaveLabel();
+      setStatus("Ready for a new puzzle.");
+    });
+    saveBtn.addEventListener("click", savePuzzle);
+    sideSelect.addEventListener("change", () => {
+      const value = fenInput.value.trim();
+      if (value) {
+        fenInput.value = normalizeFen(value, sideSelect.value);
+      } else {
+        updateFenFromBoard(board.position());
+      }
+    });
+  </script>
+</body>
+</html>

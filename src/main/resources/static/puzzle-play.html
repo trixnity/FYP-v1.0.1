@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Puzzle Player</title>
+  <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+  <style>
+    :root {
+      --bg: #0a1020;
+      --panel: #0f172a;
+      --text: #f6f8ff;
+      --muted: #9ba6c5;
+      --accent: #4dabff;
+      --accent-2: #5cf5a5;
+      --stroke: #1f2a44;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(92,245,165,0.08), transparent 34%),
+                  radial-gradient(circle at 80% 0%, rgba(77,171,255,0.10), transparent 30%),
+                  linear-gradient(135deg, #060b18, #0a1024);
+      color: var(--text);
+      padding: 16px;
+    }
+    h1 { margin: 0 0 12px; font-size: 26px; }
+    .wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 18px 45px rgba(3, 8, 20, 0.4);
+    }
+    #board {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    button {
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.primary { background: linear-gradient(135deg, var(--accent), #73c8ff); color: #031021; border: none; }
+    input {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      min-width: 0;
+      flex: 1;
+    }
+    .title { font-weight: 700; margin-bottom: 6px; }
+    .small { color: var(--muted); font-size: 14px; margin-bottom: 10px; }
+    .moves {
+      border-top: 1px solid var(--stroke);
+      padding-top: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      min-height: 120px;
+    }
+    .status { color: var(--muted); margin: 8px 0; }
+  </style>
+  <link rel="stylesheet" href="css/theme-light.css">
+</head>
+<body class="theme-light">
+  <h1>Chess Puzzle Player (API-backed)</h1>
+  <div class="wrap">
+    <div class="panel">
+      <div id="board"></div>
+      <div class="row">
+        <button class="primary" id="btnLoad">Load puzzle</button>
+        <input id="puzzleId" type="number" min="1" placeholder="Puzzle id (e.g. 1)">
+      </div>
+      <div class="row">
+        <button id="btnReset">Reset</button>
+        <button id="btnFlip">Flip</button>
+      </div>
+      <div class="status" id="pStatus">Ready.</div>
+    </div>
+
+    <div class="panel">
+      <div class="title" id="pTitle">Puzzle</div>
+      <div class="small" id="pInfo">Drag a piece to find the best move.</div>
+      <div class="moves" id="moveList">(moves will appear here)</div>
+    </div>
+  </div>
+
+  <script src="lib/chess.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script src="lib/chessboard-1.0.0.min.js"></script>
+  <script>
+    let board;
+    let game = new Chess();
+    let puzzle = null;   // API puzzle
+    let step = 0;        // which solution move index we are on
+    let moveText = [];   // SAN list for right panel
+
+    const elTitle = document.getElementById("pTitle");
+    const elInfo  = document.getElementById("pInfo");
+    const elMoves = document.getElementById("moveList");
+    const elStatus = document.getElementById("pStatus");
+    const idInput = document.getElementById("puzzleId");
+    const storedRole = (localStorage.getItem("userRole") || "STUDENT").toUpperCase();
+    const roleHeaders = { "X-User-Role": storedRole };
+
+    const setStatus = (msg) => { elStatus.textContent = msg; };
+    const renderMoves = () => {
+      elMoves.textContent = moveText.length ? moveText.join("\\n") : "(moves will appear here)";
+    };
+
+    function resetPuzzle() {
+      if (!puzzle) return;
+      step = 0;
+      moveText = [];
+      game.load(puzzle.fen);
+      board.position(puzzle.fen);
+      setStatus("Ready. " + (game.turn() === "w" ? "White" : "Black") + " to move.");
+      elInfo.textContent = "Drag a piece to find the best move.";
+      renderMoves();
+    }
+
+    async function loadPuzzleById(id) {
+      try {
+        setStatus("Loading puzzle " + id + "...");
+        const res = await fetch(`/api/puzzles/${id}`, { headers: roleHeaders });
+        if (!res.ok) throw new Error("Puzzle load failed");
+        puzzle = await res.json();
+
+        let moves = Array.isArray(puzzle.moves)
+          ? (typeof puzzle.moves[0] === "string" ? puzzle.moves : puzzle.moves.map((m) => m.moveUci))
+          : [];
+        if (!moves.length && puzzle.solutionMove) {
+          moves = [puzzle.solutionMove];
+        }
+        if (!moves.length) throw new Error("No moves for this puzzle");
+        puzzle._movesUci = moves;
+
+        elTitle.textContent = puzzle.title || `Puzzle #${id}`;
+        elInfo.textContent = `Theme: ${puzzle.theme || "-"} | Difficulty: ${puzzle.difficulty || "-"}`;
+        resetPuzzle();
+      } catch (e) {
+        setStatus("Could not load puzzle: " + e.message);
+      }
+    }
+
+    function onDragStart(source, piece) {
+      if (!puzzle) return false;
+      if (game.game_over()) return false;
+      if ((game.turn() === "w" && piece.startsWith("b")) || (game.turn() === "b" && piece.startsWith("w"))) {
+        return false;
+      }
+    }
+
+    function onDrop(source, target) {
+      if (!puzzle) return "snapback";
+      const move = game.move({ from: source, to: target, promotion: "q" });
+      if (move === null) return "snapback"; // illegal move
+
+      const expected = puzzle._movesUci[step];   // e.g. "e1e8"
+      const attempted = source + target + (move.promotion || "");
+
+      if (attempted !== expected) {
+        game.undo();
+        setStatus("Wrong move. Try again.");
+        return "snapback";
+      }
+
+      moveText.push(`${step + 1}. ${move.san}`);
+      step++;
+
+      // optional reply (for longer lines)
+      if (step < puzzle._movesUci.length) {
+        const reply = puzzle._movesUci[step];
+        const replyMove = game.move({ from: reply.slice(0,2), to: reply.slice(2,4), promotion: reply[4] });
+        if (replyMove) moveText.push(`... ${replyMove.san}`);
+        step++;
+      }
+
+      board.position(game.fen());
+      renderMoves();
+
+      if (step >= puzzle._movesUci.length) {
+        const msg = game.in_checkmate() ? "Checkmate! Solved." : "Solved!";
+        setStatus(msg);
+      } else {
+        setStatus("Correct. Continue...");
+      }
+    }
+
+    function onSnapEnd() {
+      board.position(game.fen());
+    }
+
+    const pieceTheme = (piece) => `img/pieces/${piece.toLowerCase()}.svg`;
+
+    board = Chessboard("board", {
+      draggable: true,
+      position: "start",
+      pieceTheme,
+      onDragStart,
+      onDrop,
+      onSnapEnd
+    });
+
+    document.getElementById("btnReset").addEventListener("click", resetPuzzle);
+    document.getElementById("btnLoad").addEventListener("click", () => {
+      const id = idInput.value || "1";
+      loadPuzzleById(id);
+    });
+    document.getElementById("btnFlip").addEventListener("click", () => {
+      if (board) board.flip();
+    });
+
+    const initialId = new URLSearchParams(window.location.search).get("id");
+    if (initialId) {
+      idInput.value = initialId;
+      loadPuzzleById(initialId);
+    } else {
+      loadPuzzleById(1);
+    }
+  </script>
+</body>
+</html>

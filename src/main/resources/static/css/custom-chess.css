@@ -1,0 +1,168 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  color: #111827;
+  font-family: Arial, sans-serif;
+  padding: 16px;
+}
+
+.container {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+h1 {
+  font-size: 1.6rem;
+  letter-spacing: 0.03em;
+}
+
+.board {
+  --tile: clamp(38px, 9vw, 72px);
+  display: grid;
+  grid-template-columns: repeat(8, var(--tile));
+  grid-template-rows: repeat(8, var(--tile));
+  list-style: none;
+  padding: 6px;
+  background: #111827;
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 1;
+}
+
+.board-wrap {
+  position: relative;
+}
+
+.arrow-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.box {
+  width: var(--tile);
+  height: var(--tile);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(232 235 239);
+  transition: background-color 120ms ease;
+}
+
+.all-img {
+  width: 82%;
+  height: auto;
+  user-select: none;
+  pointer-events: auto;
+}
+
+.all-pawn {
+  transform: scale(0.85);
+}
+
+.controls {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+#tog {
+  padding: 6px 10px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+#reset-btn {
+  border: 1px solid #1f2937;
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+#reset-btn:hover {
+  background: #111827;
+}
+
+.analysis {
+  width: min(520px, 92vw);
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.analysis-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.analysis-actions button {
+  border: 1px solid #1f2937;
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.analysis-actions button#stop-btn {
+  background: #6b7280;
+  border-color: #6b7280;
+}
+
+.analysis-depth {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.analysis-depth input {
+  width: 60px;
+  padding: 4px 6px;
+}
+
+.analysis-output {
+  display: grid;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
+.analysis-output .pv {
+  word-break: break-word;
+}
+
+.muted {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.2rem;
+  }
+}

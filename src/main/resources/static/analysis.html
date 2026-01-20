@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Analysis</title>
+  <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+  <style>
+    :root {
+      --bg: #0a1020;
+      --panel: #0f172a;
+      --text: #f6f8ff;
+      --muted: #9ba6c5;
+      --accent: #4dabff;
+      --accent-2: #5cf5a5;
+      --stroke: #1f2a44;
+      --shadow: 0 18px 45px rgba(3, 8, 20, 0.4);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(92,245,165,0.08), transparent 34%),
+                  radial-gradient(circle at 80% 0%, rgba(77,171,255,0.10), transparent 30%),
+                  linear-gradient(135deg, #060b18, #0a1024);
+      color: var(--text);
+      padding: 16px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: rgba(6, 11, 24, 0.85);
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    header a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    h1 { margin: 0; font-size: 22px; }
+    .wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 12px;
+    }
+    .board-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    #analysisBoard {
+      width: 100%;
+    }
+    #bestMoveArrow {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    button {
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.primary { background: linear-gradient(135deg, var(--accent), #73c8ff); color: #031021; border: none; }
+    input, textarea {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      min-width: 0;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    textarea { min-height: 100px; width: 100%; }
+    label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+    .status { color: var(--muted); min-height: 18px; }
+    .metric {
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.02);
+      display: grid;
+      gap: 6px;
+    }
+    .metric .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .metric .value { font-size: 16px; font-weight: 600; word-break: break-word; }
+    #pvLine { white-space: pre-wrap; }
+  </style>
+  <link rel="stylesheet" href="css/theme-light.css">
+</head>
+<body class="theme-light">
+  <header>
+    <h1>Chess Analysis (Stockfish)</h1>
+    <nav class="row">
+      <a href="dashboard.html">Back to dashboard</a>
+    </nav>
+  </header>
+
+  <div class="wrap">
+    <section class="panel">
+      <div class="board-wrap">
+        <div id="analysisBoard"></div>
+        <canvas id="bestMoveArrow"></canvas>
+      </div>
+      <div class="row">
+        <button class="primary" id="btnAnalyze">Analyze</button>
+        <button id="btnPlayBest">Play best move</button>
+        <button id="btnReset">Reset</button>
+        <button id="btnFlip">Flip</button>
+      </div>
+      <label>FEN
+        <textarea id="fenInput" placeholder="Paste a FEN to analyze"></textarea>
+      </label>
+      <div class="row">
+        <button id="btnApplyFen">Apply FEN</button>
+        <label class="row" style="align-items:center; gap:6px;">
+          <input type="checkbox" id="autoAnalyze">
+          Auto analyze after every move
+        </label>
+      </div>
+      <div class="row">
+        <label>Depth
+          <input id="depthInput" type="number" min="1" placeholder="e.g. 14">
+        </label>
+        <label>Move time (ms)
+          <input id="timeInput" type="number" min="100" placeholder="800">
+        </label>
+      </div>
+      <div class="status" id="status">Ready.</div>
+    </section>
+
+    <section class="panel">
+      <div class="metric">
+        <div class="label">Best move</div>
+        <div class="value" id="bestMove">-</div>
+      </div>
+      <div class="metric">
+        <div class="label">Evaluation</div>
+        <div class="value" id="evalScore">-</div>
+      </div>
+      <div class="metric">
+        <div class="label">PV line</div>
+        <div class="value" id="pvLine">-</div>
+      </div>
+    </section>
+  </div>
+
+  <script src="lib/chess.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script src="lib/chessboard-1.0.0.min.js"></script>
+  <script>
+    const boardEl = document.getElementById("analysisBoard");
+    const fenInput = document.getElementById("fenInput");
+    const statusEl = document.getElementById("status");
+    const bestMoveEl = document.getElementById("bestMove");
+    const evalEl = document.getElementById("evalScore");
+    const pvEl = document.getElementById("pvLine");
+    const depthInput = document.getElementById("depthInput");
+    const timeInput = document.getElementById("timeInput");
+    const autoAnalyze = document.getElementById("autoAnalyze");
+    const arrowCanvas = document.getElementById("bestMoveArrow");
+    const arrowCtx = arrowCanvas ? arrowCanvas.getContext("2d") : null;
+    let bestMove = null;
+    let bestLines = [];
+    const arrowStyles = [
+      { fill: "rgba(34, 197, 94, 0.55)", stroke: "rgba(15, 23, 42, 0.3)", highlight: "rgba(34, 197, 94, 0.22)" },
+      { fill: "rgba(59, 130, 246, 0.45)", stroke: "rgba(15, 23, 42, 0.28)", highlight: "rgba(59, 130, 246, 0.2)" },
+      { fill: "rgba(245, 158, 11, 0.45)", stroke: "rgba(15, 23, 42, 0.28)", highlight: "rgba(245, 158, 11, 0.2)" }
+    ];
+
+    const game = new Chess();
+    const pieceTheme = (piece) => `img/pieces/${piece.toLowerCase()}.svg`;
+    const board = Chessboard("analysisBoard", {
+      draggable: true,
+      position: "start",
+      pieceTheme,
+      onDragStart: (_, piece) => {
+        if ((game.turn() === "w" && piece.startsWith("b")) || (game.turn() === "b" && piece.startsWith("w"))) {
+          return false;
+        }
+      },
+      onDrop: (source, target) => {
+        const move = game.move({ from: source, to: target, promotion: "q" });
+        if (!move) return "snapback";
+        updateFenInput();
+        if (autoAnalyze.checked) {
+          analyze();
+        } else {
+          clearAnalysis();
+        }
+      },
+      onSnapEnd: () => board.position(game.fen())
+    });
+
+    const setStatus = (msg, tone = "info") => {
+      const colors = { info: "var(--muted)", success: "var(--accent-2)", warn: "#f5b841" };
+      statusEl.textContent = msg;
+      statusEl.style.color = colors[tone] || colors.info;
+    };
+
+    const updateFenInput = () => {
+      fenInput.value = game.fen();
+    };
+
+    const resizeArrowCanvas = () => {
+      if (!arrowCanvas || !boardEl || !arrowCtx) return;
+      const rect = boardEl.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      arrowCanvas.width = rect.width * dpr;
+      arrowCanvas.height = rect.height * dpr;
+      arrowCanvas.style.width = `${rect.width}px`;
+      arrowCanvas.style.height = `${rect.height}px`;
+      arrowCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    const clearArrow = () => {
+      if (!arrowCanvas || !arrowCtx) return;
+      arrowCtx.clearRect(0, 0, arrowCanvas.width, arrowCanvas.height);
+    };
+
+    const drawArrow = (from, to, style) => {
+      if (!arrowCanvas || !arrowCtx || !boardEl) return;
+      if (!from || !to) return;
+      const fromEl = boardEl.querySelector(`[data-square="${from}"]`);
+      const toEl = boardEl.querySelector(`[data-square="${to}"]`);
+      if (!fromEl || !toEl) return;
+
+      const boardRect = boardEl.getBoundingClientRect();
+      const fromRect = fromEl.getBoundingClientRect();
+      const toRect = toEl.getBoundingClientRect();
+
+      const fromX = fromRect.left + fromRect.width / 2 - boardRect.left;
+      const fromY = fromRect.top + fromRect.height / 2 - boardRect.top;
+      const toX = toRect.left + toRect.width / 2 - boardRect.left;
+      const toY = toRect.top + toRect.height / 2 - boardRect.top;
+
+      const dx = toX - fromX;
+      const dy = toY - fromY;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) return;
+
+      const squareSize = boardRect.width / 8;
+      const tailWidth = Math.max(6, squareSize * 0.2);
+      const headWidth = Math.max(12, squareSize * 0.55);
+      const headLen = Math.max(16, squareSize * 0.65);
+      const padStart = squareSize * 0.18;
+      const padEnd = squareSize * 0.28;
+
+      const ux = dx / len;
+      const uy = dy / len;
+      const px = -uy;
+      const py = ux;
+
+      const startX = fromX + ux * padStart;
+      const startY = fromY + uy * padStart;
+      const endX = toX - ux * padEnd;
+      const endY = toY - uy * padEnd;
+      const baseX = endX - ux * Math.min(headLen, len * 0.6);
+      const baseY = endY - uy * Math.min(headLen, len * 0.6);
+
+      const startLeft = { x: startX + px * (tailWidth / 2), y: startY + py * (tailWidth / 2) };
+      const startRight = { x: startX - px * (tailWidth / 2), y: startY - py * (tailWidth / 2) };
+      const baseLeftTail = { x: baseX + px * (tailWidth / 2), y: baseY + py * (tailWidth / 2) };
+      const baseRightTail = { x: baseX - px * (tailWidth / 2), y: baseY - py * (tailWidth / 2) };
+      const baseLeft = { x: baseX + px * (headWidth / 2), y: baseY + py * (headWidth / 2) };
+      const baseRight = { x: baseX - px * (headWidth / 2), y: baseY - py * (headWidth / 2) };
+
+      const fill = style?.fill || "rgba(34, 197, 94, 0.55)";
+      const stroke = style?.stroke || "rgba(15, 23, 42, 0.3)";
+      const highlight = style?.highlight || "rgba(34, 197, 94, 0.22)";
+
+      arrowCtx.save();
+      arrowCtx.fillStyle = fill;
+      arrowCtx.strokeStyle = stroke;
+      arrowCtx.lineJoin = "round";
+      arrowCtx.lineWidth = Math.max(1.5, squareSize * 0.04);
+
+      arrowCtx.beginPath();
+      arrowCtx.moveTo(startLeft.x, startLeft.y);
+      arrowCtx.lineTo(baseLeftTail.x, baseLeftTail.y);
+      arrowCtx.lineTo(baseLeft.x, baseLeft.y);
+      arrowCtx.lineTo(endX, endY);
+      arrowCtx.lineTo(baseRight.x, baseRight.y);
+      arrowCtx.lineTo(baseRightTail.x, baseRightTail.y);
+      arrowCtx.lineTo(startRight.x, startRight.y);
+      arrowCtx.closePath();
+      arrowCtx.fill();
+      arrowCtx.stroke();
+
+      arrowCtx.fillStyle = highlight;
+      arrowCtx.beginPath();
+      arrowCtx.arc(startX, startY, squareSize * 0.18, 0, Math.PI * 2);
+      arrowCtx.fill();
+      arrowCtx.beginPath();
+      arrowCtx.arc(endX, endY, squareSize * 0.16, 0, Math.PI * 2);
+      arrowCtx.fill();
+      arrowCtx.restore();
+    };
+
+    const refreshArrow = () => {
+      resizeArrowCanvas();
+      clearArrow();
+      if (bestLines.length) {
+        bestLines.slice(0, 3).forEach((line, idx) => {
+          const move = line.move;
+          if (move && move.length >= 4) {
+            drawArrow(move.slice(0, 2), move.slice(2, 4), arrowStyles[idx] || arrowStyles[0]);
+          }
+        });
+        return;
+      }
+      if (bestMove && bestMove.length >= 4) {
+        drawArrow(bestMove.slice(0, 2), bestMove.slice(2, 4), arrowStyles[0]);
+      }
+    };
+
+    const clearAnalysis = () => {
+      bestMove = null;
+      bestLines = [];
+      bestMoveEl.textContent = "-";
+      evalEl.textContent = "-";
+      pvEl.textContent = "-";
+      refreshArrow();
+    };
+
+    const formatLine = (line, idx) => {
+      const evalLabel = line.evaluation ? `(${line.evaluation})` : "";
+      const pvLabel = line.pv ? line.pv : "";
+      const parts = [line.move, evalLabel, pvLabel].filter(Boolean);
+      return `${idx + 1}. ${parts.join(" ")}`.trim();
+    };
+
+    const updateMetrics = (data) => {
+      const rawLines = Array.isArray(data.lines) ? data.lines : [];
+      bestLines = rawLines
+        .filter((line) => line && line.move)
+        .slice(0, 3);
+
+      if (!bestLines.length && data.pv) {
+        const firstMove = data.bestMove || data.pv.split(/\s+/)[0];
+        if (firstMove) {
+          bestLines = [{ move: firstMove, evaluation: data.evaluation, pv: data.pv }];
+        }
+      }
+
+      bestMove = bestLines[0]?.move || data.bestMove || null;
+      bestMoveEl.textContent = bestMove || "-";
+      evalEl.textContent = bestLines[0]?.evaluation || data.evaluation || "-";
+      if (bestLines.length) {
+        pvEl.textContent = bestLines.map(formatLine).join("\n");
+      } else {
+        pvEl.textContent = data.pv || "-";
+      }
+      refreshArrow();
+    };
+
+    const analyze = async () => {
+      const depthVal = parseInt(depthInput.value, 10);
+      const timeVal = parseInt(timeInput.value, 10);
+      const payload = {
+        fen: game.fen(),
+        depth: Number.isFinite(depthVal) ? depthVal : null,
+        movetime: Number.isFinite(timeVal) ? timeVal : null,
+        multipv: 3
+      };
+      try {
+        setStatus("Analyzing...");
+        const res = await fetch("/api/analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setStatus(data.error || "Engine error", "warn");
+          return;
+        }
+        updateMetrics(data);
+        setStatus("Best move ready.", "success");
+      } catch (err) {
+        setStatus("Engine error. Check backend logs.", "warn");
+      }
+    };
+
+    document.getElementById("btnAnalyze").addEventListener("click", analyze);
+    document.getElementById("btnReset").addEventListener("click", () => {
+      game.reset();
+      board.start();
+      updateFenInput();
+      clearAnalysis();
+      setStatus("Reset to start.");
+    });
+    document.getElementById("btnFlip").addEventListener("click", () => {
+      board.flip();
+      refreshArrow();
+    });
+    document.getElementById("btnApplyFen").addEventListener("click", () => {
+      const fen = fenInput.value.trim();
+      if (!fen) return;
+      if (!game.load(fen)) {
+        setStatus("Invalid FEN", "warn");
+        return;
+      }
+      board.position(game.fen(), false);
+      updateFenInput();
+      clearAnalysis();
+      setStatus("FEN loaded.", "success");
+    });
+    document.getElementById("btnPlayBest").addEventListener("click", () => {
+      if (!bestMove || bestMove.length < 4) {
+        setStatus("No best move yet.", "warn");
+        return;
+      }
+      const move = game.move({
+        from: bestMove.slice(0, 2),
+        to: bestMove.slice(2, 4),
+        promotion: bestMove[4]
+      });
+      if (!move) {
+        setStatus("Best move not legal for current position.", "warn");
+        return;
+      }
+      board.position(game.fen());
+      updateFenInput();
+      if (autoAnalyze.checked) {
+        analyze();
+      } else {
+        clearAnalysis();
+      }
+    });
+
+    updateFenInput();
+    window.addEventListener("resize", refreshArrow);
+    setTimeout(refreshArrow, 60);
+  </script>
+</body>
+</html>
