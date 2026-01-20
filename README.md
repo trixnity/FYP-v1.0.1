@@ -2,29 +2,30 @@
 Untuk Present
 # Smart Chess Education & Trainer System
 
-## 📌 Project Overview
+## Project Overview
 A web-based AI-assisted chess education system using Stockfish engine to help players analyze games, learn best moves, and improve performance.
 
-## 🛠️ Technologies Used
+## Technologies That I Used
 - Java Spring Boot
 - MySQL
 - Stockfish Chess Engine
 - HTML / CSS / JavaScript
 
-## 🎯 Key Features
+## Key Features
 - Chessboard analysis (Stockfish suggested moves)
 - PGN upload & analysis
 - Player & coach management
 - Puzzle training module
 
-## 🏗️ System Architecture
+## System Architecture
 - MVC Architecture
-- RESTful API
+- RESTful API (PostMan)
 
-## 🚀 How to Run
+## How to Run
 1. Clone repository
 2. Configure database
 3. Run Spring Boot application
 
 ## 👤 Author
-- Muhammad Syazrin Amzar (UMT)
+- Muhammad Syazrin Amzar bin Mohd Zaimi (S65748)
+- SMSK (KP)
