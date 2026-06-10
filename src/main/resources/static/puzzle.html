@@ -3,202 +3,472 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Puzzle Themes</title>
+  <title>EduChess Puzzle Library</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
   <style>
     :root {
-      --bg: #eef3ff;
-      --card: #ffffff;
-      --accent: #1d72f3;
-      --text: #0e1a2a;
-      --muted: #5c6b80;
-      --stroke: #dbe4f4;
-      --shadow: 0 10px 30px rgba(0, 46, 121, 0.12);
+      --nav: #2f5597;
+      --nav-dark: #27487e;
+      --bg: #eef2f8;
+      --panel: #ffffff;
+      --text: #1b2b44;
+      --muted: #6a7a94;
+      --accent: #0b6ef3;
+      --stroke: #e1e8f2;
+      --soft: #f6f8fc;
+      --shadow: 0 14px 30px rgba(20, 39, 70, 0.12);
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); }
-    header { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 1px solid var(--stroke); box-shadow: var(--shadow); position: sticky; top: 0; z-index: 10; }
-    .brand { font-family: 'Playfair Display', serif; font-size: 20px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 24px; max-width: 1100px; margin: 0 auto; }
-    .card { background: var(--card); border: 1px solid var(--stroke); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease; text-decoration: none; color: inherit; }
-    .card:hover { transform: translateY(-3px); box-shadow: 0 14px 35px rgba(0,46,121,0.18); }
-    .icon { font-size: 36px; margin-bottom: 10px; }
-    h3 { margin: 0 0 6px; font-size: 18px; }
-    .muted { color: var(--muted); font-size: 14px; }
-    .section-title { max-width: 1100px; margin: 16px auto 0; padding: 0 24px; font-size: 18px; font-weight: 600; }
-    .status { max-width: 1100px; margin: 0 auto; padding: 0 24px 16px; color: var(--muted); font-size: 14px; }
-    .controls { max-width: 1100px; margin: 0 auto; padding: 10px 24px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .controls input, .controls select {
+    body {
+      margin: 0;
+      font-family: "Manrope", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: linear-gradient(90deg, var(--nav), var(--nav-dark));
+      color: #fff;
+      padding: 14px 26px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 8px 20px rgba(16, 32, 59, 0.25);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .brand-title {
+      font-family: "Playfair Display", serif;
+      font-size: 18px;
+    }
+    nav a {
+      color: #e7efff;
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 16px;
+    }
+    nav a:hover { color: #fff; }
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 26px;
+      display: grid;
+      gap: 22px;
+    }
+    .panel {
+      background: var(--panel);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 20px 22px;
+    }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .tab-btn {
+      border: 1px solid transparent;
+      background: #edf2ff;
+      color: #2c5ea8;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 120ms ease;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(11, 110, 243, 0.25);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 22px;
+      padding: 10px 8px 6px;
+    }
+    .theme-card {
+      background: var(--soft);
+      border: 1px solid var(--stroke);
+      border-radius: 18px;
+      padding: 18px 16px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+    }
+    .theme-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 28px rgba(30, 52, 90, 0.12);
+    }
+    .theme-card.selected {
+      border-color: rgba(11, 110, 243, 0.6);
+      box-shadow: 0 16px 32px rgba(11, 110, 243, 0.18);
+    }
+    .theme-icon {
+      width: 88px;
+      height: 88px;
+      border-radius: 24px;
+      background: #eaf1ff;
+      margin: 0 auto 12px;
+      display: grid;
+      place-items: center;
+    }
+    .theme-icon img {
+      width: 56px;
+      height: 56px;
+      opacity: 0.85;
+      filter: drop-shadow(0 6px 12px rgba(24, 50, 90, 0.2));
+    }
+    .theme-card h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+    .theme-meta {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .details {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) 1fr;
+      gap: 20px;
+    }
+    .sidebar {
+      background: var(--soft);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--stroke);
+    }
+    .sidebar h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+    }
+    .sidebar .muted { color: var(--muted); font-size: 14px; }
+    .progress {
+      margin: 14px 0 18px;
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #dde6f3;
+      overflow: hidden;
+    }
+    .bar span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #36d1dc, #5b86e5);
+    }
+    .sidebar .actions {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .sidebar .actions button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #e9effa;
+      color: #2b4c7f;
+    }
+    .sidebar .actions button.primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .puzzle-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 18px;
+    }
+    .puzzle-card {
+      background: #fff;
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+      text-decoration: none;
+      color: inherit;
+    }
+    .puzzle-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 30px rgba(25, 45, 80, 0.14);
+    }
+    .puzzle-card .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .puzzle-card button {
+      border: 1px solid var(--stroke);
+      background: #f0f5ff;
+      color: #2b4c7f;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .puzzle-card button.danger {
+      background: #ffe8e8;
+      color: #b91c1c;
+      border-color: #f5b5b5;
+    }
+    .mini-board {
+      width: 100%;
+      max-width: 170px;
+      margin: 0 auto 10px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #c9d6ea;
+    }
+    .puzzle-title {
+      font-size: 14px;
+      margin: 6px 0 4px;
+      font-weight: 600;
+    }
+    .puzzle-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .stars {
+      margin-top: 6px;
+      color: #f5a524;
+      letter-spacing: 1px;
+      font-size: 12px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      margin-top: 8px;
+    }
+    .badge.live { background: #e8f7f2; color: #0b7a4a; border-color: #b6ead6; }
+    .badge.off { background: #fff2d5; color: #b45309; border-color: #f6d28a; }
+    .coach-tools {
+      margin-bottom: 14px;
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #fdfefe;
+    }
+    .coach-tools summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #2f4f82;
+    }
+    .coach-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .coach-controls input,
+    .coach-controls select,
+    .coach-controls button {
       padding: 8px 10px;
       border-radius: 10px;
       border: 1px solid var(--stroke);
-      background: #fff;
-      color: var(--text);
-      font-size: 14px;
-      min-width: 0;
+      font-size: 13px;
     }
-    .controls button {
-      border: 1px solid var(--stroke);
+    .coach-controls button {
       background: var(--accent);
       color: #fff;
-      padding: 8px 12px;
-      border-radius: 10px;
-      cursor: pointer;
       font-weight: 600;
-    }
-    .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-    .badge.live { background: rgba(92, 245, 165, 0.2); color: #0a7b4f; border: 1px solid rgba(92, 245, 165, 0.5); }
-    .badge.off { background: rgba(245, 158, 11, 0.15); color: #b45309; border: 1px solid rgba(245, 158, 11, 0.35); }
-    .card-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-    .card-actions button {
-      border: 1px solid var(--stroke);
-      background: rgba(29, 114, 243, 0.1);
-      color: var(--accent);
-      padding: 6px 10px;
-      border-radius: 10px;
+      border: none;
       cursor: pointer;
-      font-weight: 600;
     }
-    .theme-card { text-align: left; }
-    .theme-card.selected { border-color: rgba(29, 114, 243, 0.6); box-shadow: 0 14px 35px rgba(29, 114, 243, 0.15); }
-    .theme-count { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    .empty {
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--stroke);
+      border-radius: 14px;
+    }
+    @media (max-width: 880px) {
+      .details { grid-template-columns: 1fr; }
+    }
   </style>
   <link rel="stylesheet" href="css/theme-light.css">
 </head>
 <body class="theme-light">
   <header>
-    <div class="brand">EduChess — Puzzle Themes</div>
+    <div class="brand">
+      <span class="brand-title">EduChess</span>
+      <span>Puzzle Library</span>
+    </div>
     <nav>
-      <a id="createPuzzleLink" href="puzzle-editor.html" style="color:var(--accent); text-decoration:none; font-weight:600; margin-right:12px;">Create puzzle</a>
-      <a href="dashboard.html" style="color:var(--accent); text-decoration:none; font-weight:600;">Back to dashboard</a>
+      <a id="createPuzzleLink" href="puzzle-editor.html">Create puzzle</a>
+      <a href="dashboard.html">Back to dashboard</a>
     </nav>
   </header>
 
-  <div class="section-title">Custom puzzles</div>
-  <div class="controls" id="libraryControls">
-    <input id="filterTheme" placeholder="Theme (e.g. fork)">
-    <input id="filterDifficulty" type="number" min="0" placeholder="Difficulty">
-    <select id="sortBy">
-      <option value="difficulty">Sort: Difficulty</option>
-      <option value="title">Sort: Title</option>
-      <option value="id">Sort: ID</option>
-      <option value="theme">Sort: Theme</option>
-    </select>
-    <select id="sortDir">
-      <option value="asc">Asc</option>
-      <option value="desc">Desc</option>
-    </select>
-    <button id="applyFilters">Apply</button>
-  </div>
-  <div class="grid" id="customPuzzleGrid">
-    <div class="card"><div class="muted">Loading puzzles from the API...</div></div>
-  </div>
-  <div class="status" id="customPuzzleStatus"></div>
+  <main>
+    <section class="panel">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="tactic">Tactic</button>
+        <button class="tab-btn" data-tab="openings">Openings</button>
+        <button class="tab-btn" data-tab="endings">Endings</button>
+        <button class="tab-btn" data-tab="beginners">For beginners</button>
+        <button class="tab-btn" data-tab="coach">For coach</button>
+      </div>
+      <div class="tab-panel active" data-panel="tactic">
+        <div class="theme-grid" id="themeGrid"></div>
+      </div>
+      <div class="tab-panel" data-panel="openings">
+        <div class="empty">Opening courses will appear here.</div>
+      </div>
+      <div class="tab-panel" data-panel="endings">
+        <div class="empty">Endgame courses will appear here.</div>
+      </div>
+      <div class="tab-panel" data-panel="beginners">
+        <div class="empty">Beginner tracks will appear here.</div>
+      </div>
+      <div class="tab-panel" data-panel="coach">
+        <div class="empty">Coach-specific content will appear here.</div>
+      </div>
+    </section>
 
-  <div class="section-title">Theme library</div>
-  <div class="grid" id="themeGrid"></div>
+    <section class="panel details">
+      <aside class="sidebar">
+        <h2 id="activeThemeTitle">Choose a theme</h2>
+        <div class="muted" id="activeThemeSubtitle">Select a theme card to load puzzles.</div>
+        <div class="progress">
+          <div class="progress-label">
+            <span>Theme progress</span>
+            <span id="themeProgressText">0 / 0</span>
+          </div>
+          <div class="bar"><span id="themeProgressBar"></span></div>
+        </div>
+        <div class="actions">
+          <button class="primary" id="btnFirstPuzzle">Go to the first puzzle</button>
+          <button id="btnResetTheme">Theme progress reset</button>
+        </div>
+        <div class="muted" id="themeMeta">No theme selected yet.</div>
+      </aside>
 
+      <div>
+        <details class="coach-tools" id="coachTools">
+          <summary>Coach tools</summary>
+          <div class="coach-controls">
+            <input id="filterTheme" placeholder="Theme (e.g. fork)">
+            <input id="filterDifficulty" type="number" min="0" placeholder="Difficulty">
+            <select id="sortBy">
+              <option value="difficulty">Sort: Difficulty</option>
+              <option value="title">Sort: Title</option>
+              <option value="id">Sort: ID</option>
+              <option value="theme">Sort: Theme</option>
+            </select>
+            <select id="sortDir">
+              <option value="asc">Asc</option>
+              <option value="desc">Desc</option>
+            </select>
+            <button id="applyFilters">Apply filters</button>
+          </div>
+        </details>
+
+        <div class="puzzle-grid" id="puzzleGrid">
+          <div class="empty">Pick a theme to show puzzles.</div>
+        </div>
+        <div class="status" id="puzzleStatus"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script src="lib/chessboard-1.0.0.min.js"></script>
   <script>
-    const customGrid = document.getElementById("customPuzzleGrid");
-    const customStatus = document.getElementById("customPuzzleStatus");
     const themeGrid = document.getElementById("themeGrid");
+    const puzzleGrid = document.getElementById("puzzleGrid");
+    const puzzleStatus = document.getElementById("puzzleStatus");
+    const activeThemeTitle = document.getElementById("activeThemeTitle");
+    const activeThemeSubtitle = document.getElementById("activeThemeSubtitle");
+    const themeMeta = document.getElementById("themeMeta");
+    const progressText = document.getElementById("themeProgressText");
+    const progressBar = document.getElementById("themeProgressBar");
     const createLink = document.getElementById("createPuzzleLink");
-    const controls = document.getElementById("libraryControls");
+    const coachTools = document.getElementById("coachTools");
+
     const themeFilter = document.getElementById("filterTheme");
     const difficultyFilter = document.getElementById("filterDifficulty");
     const sortBySelect = document.getElementById("sortBy");
     const sortDirSelect = document.getElementById("sortDir");
     const applyFiltersBtn = document.getElementById("applyFilters");
+    const btnFirstPuzzle = document.getElementById("btnFirstPuzzle");
+    const btnResetTheme = document.getElementById("btnResetTheme");
+
+    const authToken = localStorage.getItem("authToken");
+    if (!authToken) { window.location.href = "index.html"; }
 
     const storedRole = (localStorage.getItem("userRole") || "STUDENT").toUpperCase();
     const isCoach = storedRole === "COACH" || storedRole === "ADMIN";
-    const roleHeaders = { "X-User-Role": storedRole };
+    const roleHeaders = { "X-User-Role": storedRole, "Authorization": "Bearer " + (authToken || "") };
+
+    const pieceTheme = (piece) => `img/pieces/${piece.toLowerCase()}.svg`;
     let activeTheme = "";
     let themeListCache = [];
+    let lastLoadedPuzzles = [];
+
+    const defaultThemes = [
+      { id: "mateIn1", label: "Mate in one", icon: "wk.svg", tokens: ["mateIn1"] },
+      { id: "fork", label: "Double Attack and forks", icon: "wn.svg", tokens: ["fork", "doubleAttack"] },
+      { id: "pin", label: "A pin", icon: "wb.svg", tokens: ["pin"] },
+      { id: "skewer", label: "Skewer", icon: "wr.svg", tokens: ["skewer"] },
+      { id: "discoveredCheck", label: "Discover Check", icon: "wq.svg", tokens: ["discoveredCheck"] },
+      { id: "discoveredAttack", label: "Discover Attack", icon: "wp.svg", tokens: ["discoveredAttack"] },
+      { id: "doubleCheck", label: "Double Check", icon: "wk.svg", tokens: ["doubleCheck"] },
+      { id: "trappedPiece", label: "Trapping a piece", icon: "wr.svg", tokens: ["trappedPiece"] },
+      { id: "removeDefender", label: "Remove the defender", icon: "wb.svg", tokens: ["removeDefender"] },
+      { id: "deflection", label: "Deflection", icon: "wn.svg", tokens: ["deflection"] },
+      { id: "attraction", label: "Attraction", icon: "wq.svg", tokens: ["attraction"] },
+      { id: "mateIn2", label: "Mate in two", icon: "wk.svg", tokens: ["mateIn2"] }
+    ];
 
     if (!isCoach) {
-      if (controls) controls.style.display = "none";
+      if (coachTools) coachTools.style.display = "none";
       if (createLink) createLink.style.display = "none";
     }
 
-    const renderCustomPuzzles = (puzzles) => {
-      customGrid.innerHTML = "";
-      if (!puzzles.length) {
-        const msg = isCoach
-          ? "No puzzles found. Import the Lichess CSV dataset and try again."
-          : "No published puzzles yet. Check back later.";
-        customGrid.innerHTML = `<div class="card"><div class="muted">${msg}</div></div>`;
-        return;
-      }
-      puzzles.forEach((p) => {
-        const card = document.createElement("a");
-        card.className = "card";
-        card.href = `puzzle-play.html?id=${p.id}`;
-
-        const icon = document.createElement("div");
-        icon.className = "icon";
-        icon.textContent = "PZ";
-
-        const title = document.createElement("h3");
-        title.textContent = p.title || `Puzzle #${p.id}`;
-
-        const meta = document.createElement("div");
-        meta.className = "muted";
-        const theme = p.theme || p.topic || "-";
-        const difficulty = p.difficulty || p.level || "-";
-        const side = p.side === "b" ? "Black" : "White";
-        meta.textContent = `Theme: ${theme} | Difficulty: ${difficulty} | ${side} to move`;
-
-        const badge = document.createElement("span");
-        const published = !!p.published;
-        badge.className = `badge ${published ? "live" : "off"}`;
-        badge.textContent = published ? "Published" : "Not published";
-
-        card.appendChild(icon);
-        card.appendChild(title);
-        card.appendChild(meta);
-        card.appendChild(badge);
-
-        if (isCoach) {
-          const actions = document.createElement("div");
-          actions.className = "card-actions";
-          const toggleBtn = document.createElement("button");
-          toggleBtn.textContent = published ? "Unpublish" : "Publish";
-          toggleBtn.addEventListener("click", async (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            await togglePublish(p.id, !published);
-          });
-          actions.appendChild(toggleBtn);
-          card.appendChild(actions);
-        }
-
-        customGrid.appendChild(card);
-      });
-      if (activeTheme) {
-        customStatus.textContent = `Showing theme: ${prettyThemeName(activeTheme)} (${puzzles.length} puzzles)`;
-      } else {
-        customStatus.textContent = `Showing all puzzles (${puzzles.length}).`;
-      }
-    };
-
-    const buildListUrl = () => {
-      if (!isCoach) {
-        const params = new URLSearchParams({ published: "true" });
-        if (activeTheme) params.set("theme", activeTheme);
-        return `/api/puzzles?${params.toString()}`;
-      }
-      const params = new URLSearchParams();
-      const theme = activeTheme || (themeFilter?.value || "").trim();
-      const difficulty = (difficultyFilter?.value || "").trim();
-      if (theme) params.set("theme", theme);
-      if (difficulty) params.set("difficulty", difficulty);
-      if (sortBySelect?.value) params.set("sortBy", sortBySelect.value);
-      if (sortDirSelect?.value) params.set("sortDir", sortDirSelect.value);
-      const qs = params.toString();
-      return qs ? `/api/puzzles?${qs}` : "/api/puzzles";
+    const setProgress = (value, total) => {
+      const safeTotal = total > 0 ? total : 0;
+      const safeValue = Math.min(value, safeTotal);
+      const pct = safeTotal > 0 ? Math.round((safeValue / safeTotal) * 100) : 0;
+      if (progressText) progressText.textContent = `${safeValue} / ${safeTotal}`;
+      if (progressBar) progressBar.style.width = `${pct}%`;
     };
 
     const prettyThemeName = (token) => {
@@ -209,43 +479,194 @@
         .replace(/\b\w/g, (m) => m.toUpperCase());
     };
 
-    const renderThemeLibrary = (themes) => {
-      if (!themeGrid) return;
-      themeListCache = themes;
-      if (!themes.length) {
-        themeGrid.innerHTML = '<div class="card"><div class="muted">No themes available yet.</div></div>';
+    const buildListUrl = () => {
+      if (!isCoach) {
+        const params = new URLSearchParams({ published: "true" });
+        if (activeTheme) params.set("theme", activeTheme);
+        if (activeTheme) params.set("limit", "9");
+        return `/api/puzzles?${params.toString()}`;
+      }
+      const params = new URLSearchParams();
+      const theme = activeTheme || (themeFilter?.value || "").trim();
+      const difficulty = (difficultyFilter?.value || "").trim();
+      if (theme) params.set("theme", theme);
+      if (difficulty) params.set("difficulty", difficulty);
+      if (sortBySelect?.value) params.set("sortBy", sortBySelect.value);
+      if (sortDirSelect?.value) params.set("sortDir", sortDirSelect.value);
+      if (activeTheme) params.set("limit", "9");
+      const qs = params.toString();
+      return qs ? `/api/puzzles?${qs}` : "/api/puzzles";
+    };
+
+    const estimateStars = (difficulty) => {
+      const value = Number(difficulty);
+      if (!Number.isFinite(value)) return 0;
+      if (value <= 900) return 1;
+      if (value <= 1300) return 2;
+      if (value <= 1700) return 3;
+      if (value <= 2100) return 4;
+      return 5;
+    };
+
+    const renderPuzzleGrid = (puzzles) => {
+      puzzleGrid.innerHTML = "";
+      lastLoadedPuzzles = puzzles;
+
+      if (!puzzles.length) {
+        puzzleGrid.innerHTML = `<div class="empty">${activeTheme ? "No puzzles found for this theme." : "Pick a theme to show puzzles."}</div>`;
+        puzzleStatus.textContent = "";
         return;
       }
-      themeGrid.innerHTML = "";
-      const totalCount = themes.reduce((sum, t) => sum + t.count, 0);
 
-      const allCard = document.createElement("div");
-      allCard.className = "card theme-card" + (activeTheme ? "" : " selected");
-      allCard.innerHTML = `<div class="icon">PZ</div><h3>All puzzles</h3><div class="theme-count">${totalCount} puzzles</div>`;
-      allCard.addEventListener("click", () => {
-        activeTheme = "";
-        if (themeFilter) themeFilter.value = "";
-        renderThemeLibrary(themes);
-        loadCustomPuzzles();
+      const fragment = document.createDocumentFragment();
+      puzzles.forEach((p) => {
+        const card = document.createElement("a");
+        card.className = "puzzle-card";
+        card.href = `puzzle-play.html?id=${p.id}`;
+
+        const boardWrap = document.createElement("div");
+        const boardId = `mini-board-${p.id}`;
+        boardWrap.className = "mini-board";
+        boardWrap.id = boardId;
+
+        const title = document.createElement("div");
+        title.className = "puzzle-title";
+        title.textContent = p.title || `Puzzle #${p.id}`;
+
+        const meta = document.createElement("div");
+        meta.className = "puzzle-meta";
+        const side = p.side === "b" ? "Black" : "White";
+        meta.textContent = `${side} to move · Rating ${p.difficulty ?? "-"}`;
+
+        const stars = document.createElement("div");
+        stars.className = "stars";
+        const count = estimateStars(p.difficulty);
+        stars.textContent = count ? "★".repeat(count) : "☆";
+
+        card.appendChild(boardWrap);
+        card.appendChild(title);
+        card.appendChild(meta);
+        card.appendChild(stars);
+
+        if (isCoach) {
+          const badge = document.createElement("div");
+          const published = !!p.published;
+          badge.className = `badge ${published ? "live" : "off"}`;
+          badge.textContent = published ? "Published" : "Not published";
+          card.appendChild(badge);
+
+          const actions = document.createElement("div");
+          actions.className = "action-row";
+
+          const publishBtn = document.createElement("button");
+          publishBtn.textContent = published ? "Unpublish" : "Publish";
+          publishBtn.addEventListener("click", async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            await togglePublish(p.id, !published);
+          });
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.className = "danger";
+          deleteBtn.textContent = "Delete";
+          deleteBtn.addEventListener("click", async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            await deletePuzzle(p.id, p.title);
+          });
+
+          actions.appendChild(publishBtn);
+          actions.appendChild(deleteBtn);
+          card.appendChild(actions);
+        }
+
+        fragment.appendChild(card);
       });
-      themeGrid.appendChild(allCard);
 
-      themes.forEach((theme) => {
+      puzzleGrid.appendChild(fragment);
+
+      puzzles.forEach((p) => {
+        const boardId = `mini-board-${p.id}`;
+        const fen = p.fen ? p.fen.split(" ")[0] : "start";
+        requestAnimationFrame(() => {
+          Chessboard(boardId, {
+            position: fen,
+            orientation: "white",
+            showNotation: false,
+            draggable: false,
+            pieceTheme
+          });
+        });
+      });
+
+      puzzleStatus.textContent = `Showing ${puzzles.length} puzzles.`;
+    };
+
+    const renderThemeLibrary = (themes) => {
+      if (!themeGrid) return;
+      const themeList = Array.isArray(themes) ? themes : [];
+      themeListCache = themeList;
+      themeGrid.innerHTML = "";
+
+      const countsMap = new Map(themeList.map((t) => [String(t.theme).toLowerCase(), t.count || 0]));
+      const defaultTokens = new Set(defaultThemes.flatMap((t) => (t.tokens || [t.id]).map((token) => String(token).toLowerCase())));
+
+      defaultThemes.forEach((theme) => {
+        const tokens = theme.tokens || [theme.id];
+        const count = tokens.reduce((sum, token) => sum + (countsMap.get(String(token).toLowerCase()) || 0), 0);
+        const matchedToken = tokens.find((token) => countsMap.has(String(token).toLowerCase())) || theme.id;
+
         const card = document.createElement("div");
-        card.className = `card theme-card${activeTheme === theme.theme ? " selected" : ""}`;
+        card.className = `theme-card${activeTheme === matchedToken ? " selected" : ""}`;
         card.innerHTML = `
-          <div class="icon">PZ</div>
-          <h3>${prettyThemeName(theme.theme)}</h3>
-          <div class="theme-count">${theme.count} puzzles</div>
+          <div class="theme-icon"><img alt="" src="img/pieces/${theme.icon}"></div>
+          <h3>${theme.label}</h3>
+          <div class="theme-meta">Puzzles ${count}</div>
         `;
         card.addEventListener("click", () => {
-          activeTheme = theme.theme;
-          if (themeFilter) themeFilter.value = theme.theme;
-          renderThemeLibrary(themes);
+          activeTheme = matchedToken;
+          if (themeFilter) themeFilter.value = matchedToken;
+          setActiveThemeInfo(matchedToken, count);
+          renderThemeLibrary(themeList);
           loadCustomPuzzles();
         });
         themeGrid.appendChild(card);
       });
+
+      if (isCoach) {
+        const extraThemes = themeList.filter((theme) => !defaultTokens.has(String(theme.theme).toLowerCase()));
+        extraThemes.slice(0, 10).forEach((theme) => {
+          const card = document.createElement("div");
+          card.className = `theme-card${activeTheme === theme.theme ? " selected" : ""}`;
+          card.innerHTML = `
+            <div class="theme-icon"><img alt="" src="img/pieces/wq.svg"></div>
+            <h3>${prettyThemeName(theme.theme)}</h3>
+            <div class="theme-meta">Puzzles ${theme.count}</div>
+          `;
+          card.addEventListener("click", () => {
+            activeTheme = theme.theme;
+            if (themeFilter) themeFilter.value = theme.theme;
+            setActiveThemeInfo(theme.theme, theme.count);
+            renderThemeLibrary(themeList);
+            loadCustomPuzzles();
+          });
+          themeGrid.appendChild(card);
+        });
+      }
+    };
+
+    const setActiveThemeInfo = (themeToken, count) => {
+      if (!themeToken) {
+        activeThemeTitle.textContent = "Choose a theme";
+        activeThemeSubtitle.textContent = "Select a theme card to load puzzles.";
+        themeMeta.textContent = "No theme selected yet.";
+        setProgress(0, 0);
+        return;
+      }
+      activeThemeTitle.textContent = prettyThemeName(themeToken);
+      activeThemeSubtitle.textContent = `Showing up to 9 puzzles for ${prettyThemeName(themeToken)}.`;
+      themeMeta.textContent = `Puzzles loaded: ${count || 0}`;
+      setProgress(0, count || 0);
     };
 
     const loadThemeLibrary = async () => {
@@ -256,7 +677,7 @@
         renderThemeLibrary(Array.isArray(data) ? data : []);
       } catch (err) {
         if (themeGrid) {
-          themeGrid.innerHTML = '<div class="card"><div class="muted">Could not load themes. Try again later.</div></div>';
+          themeGrid.innerHTML = '<div class="empty">Could not load themes. Try again later.</div>';
         }
       }
     };
@@ -268,41 +689,88 @@
           headers: { "Content-Type": "application/json", ...roleHeaders },
           body: JSON.stringify({ published: publish })
         });
-        if (!res.ok) {
-          throw new Error("Publish failed");
-        }
+        if (!res.ok) throw new Error("Publish failed");
         loadCustomPuzzles();
         loadThemeLibrary();
       } catch (err) {
-        customStatus.textContent = "Could not update publish status.";
+        puzzleStatus.textContent = "Could not update publish status.";
+      }
+    };
+
+    const deletePuzzle = async (id, title) => {
+      if (!id) return;
+      const name = title ? `"${title}"` : `#${id}`;
+      const ok = window.confirm(`Delete puzzle ${name}? This cannot be undone.`);
+      if (!ok) return;
+      try {
+        const res = await fetch(`/api/puzzles/${id}`, {
+          method: "DELETE",
+          headers: roleHeaders
+        });
+        if (!res.ok) throw new Error("Delete failed");
+        await loadCustomPuzzles();
+        await loadThemeLibrary();
+      } catch (err) {
+        puzzleStatus.textContent = "Could not delete puzzle.";
       }
     };
 
     const loadCustomPuzzles = async () => {
+      if (!activeTheme && !isCoach) {
+        puzzleGrid.innerHTML = '<div class="empty">Pick a theme to show puzzles.</div>';
+        puzzleStatus.textContent = "";
+        lastLoadedPuzzles = [];
+        return;
+      }
       try {
         const res = await fetch(buildListUrl(), { headers: roleHeaders });
         if (!res.ok) throw new Error("API unavailable");
         const data = await res.json();
-        renderCustomPuzzles(Array.isArray(data) ? data : []);
+        renderPuzzleGrid(Array.isArray(data) ? data : []);
       } catch (err) {
-        customGrid.innerHTML = '<div class="card"><div class="muted">Could not load puzzles. Is the backend running?</div></div>';
-        customStatus.textContent = "Check your Spring Boot server and reload.";
+        puzzleGrid.innerHTML = '<div class="empty">Could not load puzzles. Is the backend running?</div>';
+        puzzleStatus.textContent = "Check your Spring Boot server and reload.";
       }
     };
 
     if (applyFiltersBtn) {
       applyFiltersBtn.addEventListener("click", () => {
         activeTheme = (themeFilter?.value || "").trim();
+        setActiveThemeInfo(activeTheme, 0);
         renderThemeLibrary(themeListCache);
         loadCustomPuzzles();
       });
     }
+
+    if (btnFirstPuzzle) {
+      btnFirstPuzzle.addEventListener("click", () => {
+        const first = lastLoadedPuzzles[0];
+        if (first) {
+          window.location.href = `puzzle-play.html?id=${first.id}`;
+        }
+      });
+    }
+
+    if (btnResetTheme) {
+      btnResetTheme.addEventListener("click", () => {
+        setProgress(0, lastLoadedPuzzles.length);
+      });
+    }
+
+    const tabs = Array.from(document.querySelectorAll(".tab-btn"));
+    const panels = Array.from(document.querySelectorAll(".tab-panel"));
+    tabs.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tab = btn.getAttribute("data-tab");
+        tabs.forEach((b) => b.classList.toggle("active", b === btn));
+        panels.forEach((panel) => {
+          panel.classList.toggle("active", panel.getAttribute("data-panel") === tab);
+        });
+      });
+    });
 
     loadCustomPuzzles();
     loadThemeLibrary();
   </script>
 </body>
 </html>
-
-
-

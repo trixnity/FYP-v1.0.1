@@ -67,13 +67,46 @@
     }
     #bestMoveArrow {
       position: absolute;
-      inset: 0;
+      left: 0;
+      top: 0;
       width: 100%;
       height: 100%;
       pointer-events: none;
       z-index: 5;
     }
     .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .setup-panel {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+    }
+    .setup-panel.is-active {
+      border-color: rgba(130, 189, 74, 0.45);
+      background: rgba(130, 189, 74, 0.08);
+    }
+    .setup-panel label {
+      min-width: 120px;
+    }
+    .setup-panel select,
+    .setup-panel input {
+      min-height: 40px;
+    }
+    .board-wrap .spare-pieces-7492f {
+      margin: 10px auto;
+      border: 1px solid rgba(184, 199, 219, 0.16);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      min-height: 46px;
+    }
+    .board-wrap .spare-pieces-7492f img {
+      cursor: grab;
+    }
+    .board-wrap .spare-pieces-7492f img:active {
+      cursor: grabbing;
+    }
     button {
       border: 1px solid var(--stroke);
       background: rgba(255,255,255,0.06);
@@ -131,6 +164,34 @@
         <button id="btnReset">Reset</button>
         <button id="btnFlip">Flip</button>
       </div>
+      <div class="setup-panel" id="setupPanel">
+        <div class="row">
+          <button id="btnSetupToggle" type="button">Setup position</button>
+          <button id="btnClearBoard" type="button">Clear board</button>
+          <button id="btnStartPosition" type="button">Start position</button>
+          <button id="btnUseBoardFen" type="button">Use board FEN</button>
+        </div>
+        <div class="row">
+          <label>Side to move
+            <select id="sideToMove">
+              <option value="w">White</option>
+              <option value="b">Black</option>
+            </select>
+          </label>
+          <label>Castling
+            <input id="castlingInput" type="text" value="-" placeholder="- or KQkq">
+          </label>
+          <label>En passant
+            <input id="epInput" type="text" value="-" placeholder="- or e3">
+          </label>
+          <label>Halfmove
+            <input id="halfmoveInput" type="number" min="0" value="0">
+          </label>
+          <label>Fullmove
+            <input id="fullmoveInput" type="number" min="1" value="1">
+          </label>
+        </div>
+      </div>
       <label>FEN
         <textarea id="fenInput" placeholder="Paste a FEN to analyze"></textarea>
       </label>
@@ -172,6 +233,10 @@
   <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
   <script src="lib/chessboard-1.0.0.min.js"></script>
   <script>
+    const authToken = localStorage.getItem("authToken");
+    if (!authToken) { window.location.href = "index.html"; }
+    const authHeaders = { "Authorization": "Bearer " + (authToken || "") };
+
     const boardEl = document.getElementById("analysisBoard");
     const fenInput = document.getElementById("fenInput");
     const statusEl = document.getElementById("status");
@@ -181,6 +246,16 @@
     const depthInput = document.getElementById("depthInput");
     const timeInput = document.getElementById("timeInput");
     const autoAnalyze = document.getElementById("autoAnalyze");
+    const setupPanel = document.getElementById("setupPanel");
+    const setupToggle = document.getElementById("btnSetupToggle");
+    const clearBoardBtn = document.getElementById("btnClearBoard");
+    const startPositionBtn = document.getElementById("btnStartPosition");
+    const useBoardFenBtn = document.getElementById("btnUseBoardFen");
+    const sideToMove = document.getElementById("sideToMove");
+    const castlingInput = document.getElementById("castlingInput");
+    const epInput = document.getElementById("epInput");
+    const halfmoveInput = document.getElementById("halfmoveInput");
+    const fullmoveInput = document.getElementById("fullmoveInput");
     const arrowCanvas = document.getElementById("bestMoveArrow");
     const arrowCtx = arrowCanvas ? arrowCanvas.getContext("2d") : null;
     let bestMove = null;
@@ -192,28 +267,155 @@
     ];
 
     const game = new Chess();
+    const startFen = game.fen();
     const pieceTheme = (piece) => `img/pieces/${piece.toLowerCase()}.svg`;
-    const board = Chessboard("analysisBoard", {
-      draggable: true,
-      position: "start",
-      pieceTheme,
-      onDragStart: (_, piece) => {
-        if ((game.turn() === "w" && piece.startsWith("b")) || (game.turn() === "b" && piece.startsWith("w"))) {
-          return false;
+    let board;
+    let setupMode = false;
+    let currentOrientation = "white";
+
+    const files = "abcdefgh".split("");
+
+    const boardAreaEl = () => boardEl.querySelector(".board-b72b1") || boardEl;
+
+    const normalizeCastling = (value) => {
+      const raw = (value || "-").trim();
+      if (raw === "-") return "-";
+      const ordered = ["K", "Q", "k", "q"].filter((token) => raw.includes(token)).join("");
+      return ordered || "-";
+    };
+
+    const normalizeEp = (value) => {
+      const raw = (value || "-").trim().toLowerCase();
+      return /^[a-h][36]$/.test(raw) ? raw : "-";
+    };
+
+    const normalizeNumber = (value, fallback, min) => {
+      const parsed = parseInt(value, 10);
+      return Number.isFinite(parsed) && parsed >= min ? parsed : fallback;
+    };
+
+    const boardObjToPlacement = (position) => {
+      let placement = "";
+      for (let rank = 8; rank >= 1; rank--) {
+        let empty = 0;
+        for (const file of files) {
+          const square = `${file}${rank}`;
+          const piece = position[square];
+          if (!piece) {
+            empty++;
+            continue;
+          }
+          if (empty) {
+            placement += empty;
+            empty = 0;
+          }
+          placement += piece[0] === "w" ? piece[1].toUpperCase() : piece[1].toLowerCase();
         }
-      },
-      onDrop: (source, target) => {
-        const move = game.move({ from: source, to: target, promotion: "q" });
-        if (!move) return "snapback";
-        updateFenInput();
-        if (autoAnalyze.checked) {
-          analyze();
-        } else {
-          clearAnalysis();
+        if (empty) placement += empty;
+        if (rank > 1) placement += "/";
+      }
+      return placement;
+    };
+
+    const buildFenFromPosition = (position) => {
+      const side = sideToMove.value || "w";
+      const castling = normalizeCastling(castlingInput.value);
+      const ep = normalizeEp(epInput.value);
+      const halfmove = normalizeNumber(halfmoveInput.value, 0, 0);
+      const fullmove = normalizeNumber(fullmoveInput.value, 1, 1);
+      return `${boardObjToPlacement(position)} ${side} ${castling} ${ep} ${halfmove} ${fullmove}`;
+    };
+
+    const updateSetupControlsFromFen = (fen) => {
+      const parts = (fen || "").trim().split(/\s+/);
+      if (parts.length < 6) return;
+      sideToMove.value = parts[1] === "b" ? "b" : "w";
+      castlingInput.value = parts[2] || "-";
+      epInput.value = parts[3] || "-";
+      halfmoveInput.value = normalizeNumber(parts[4], 0, 0);
+      fullmoveInput.value = normalizeNumber(parts[5], 1, 1);
+    };
+
+    const validateAnalysisFen = (fen) => {
+      const testGame = new Chess();
+      const validation = testGame.validate_fen(fen);
+      if (!validation.valid) return validation.error;
+      const position = Chessboard.fenToObj(fen) || {};
+      const whiteKings = Object.values(position).filter((piece) => piece === "wK").length;
+      const blackKings = Object.values(position).filter((piece) => piece === "bK").length;
+      if (whiteKings !== 1 || blackKings !== 1) {
+        return "Position needs exactly one white king and one black king.";
+      }
+      if (!testGame.load(fen)) return "Invalid position.";
+      return "";
+    };
+
+    const syncFenFromBoard = (options = {}) => {
+      if (!board) return false;
+      const fen = buildFenFromPosition(board.position());
+      fenInput.value = fen;
+      const error = validateAnalysisFen(fen);
+      if (error) {
+        if (!options.quiet) setStatus(error, "warn");
+        return false;
+      }
+      if (options.loadGame) game.load(fen);
+      if (!options.quiet) setStatus("Position FEN ready.", "success");
+      return true;
+    };
+
+    const onPlayDragStart = (_, piece) => {
+      if ((game.turn() === "w" && piece.startsWith("b")) || (game.turn() === "b" && piece.startsWith("w"))) {
+        return false;
+      }
+    };
+
+    const onPlayDrop = (source, target) => {
+      const move = game.move({ from: source, to: target, promotion: "q" });
+      if (!move) return "snapback";
+      updateFenInput();
+      if (autoAnalyze.checked) {
+        analyze();
+      } else {
+        clearAnalysis();
+      }
+    };
+
+    const onSetupDrop = () => {
+      window.setTimeout(() => {
+        syncFenFromBoard({ quiet: true });
+        clearAnalysis();
+        setStatus("Setup mode active.", "success");
+      }, 0);
+    };
+
+    const initBoard = (position = game.fen(), editing = setupMode) => {
+      if (board) board.destroy();
+      const config = {
+        draggable: true,
+        position,
+        pieceTheme,
+        orientation: currentOrientation,
+        onDrop: editing ? onSetupDrop : onPlayDrop,
+        onSnapEnd: () => {
+          if (editing) {
+            syncFenFromBoard({ quiet: true });
+          } else {
+            board.position(game.fen());
+          }
+          refreshArrow();
         }
-      },
-      onSnapEnd: () => board.position(game.fen())
-    });
+      };
+      if (editing) {
+        config.sparePieces = true;
+        config.dropOffBoard = "trash";
+      } else {
+        config.onDragStart = onPlayDragStart;
+      }
+      board = Chessboard("analysisBoard", config);
+      currentOrientation = board.orientation();
+      window.setTimeout(refreshArrow, 80);
+    };
 
     const setStatus = (msg, tone = "info") => {
       const colors = { info: "var(--muted)", success: "var(--accent-2)", warn: "#f5b841" };
@@ -222,15 +424,21 @@
     };
 
     const updateFenInput = () => {
-      fenInput.value = game.fen();
+      const fen = game.fen();
+      fenInput.value = fen;
+      updateSetupControlsFromFen(fen);
     };
 
     const resizeArrowCanvas = () => {
       if (!arrowCanvas || !boardEl || !arrowCtx) return;
-      const rect = boardEl.getBoundingClientRect();
+      const boardArea = boardAreaEl();
+      const rect = boardArea.getBoundingClientRect();
+      const wrapRect = boardEl.parentElement.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
       arrowCanvas.width = rect.width * dpr;
       arrowCanvas.height = rect.height * dpr;
+      arrowCanvas.style.left = `${rect.left - wrapRect.left}px`;
+      arrowCanvas.style.top = `${rect.top - wrapRect.top}px`;
       arrowCanvas.style.width = `${rect.width}px`;
       arrowCanvas.style.height = `${rect.height}px`;
       arrowCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -248,7 +456,7 @@
       const toEl = boardEl.querySelector(`[data-square="${to}"]`);
       if (!fromEl || !toEl) return;
 
-      const boardRect = boardEl.getBoundingClientRect();
+      const boardRect = boardAreaEl().getBoundingClientRect();
       const fromRect = fromEl.getBoundingClientRect();
       const toRect = toEl.getBoundingClientRect();
 
@@ -377,7 +585,41 @@
       refreshArrow();
     };
 
+    const setSetupMode = (enabled) => {
+      if (enabled === setupMode) return true;
+      if (enabled) {
+        setupMode = true;
+        setupPanel.classList.add("is-active");
+        setupToggle.textContent = "Use position";
+        initBoard(board ? board.position() : game.fen(), true);
+        syncFenFromBoard({ quiet: true });
+        clearAnalysis();
+        setStatus("Setup mode active.", "success");
+        return true;
+      }
+
+      const fen = fenInput.value.trim();
+      const error = validateAnalysisFen(fen);
+      if (error) {
+        setStatus(error, "warn");
+        return false;
+      }
+      game.load(fen);
+      setupMode = false;
+      setupPanel.classList.remove("is-active");
+      setupToggle.textContent = "Setup position";
+      initBoard(game.fen(), false);
+      updateFenInput();
+      clearAnalysis();
+      setStatus("Position ready for legal moves.", "success");
+      return true;
+    };
+
     const analyze = async () => {
+      if (setupMode && !syncFenFromBoard({ loadGame: true, quiet: true })) {
+        setStatus(validateAnalysisFen(fenInput.value.trim()) || "Invalid setup position.", "warn");
+        return;
+      }
       const depthVal = parseInt(depthInput.value, 10);
       const timeVal = parseInt(timeInput.value, 10);
       const payload = {
@@ -390,7 +632,7 @@
         setStatus("Analyzing...");
         const res = await fetch("/api/analysis", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -408,28 +650,81 @@
     document.getElementById("btnAnalyze").addEventListener("click", analyze);
     document.getElementById("btnReset").addEventListener("click", () => {
       game.reset();
-      board.start();
+      setupMode = false;
+      setupPanel.classList.remove("is-active");
+      setupToggle.textContent = "Setup position";
+      initBoard("start", false);
       updateFenInput();
       clearAnalysis();
       setStatus("Reset to start.");
     });
     document.getElementById("btnFlip").addEventListener("click", () => {
-      board.flip();
+      currentOrientation = board.flip();
       refreshArrow();
     });
     document.getElementById("btnApplyFen").addEventListener("click", () => {
       const fen = fenInput.value.trim();
       if (!fen) return;
-      if (!game.load(fen)) {
-        setStatus("Invalid FEN", "warn");
+      const error = validateAnalysisFen(fen);
+      if (error) {
+        setStatus(error, "warn");
         return;
       }
-      board.position(game.fen(), false);
+      game.load(fen);
+      updateSetupControlsFromFen(game.fen());
+      initBoard(game.fen(), setupMode);
       updateFenInput();
       clearAnalysis();
       setStatus("FEN loaded.", "success");
     });
+    setupToggle.addEventListener("click", () => {
+      setSetupMode(!setupMode);
+    });
+    clearBoardBtn.addEventListener("click", () => {
+      if (!setupMode) setSetupMode(true);
+      castlingInput.value = "-";
+      epInput.value = "-";
+      halfmoveInput.value = 0;
+      fullmoveInput.value = 1;
+      board.clear(false);
+      fenInput.value = buildFenFromPosition({});
+      clearAnalysis();
+      setStatus("Board cleared.", "success");
+    });
+    startPositionBtn.addEventListener("click", () => {
+      updateSetupControlsFromFen(startFen);
+      if (setupMode) {
+        board.start(false);
+        syncFenFromBoard({ quiet: true });
+      } else {
+        game.reset();
+        initBoard("start", false);
+        updateFenInput();
+      }
+      clearAnalysis();
+      setStatus("Starting position loaded.", "success");
+    });
+    useBoardFenBtn.addEventListener("click", () => {
+      if (!setupMode) {
+        updateFenInput();
+        setStatus("Current board FEN copied.", "success");
+        return;
+      }
+      syncFenFromBoard({ loadGame: false });
+    });
+    [sideToMove, castlingInput, epInput, halfmoveInput, fullmoveInput].forEach((control) => {
+      control.addEventListener("change", () => {
+        if (setupMode) {
+          syncFenFromBoard({ quiet: true });
+          clearAnalysis();
+        }
+      });
+    });
     document.getElementById("btnPlayBest").addEventListener("click", () => {
+      if (setupMode && !syncFenFromBoard({ loadGame: true, quiet: true })) {
+        setStatus(validateAnalysisFen(fenInput.value.trim()) || "Invalid setup position.", "warn");
+        return;
+      }
       if (!bestMove || bestMove.length < 4) {
         setStatus("No best move yet.", "warn");
         return;
@@ -453,6 +748,7 @@
     });
 
     updateFenInput();
+    initBoard("start", false);
     window.addEventListener("resize", refreshArrow);
     setTimeout(refreshArrow, 60);
   </script>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -69,6 +69,28 @@
     }
     textarea { min-height: 120px; resize: vertical; }
     .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .topic-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .topic-row select { min-width: 180px; }
+    .topic-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .topic-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.06);
+      font-size: 12px;
+      color: var(--text);
+    }
+    .topic-tag button {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      font-size: 12px;
+    }
     button {
       border: 1px solid var(--stroke);
       background: rgba(255,255,255,0.06);
@@ -80,6 +102,7 @@
     }
     button.primary { background: linear-gradient(135deg, var(--accent), #73c8ff); color: #041022; border: none; }
     button.ghost { background: rgba(255,255,255,0.04); }
+    button.danger { background: rgba(245, 91, 91, 0.18); border-color: rgba(245, 91, 91, 0.45); color: #ffd6d6; }
     .status { color: var(--muted); min-height: 18px; }
     .hint { color: var(--muted); font-size: 12px; }
   </style>
@@ -113,14 +136,26 @@
 
     <section class="panel">
       <div class="row">
-        <label>Load puzzle ID
-          <input id="puzzleId" type="number" min="1" placeholder="e.g. 1">
+        <label>Theme
+          <select id="loadThemeSelect"></select>
+        </label>
+        <label>Load puzzle
+          <select id="loadPuzzleSelect"></select>
         </label>
         <button id="btnLoad">Load</button>
         <button id="btnNew">New</button>
       </div>
+      <div class="hint" id="loadHint">Pick a theme to list puzzles.</div>
       <label>Title<input id="titleInput" placeholder="Mate in 2"></label>
-      <label>Topic<input id="topicInput" placeholder="mate1 / pin / fork"></label>
+      <label>Topic<input id="topicInput" placeholder="mateIn1 / pin / fork"></label>
+      <div class="topic-row">
+        <label>Topic presets
+          <select id="topicPresetSelect"></select>
+        </label>
+        <button type="button" id="topicAddBtn">Add topic</button>
+        <button type="button" class="ghost" id="topicClearBtn">Clear topics</button>
+      </div>
+      <div class="topic-tags" id="topicTags"></div>
       <label>Difficulty<input id="difficultyInput" type="number" min="1" placeholder="1200"></label>
       <label>Side to move
         <select id="sideSelect">
@@ -129,8 +164,9 @@
         </select>
       </label>
       <label>Solution move (UCI)<input id="solutionInput" placeholder="e2e4"></label>
-      <div class="hint">Tip: solution should be the best move from the position.</div>
+      <div class="hint">Tip: use UCI moves (e2e4). Separate moves with spaces for a full line.</div>
       <button class="primary" id="btnSave">Create puzzle</button>
+      <button class="danger" id="btnDelete">Delete puzzle</button>
       <div class="status" id="status"></div>
     </section>
   </main>
@@ -143,22 +179,81 @@
     const fenInput = document.getElementById("fenInput");
     const titleInput = document.getElementById("titleInput");
     const topicInput = document.getElementById("topicInput");
+    const topicPresetSelect = document.getElementById("topicPresetSelect");
+    const topicAddBtn = document.getElementById("topicAddBtn");
+    const topicClearBtn = document.getElementById("topicClearBtn");
+    const topicTags = document.getElementById("topicTags");
     const difficultyInput = document.getElementById("difficultyInput");
     const sideSelect = document.getElementById("sideSelect");
     const solutionInput = document.getElementById("solutionInput");
-    const puzzleIdInput = document.getElementById("puzzleId");
+    const loadThemeSelect = document.getElementById("loadThemeSelect");
+    const loadPuzzleSelect = document.getElementById("loadPuzzleSelect");
+    const loadHint = document.getElementById("loadHint");
     const statusEl = document.getElementById("status");
     const saveBtn = document.getElementById("btnSave");
+    const deleteBtn = document.getElementById("btnDelete");
+    const authToken = localStorage.getItem("authToken");
+    if (!authToken) { window.location.href = "index.html"; }
+
     const storedRole = (localStorage.getItem("userRole") || "STUDENT").toUpperCase();
-    const roleHeaders = { "X-User-Role": storedRole };
+    const roleHeaders = { "X-User-Role": storedRole, "Authorization": "Bearer " + (authToken || "") };
+    const isCoach = storedRole === "COACH" || storedRole === "ADMIN";
     let board;
     let currentId = null;
+    let puzzleOptions = [];
+    let topicTokens = new Set();
+
+    const themeLabels = {
+      matein1: "Mate in one",
+      matein2: "Mate in two",
+      matein3: "Mate in three",
+      matein4: "Mate in four",
+      pin: "A pin",
+      skewer: "Skewer",
+      fork: "Double attack and forks",
+      doubleattack: "Double attack and forks",
+      discoveredcheck: "Discover Check",
+      discoveredattack: "Discover Attack",
+      deflection: "Deflection",
+      attraction: "Attraction",
+      overloaded: "Overload",
+      overload: "Overload",
+      backrankmate: "Back rank mate",
+      clearance: "Clearance",
+      removedefender: "Remove the defender",
+      trappingapiece: "Trapping a piece",
+      doublecheck: "Double check",
+      interference: "Interference",
+      intermezzo: "Intermezzo"
+    };
+
+    const defaultTopicPresets = [
+      { token: "mateIn1", label: "Mate in one" },
+      { token: "mateIn2", label: "Mate in two" },
+      { token: "mateIn3", label: "Mate in three" },
+      { token: "fork", label: "Double attack and forks" },
+      { token: "pin", label: "A pin" },
+      { token: "skewer", label: "Skewer" },
+      { token: "removeDefender", label: "Remove the defender" },
+      { token: "deflection", label: "Deflection" },
+      { token: "attraction", label: "Attraction" },
+      { token: "doubleCheck", label: "Double check" },
+      { token: "discoveredAttack", label: "Discover Attack" },
+      { token: "discoveredCheck", label: "Discover Check" },
+      { token: "trappedPiece", label: "Trapping a piece" },
+      { token: "backRankMate", label: "Back rank mate" }
+    ];
 
     const setStatus = (msg, tone = "info") => {
       const colors = { info: "var(--muted)", success: "var(--accent-2)", warn: "#f5b841" };
       statusEl.textContent = msg;
       statusEl.style.color = colors[tone] || colors.info;
     };
+
+    if (!isCoach) {
+      if (saveBtn) saveBtn.style.display = "none";
+      if (deleteBtn) deleteBtn.style.display = "none";
+    }
 
     const pieceTheme = (piece) => `img/pieces/${piece.toLowerCase()}.svg`;
 
@@ -203,8 +298,14 @@
       fenInput.value = positionToFen(position || board.position(), sideSelect.value);
     };
 
+    const updateDeleteState = () => {
+      if (!deleteBtn) return;
+      deleteBtn.style.display = currentId ? "inline-flex" : "none";
+    };
+
     const updateSaveLabel = () => {
-      saveBtn.textContent = currentId ? "Update puzzle" : "Create puzzle";
+      if (saveBtn) saveBtn.textContent = currentId ? "Update puzzle" : "Create puzzle";
+      updateDeleteState();
     };
 
     const applyFenToBoard = () => {
@@ -226,7 +327,28 @@
         setStatus("Invalid FEN. Please fix the position.", "warn");
         return false;
       }
-      if (payload.solutionMove) {
+      if (payload.moves && payload.moves.length) {
+        for (const mv of payload.moves) {
+          const moveText = typeof mv === "string" ? mv : mv.moveUci;
+          if (!moveText || !isUciMove(moveText)) {
+            setStatus("Use UCI moves like e2e4 (space-separated).", "warn");
+            return false;
+          }
+          const move = tester.move({
+            from: moveText.slice(0, 2),
+            to: moveText.slice(2, 4),
+            promotion: moveText[4]
+          });
+          if (!move) {
+            setStatus("One of the solution moves is illegal for this FEN.", "warn");
+            return false;
+          }
+        }
+      } else if (payload.solutionMove) {
+        if (!isUciMove(payload.solutionMove)) {
+          setStatus("Use UCI moves like e2e4 (space-separated).", "warn");
+          return false;
+        }
         const move = tester.move({
           from: payload.solutionMove.slice(0, 2),
           to: payload.solutionMove.slice(2, 4),
@@ -242,7 +364,7 @@
 
     const loadPuzzle = async (id) => {
       if (!id) {
-        setStatus("Enter a puzzle id to load.", "warn");
+        setStatus("Select a puzzle to load.", "warn");
         return;
       }
       try {
@@ -251,16 +373,17 @@
         if (!res.ok) throw new Error("Puzzle not found");
         const data = await res.json();
         currentId = data.id || id;
-        puzzleIdInput.value = currentId;
+        syncPuzzleSelection(currentId);
         titleInput.value = data.title || "";
         topicInput.value = data.theme || data.topic || "";
+        syncTopicsFromInput();
         difficultyInput.value = data.difficulty || data.level || "";
         const side = data.side || (data.fen || " w ").split(" ")[1] || "w";
         sideSelect.value = side;
         const moves = Array.isArray(data.moves)
           ? (typeof data.moves[0] === "string" ? data.moves : data.moves.map((m) => m.moveUci))
           : [];
-        solutionInput.value = data.solutionMove || moves[0] || "";
+        solutionInput.value = moves.length ? moves.join(" ") : (data.solutionMove || "");
         const fen = normalizeFen(data.fen || "", side);
         if (fen) {
           board.position(fen, false);
@@ -273,18 +396,223 @@
       }
     };
 
+    const prettyThemeName = (token) => {
+      if (!token) return "All themes";
+      const key = String(token).replace(/[^a-z0-9]/gi, "").toLowerCase();
+      if (themeLabels[key]) return themeLabels[key];
+      return String(token)
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (m) => m.toUpperCase());
+    };
+
+    const parseTopicTokens = (value) => {
+      return (value || "")
+        .split(/[,\s]+/)
+        .map((token) => token.trim())
+        .filter(Boolean);
+    };
+
+    const isUciMove = (token) => /^[a-h][1-8][a-h][1-8][qrbn]?$/i.test(token);
+
+    const parseSolutionMoves = (value) => {
+      return (value || "")
+        .trim()
+        .split(/[,\s]+/)
+        .map((token) => token.trim())
+        .filter(Boolean);
+    };
+
+    const renderTopicTags = () => {
+      if (!topicTags) return;
+      topicTags.innerHTML = "";
+      topicTokens.forEach((token) => {
+        const tag = document.createElement("div");
+        tag.className = "topic-tag";
+        tag.innerHTML = `<span>${prettyThemeName(token)}</span>`;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = "x";
+        btn.addEventListener("click", () => {
+          topicTokens.delete(token);
+          syncTopicInputFromSet();
+          renderTopicTags();
+        });
+        tag.appendChild(btn);
+        topicTags.appendChild(tag);
+      });
+    };
+
+    const syncTopicInputFromSet = () => {
+      if (!topicInput) return;
+      topicInput.value = Array.from(topicTokens).join(" ");
+    };
+
+    const syncTopicsFromInput = () => {
+      topicTokens = new Set(parseTopicTokens(topicInput.value));
+      renderTopicTags();
+    };
+
+    const populateTopicPresetSelect = (themes) => {
+      if (!topicPresetSelect) return;
+      const options = new Map();
+      defaultTopicPresets.forEach((preset) => {
+        options.set(preset.token, preset.label);
+      });
+      (themes || []).forEach((theme) => {
+        if (!theme || !theme.theme) return;
+        if (!options.has(theme.theme)) {
+          options.set(theme.theme, prettyThemeName(theme.theme));
+        }
+      });
+      topicPresetSelect.innerHTML = "";
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Select a topic";
+      topicPresetSelect.appendChild(placeholder);
+      Array.from(options.entries())
+        .sort((a, b) => a[1].localeCompare(b[1]))
+        .forEach(([token, label]) => {
+          const option = document.createElement("option");
+          option.value = token;
+          option.textContent = label;
+          topicPresetSelect.appendChild(option);
+        });
+    };
+
+    const populateThemeSelect = (themes) => {
+      if (!loadThemeSelect) return;
+      loadThemeSelect.innerHTML = "";
+      const allOption = document.createElement("option");
+      allOption.value = "";
+      allOption.textContent = "All themes";
+      loadThemeSelect.appendChild(allOption);
+      (themes || []).forEach((t) => {
+        const option = document.createElement("option");
+        option.value = t.theme;
+        option.textContent = `${prettyThemeName(t.theme)}${t.count ? ` (${t.count})` : ""}`;
+        loadThemeSelect.appendChild(option);
+      });
+    };
+
+    const populatePuzzleSelect = (puzzles) => {
+      puzzleOptions = puzzles || [];
+      if (!loadPuzzleSelect) return;
+      loadPuzzleSelect.innerHTML = "";
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Select a puzzle";
+      loadPuzzleSelect.appendChild(placeholder);
+      puzzleOptions.forEach((p) => {
+        const option = document.createElement("option");
+        option.value = p.id;
+        const side = p.side === "b" ? "Black" : "White";
+        const rating = p.difficulty || "-";
+        option.textContent = `#${p.id} | ${p.title || "Puzzle"} | ${side} | ${rating}`;
+        loadPuzzleSelect.appendChild(option);
+      });
+      if (loadHint) {
+        loadHint.textContent = puzzleOptions.length
+          ? `Loaded ${puzzleOptions.length} puzzles.`
+          : "No puzzles for this theme.";
+      }
+    };
+
+    const syncPuzzleSelection = (id) => {
+      if (!loadPuzzleSelect) return;
+      const value = String(id || "");
+      const hasOption = Array.from(loadPuzzleSelect.options).some((opt) => opt.value === value);
+      if (hasOption) {
+        loadPuzzleSelect.value = value;
+      } else {
+        loadPuzzleSelect.value = "";
+      }
+    };
+
+    const loadPuzzleOptions = async (themeToken = "") => {
+      const params = new URLSearchParams();
+      if (themeToken) params.set("theme", themeToken);
+      params.set("limit", "200");
+      params.set("sortBy", "difficulty");
+      params.set("sortDir", "asc");
+      const url = params.toString() ? `/api/puzzles?${params.toString()}` : "/api/puzzles?limit=200";
+      try {
+        const res = await fetch(url, { headers: roleHeaders });
+        if (!res.ok) throw new Error("Puzzle list unavailable");
+        const data = await res.json();
+        populatePuzzleSelect(Array.isArray(data) ? data : []);
+      } catch (err) {
+        populatePuzzleSelect([]);
+        setStatus("Could not load puzzle list.", "warn");
+      }
+    };
+
+    const loadThemeOptions = async () => {
+      try {
+        const res = await fetch("/api/puzzles/themes", { headers: roleHeaders });
+        if (!res.ok) throw new Error("Theme list unavailable");
+        const data = await res.json();
+        const themes = Array.isArray(data) ? data : [];
+        populateThemeSelect(themes);
+        populateTopicPresetSelect(themes);
+      } catch (err) {
+        populateThemeSelect([]);
+        populateTopicPresetSelect([]);
+      }
+      loadPuzzleOptions("");
+    };
+
+    const resetForm = (message = "Ready for a new puzzle.") => {
+      currentId = null;
+      syncPuzzleSelection("");
+      titleInput.value = "";
+      topicInput.value = "";
+      syncTopicsFromInput();
+      difficultyInput.value = "";
+      solutionInput.value = "";
+      sideSelect.value = "w";
+      board.position("start");
+      updateFenFromBoard(board.position());
+      updateSaveLabel();
+      setStatus(message);
+    };
+
+    const deletePuzzle = async () => {
+      if (!currentId) {
+        setStatus("No puzzle selected to delete.", "warn");
+        return;
+      }
+      const ok = window.confirm(`Delete puzzle #${currentId}? This cannot be undone.`);
+      if (!ok) return;
+      try {
+        const res = await fetch(`/api/puzzles/${currentId}`, {
+          method: "DELETE",
+          headers: roleHeaders
+        });
+        if (!res.ok) throw new Error("Delete failed");
+        resetForm("Puzzle deleted.");
+        loadPuzzleOptions(loadThemeSelect?.value || "");
+      } catch (err) {
+        setStatus("Delete failed. Check the API.", "warn");
+      }
+    };
+
     const savePuzzle = async () => {
       const title = titleInput.value.trim() || "Custom puzzle";
       const theme = topicInput.value.trim() || "custom";
       const difficulty = parseInt(difficultyInput.value || "", 10);
       const side = sideSelect.value;
-      const solutionMove = solutionInput.value.trim().toLowerCase();
+      const solutionRaw = solutionInput.value.trim().toLowerCase();
+      const solutionMoves = parseSolutionMoves(solutionRaw);
       let fen = normalizeFen(fenInput.value, side);
       if (!fen) fen = positionToFen(board.position(), side);
 
       const payload = { title, theme, fen, side };
       if (Number.isFinite(difficulty)) payload.difficulty = difficulty;
-      if (solutionMove) payload.solutionMove = solutionMove;
+      if (solutionMoves.length) {
+        payload.solutionMove = solutionMoves[0];
+        payload.moves = solutionMoves.map((mv, idx) => ({ moveUci: mv, moveOrder: idx + 1 }));
+      }
 
       if (!validatePayload(payload)) return;
 
@@ -301,7 +629,7 @@
         if (!res.ok) throw new Error("Save failed");
         const saved = await res.json();
         currentId = saved.id || currentId;
-        puzzleIdInput.value = currentId || "";
+        syncPuzzleSelection(currentId || "");
         updateSaveLabel();
         setStatus(`Puzzle #${currentId} saved.`, "success");
       } catch (err) {
@@ -332,21 +660,17 @@
     document.getElementById("btnFlip").addEventListener("click", () => board.flip());
     document.getElementById("btnApplyFen").addEventListener("click", applyFenToBoard);
     document.getElementById("btnUseFen").addEventListener("click", () => updateFenFromBoard(board.position()));
-    document.getElementById("btnLoad").addEventListener("click", () => loadPuzzle(puzzleIdInput.value.trim()));
-    document.getElementById("btnNew").addEventListener("click", () => {
-      currentId = null;
-      puzzleIdInput.value = "";
-      titleInput.value = "";
-      topicInput.value = "";
-      difficultyInput.value = "";
-      solutionInput.value = "";
-      sideSelect.value = "w";
-      board.position("start");
-      updateFenFromBoard(board.position());
-      updateSaveLabel();
-      setStatus("Ready for a new puzzle.");
+    document.getElementById("btnLoad").addEventListener("click", () => {
+      const selectedId = loadPuzzleSelect?.value || "";
+      if (!selectedId) {
+        setStatus("Select a puzzle first.", "warn");
+        return;
+      }
+      loadPuzzle(selectedId);
     });
+    document.getElementById("btnNew").addEventListener("click", () => resetForm());
     saveBtn.addEventListener("click", savePuzzle);
+    if (deleteBtn) deleteBtn.addEventListener("click", deletePuzzle);
     sideSelect.addEventListener("change", () => {
       const value = fenInput.value.trim();
       if (value) {
@@ -355,6 +679,55 @@
         updateFenFromBoard(board.position());
       }
     });
+
+    if (loadThemeSelect) {
+      loadThemeSelect.addEventListener("change", () => {
+        const token = loadThemeSelect.value || "";
+        loadPuzzleOptions(token);
+      });
+    }
+
+    if (topicAddBtn) {
+      topicAddBtn.addEventListener("click", () => {
+        const token = topicPresetSelect?.value;
+        if (!token) {
+          setStatus("Select a topic to add.", "warn");
+          return;
+        }
+        topicTokens.add(token);
+        syncTopicInputFromSet();
+        renderTopicTags();
+        if (topicPresetSelect) topicPresetSelect.value = "";
+      });
+    }
+
+    if (topicPresetSelect) {
+      topicPresetSelect.addEventListener("change", () => {
+        const token = topicPresetSelect.value;
+        if (!token) return;
+        topicTokens.add(token);
+        syncTopicInputFromSet();
+        renderTopicTags();
+        topicPresetSelect.value = "";
+      });
+    }
+
+    if (topicClearBtn) {
+      topicClearBtn.addEventListener("click", () => {
+        topicTokens.clear();
+        syncTopicInputFromSet();
+        renderTopicTags();
+      });
+    }
+
+    if (topicInput) {
+      topicInput.addEventListener("blur", syncTopicsFromInput);
+    }
+
+    updateSaveLabel();
+    loadThemeOptions();
+    syncTopicsFromInput();
   </script>
 </body>
 </html>
+

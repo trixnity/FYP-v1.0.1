@@ -179,8 +179,9 @@
       form { width: 100%; }
     }
   </style>
+  <link rel="stylesheet" href="css/theme-light.css">
 </head>
-<body>
+<body class="theme-light">
   <header class="site-header">
     <div class="header-wrap">
       <div class="brand"><img src="logo.png" alt="EduChess logo">EduChess</div>
@@ -201,7 +202,7 @@
       <div>
         <div class="pill">Smart Chess Education & Trainer System</div>
         <h1 class="hero-title">Never forget your openings.</h1>
-        <p class="hero-lede">Practice like a chessable pro: interactive boards, lesson paths, AI feedback, and coach oversight. Log in to keep your progress on track.</p>
+        <p class="hero-lede">Practice like a pro: interactive boards, lesson paths, AI feedback, and coach oversight. Log in to keep your progress on track.</p>
         <div class="hero-badges">
           <div class="pill">AI Analysis</div>
           <div class="pill">Lessons & Puzzles</div>
@@ -635,9 +636,13 @@
   </div>
 
 <script>
-  const endpoints = { users: "/api/users", register: "/api/users/register", students: "/api/students" };
+  const endpoints = { users: "/api/users", students: "/api/students" };
   const storedRole = (localStorage.getItem("userRole") || "STUDENT").toUpperCase();
-  const roleHeaders = { "X-User-Role": storedRole };
+  const authToken = localStorage.getItem("authToken") || "";
+  const authHeaders = authToken
+    ? { "Authorization": "Bearer " + authToken, "X-User-Role": storedRole }
+    : { "X-User-Role": storedRole };
+  const roleHeaders = authHeaders;
   const views = document.querySelectorAll(".views > section");
   const navLinks = document.querySelectorAll(".nav-link[data-target]");
   const roleSelect = document.getElementById("roleSelect");
@@ -1045,7 +1050,7 @@
       const formData = new FormData(userForm);
       const rating = formData.get("rating");
       const payload = { name: formData.get("name"), email: formData.get("email"), password: formData.get("password"), role: formData.get("role") || "STUDENT", goals: formData.get("goals") || null, rating: rating ? Number(rating) : null };
-      fetch(endpoints.register, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+      fetch("/api/users/register", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders }, body: JSON.stringify(payload) })
         .then((res) => res.json())
         .then(() => { setStatus("Player registered via /api/users/register", "success"); userForm.reset(); fetchUsers(); })
         .catch(() => setStatus("Could not register player. Check the API logs.", "warn"));
@@ -1276,49 +1281,37 @@
     }
   }, 500);
 
-  const ADMIN_EMAIL = "admin@educhess.com";
-  const ADMIN_PASS = "admin123";
-
-  const loginAllowed = async (email, password) => {
-    const lower = (email || "").toLowerCase();
-    // Admin fixed credentials or legacy prefix
-    if ((lower === ADMIN_EMAIL && password === ADMIN_PASS) ||
-        (lower.startsWith("admin") && password === "admin")) {
-      return { allowed: true, role: "ADMIN", email: lower };
-    }
-    try {
-      const res = await fetch(endpoints.users);
-      if (!res.ok) return { allowed: false, reason: "network" };
-      const users = await res.json();
-      const found = (users || []).find((u) => (u.email || "").toLowerCase() === lower);
-      if (!found) return { allowed: false, reason: "notfound" };
-      if (found.password && found.password !== password) return { allowed: false, reason: "badpass" };
-      return { allowed: true, role: found.role || "STUDENT", email: found.email };
-    } catch (_) {
-      return { allowed: true, role: "STUDENT", email: lower }; // fallback allow if API unreachable
-    }
-  };
-
   if (loginForm) {
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const formData = new FormData(loginForm);
       const email = formData.get("email");
       const password = formData.get("password");
-      const result = await loginAllowed(email, password);
-      if (!result.allowed) {
-        if (result.reason === "notfound") {
-          alert("User not found. Please register first.");
-        } else if (result.reason === "badpass") {
-          alert("Incorrect password.");
-        } else {
-          alert("Login failed. Check connection or try again.");
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          if (res.status === 401) {
+            alert(err.error || "Invalid email or password.");
+          } else {
+            alert("Login failed. Please try again.");
+          }
+          return;
         }
-        return;
+        const data = await res.json();
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("userRole", data.role);
+        localStorage.setItem("userEmail", data.email);
+        localStorage.setItem("userName", data.name || "");
+        localStorage.setItem("userId", data.userId || "");
+        window.location.href = "dashboard.html";
+      } catch (_) {
+        alert("Cannot connect to server. Is the backend running?");
       }
-      if (result.role) localStorage.setItem("userRole", result.role);
-      if (result.email) localStorage.setItem("userEmail", result.email);
-      window.location.href = "dashboard.html";
     });
   }
   if (ctaShowLogin) ctaShowLogin.addEventListener("click", () => {
@@ -1340,19 +1333,20 @@
         role: formData.get("role") || "STUDENT"
       };
       try {
-        const res = await fetch(endpoints.register, {
+        const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
         if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
           if (res.status === 409) {
-            alert("Email already exists. Please log in.");
+            alert(err.error || "Email already exists. Please log in.");
             return;
           }
           throw new Error("register");
         }
-        alert("Registered! You can log in now.");
+        alert("Registered! You can now log in.");
         registerForm.reset();
         if (loginContainer) loginContainer.classList.remove("hidden");
         if (registerContainer) registerContainer.classList.add("hidden");

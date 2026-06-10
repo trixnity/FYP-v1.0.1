@@ -5,134 +5,886 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chess Puzzle Player</title>
   <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+  <link rel="stylesheet" href="css/theme-light.css">
   <style>
     :root {
-      --bg: #0a1020;
-      --panel: #0f172a;
-      --text: #f6f8ff;
-      --muted: #9ba6c5;
-      --accent: #4dabff;
-      --accent-2: #5cf5a5;
-      --stroke: #1f2a44;
+      --play-bg: #0b111b;
+      --play-surface: rgba(16, 24, 36, 0.82);
+      --play-surface-strong: rgba(8, 13, 21, 0.9);
+      --play-ink: #f6f8ff;
+      --play-muted: #aab4c4;
+      --play-accent: #82bd4a;
+      --play-accent-2: #f4c95d;
+      --play-line: rgba(184, 199, 219, 0.16);
+      --play-soft: rgba(255, 255, 255, 0.075);
+      --play-shadow: 0 24px 54px rgba(0, 0, 0, 0.38);
     }
-    * { box-sizing: border-box; }
-    body {
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+    }
+
+    body.theme-light {
       margin: 0;
       min-height: 100vh;
-      font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
-      background: radial-gradient(circle at 20% 20%, rgba(92,245,165,0.08), transparent 34%),
-                  radial-gradient(circle at 80% 0%, rgba(77,171,255,0.10), transparent 30%),
-                  linear-gradient(135deg, #060b18, #0a1024);
-      color: var(--text);
-      padding: 16px;
+      color: var(--play-ink);
+      background:
+        linear-gradient(90deg, rgba(8, 13, 21, 0.95) 0%, rgba(14, 22, 33, 0.86) 24%, rgba(20, 29, 42, 0.72) 56%, rgba(8, 13, 21, 0.95) 100%),
+        linear-gradient(180deg, rgba(10, 15, 24, 0.3) 0%, rgba(6, 9, 15, 0.82) 100%),
+        url("img/custom-chess/background.jpg") center bottom / cover fixed no-repeat;
+      padding: 0;
+      overflow-x: hidden;
     }
-    h1 { margin: 0 0 12px; font-size: 26px; }
-    .wrap {
+
+    body.theme-light::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(152deg, rgba(130, 154, 184, 0.16) 0 18%, transparent 18% 32%, rgba(74, 91, 116, 0.18) 32% 48%, transparent 48% 70%, rgba(130, 189, 74, 0.08) 70% 84%, transparent 84%),
+        linear-gradient(90deg, rgba(6, 10, 16, 0.48), transparent 28%, transparent 70%, rgba(6, 10, 16, 0.58));
+      opacity: 1;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .page-shell {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 18px 0 34px;
+    }
+
+    .play-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+      padding: 10px 12px;
+      border: 1px solid rgba(130, 189, 74, 0.18);
+      border-radius: 8px;
+      background: rgba(5, 36, 39, 0.84);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(14px);
+    }
+
+    .brand-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      color: var(--play-ink);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .brand-link img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--play-line);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .header-nav a {
+      color: rgba(246, 248, 255, 0.86);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 9px 11px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .header-nav a:hover,
+    .header-nav a:focus-visible {
+      color: var(--play-ink);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.12);
+      outline: none;
+    }
+
+    .play-hero {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 16px;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .kicker {
+      margin: 0 0 6px;
+      color: #d9ffae;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.08;
+      color: var(--play-ink);
+    }
+
+    .hero-copy {
+      margin: 8px 0 0;
+      color: var(--play-muted);
+      max-width: 560px;
+      line-height: 1.5;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat-pill {
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid rgba(184, 199, 219, 0.14);
+      border-radius: 8px;
+      background: linear-gradient(145deg, rgba(24, 34, 49, 0.82), rgba(10, 15, 24, 0.76));
+      box-shadow: var(--play-shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .stat-pill span {
+      display: block;
+      color: var(--play-muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .stat-pill strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--play-ink);
+      font-size: 17px;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .player-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+      gap: 18px;
       align-items: start;
     }
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--stroke);
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: 0 18px 45px rgba(3, 8, 20, 0.4);
+
+    body.theme-light .panel {
+      background: linear-gradient(145deg, rgba(24, 34, 49, 0.82), rgba(10, 15, 24, 0.76));
+      border: 1px solid rgba(184, 199, 219, 0.14);
+      border-radius: 8px;
+      box-shadow: var(--play-shadow);
+      backdrop-filter: blur(16px);
     }
-    #board {
-      width: 100%;
-      max-width: 520px;
-      margin: 0 auto;
+
+    .board-panel {
+      padding: 16px;
     }
-    .row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-    button {
-      border: 1px solid var(--stroke);
-      background: rgba(255,255,255,0.06);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 10px;
-      cursor: pointer;
+
+    .board-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .board-title {
+      min-width: 0;
+    }
+
+    .board-title span {
+      display: block;
+      color: var(--play-muted);
+      font-size: 13px;
       font-weight: 600;
     }
-    button.primary { background: linear-gradient(135deg, var(--accent), #73c8ff); color: #031021; border: none; }
-    input {
+
+    .board-title strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .status-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 320px;
+      padding: 9px 11px;
+      border-radius: 8px;
+      border: 1px solid rgba(29, 114, 243, 0.28);
+      background: rgba(29, 114, 243, 0.1);
+      color: #1456b8;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .status-card[data-state="success"] {
+      border-color: rgba(32, 201, 151, 0.28);
+      background: rgba(32, 201, 151, 0.1);
+      color: #0f8461;
+    }
+
+    .status-card[data-state="warn"] {
+      border-color: rgba(238, 122, 41, 0.32);
+      background: rgba(238, 122, 41, 0.11);
+      color: #9a4a10;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      flex: 0 0 9px;
+      border-radius: 999px;
+      background: var(--play-accent);
+      box-shadow: 0 0 0 4px rgba(29, 114, 243, 0.15);
+    }
+
+    .status-card[data-state="success"] .status-dot {
+      background: var(--play-accent-2);
+      box-shadow: 0 0 0 4px rgba(32, 201, 151, 0.16);
+    }
+
+    .status-card[data-state="warn"] .status-dot {
+      background: #ee7a29;
+      box-shadow: 0 0 0 4px rgba(238, 122, 41, 0.16);
+    }
+
+    .status-text {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .board-stage {
+      width: 100%;
+      max-width: 570px;
+      margin: 0 auto;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(184, 199, 219, 0.18);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0.06) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 18px 36px rgba(0, 0, 0, 0.3);
+    }
+
+    #board {
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .control-bar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+      margin-top: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .field label {
+      color: var(--play-muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    body.theme-light input {
+      width: 100%;
+      min-width: 0;
+      padding: 11px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--play-line);
+      background: rgba(255, 255, 255, 0.075);
+      color: var(--play-ink);
+      min-height: 44px;
+    }
+
+    body.theme-light input:focus {
+      outline: 3px solid rgba(29, 114, 243, 0.16);
+      border-color: rgba(29, 114, 243, 0.55);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    body.theme-light button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      border: 1px solid var(--play-line);
+      background: #ffffff;
+      color: var(--play-ink);
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 120ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    }
+
+    body.theme-light button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(29, 114, 243, 0.35);
+      box-shadow: 0 10px 20px rgba(20, 42, 90, 0.11);
+    }
+
+    body.theme-light button:focus-visible {
+      outline: 3px solid rgba(29, 114, 243, 0.18);
+      outline-offset: 2px;
+    }
+
+    body.theme-light button.primary {
+      border-color: var(--play-accent);
+      background: var(--play-accent);
+      color: #ffffff;
+      box-shadow: 0 12px 24px rgba(29, 114, 243, 0.22);
+    }
+
+    body.theme-light button.secondary {
+      background: var(--play-soft);
+    }
+
+    .details-panel {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel-heading {
+      display: grid;
+      gap: 4px;
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--play-muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 23px;
+      line-height: 1.18;
+      color: var(--play-ink);
+      overflow-wrap: anywhere;
+    }
+
+    .small {
+      color: var(--play-muted);
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .info-item {
+      min-width: 0;
       padding: 10px;
       border-radius: 10px;
-      border: 1px solid var(--stroke);
-      background: rgba(255,255,255,0.04);
-      color: var(--text);
-      min-width: 0;
-      flex: 1;
+      border: 1px solid var(--play-line);
+      background: rgba(255, 255, 255, 0.055);
     }
-    .title { font-weight: 700; margin-bottom: 6px; }
-    .small { color: var(--muted); font-size: 14px; margin-bottom: 10px; }
+
+    .info-item span {
+      display: block;
+      color: var(--play-muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .info-item strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--play-ink);
+      font-size: 15px;
+      overflow-wrap: anywhere;
+    }
+
+    .progress-wrap {
+      display: grid;
+      gap: 8px;
+    }
+
+    .progress-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--play-muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .progress-track {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .progress-fill {
+      display: block;
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--play-accent), var(--play-accent-2));
+      transition: width 180ms ease;
+    }
+
+    .moves-panel {
+      display: grid;
+      gap: 8px;
+      padding-top: 2px;
+    }
+
     .moves {
-      border-top: 1px solid var(--stroke);
-      padding-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 138px;
+      align-content: flex-start;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px dashed rgba(184, 199, 219, 0.18);
+      background: rgba(255, 255, 255, 0.045);
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 14px;
-      white-space: pre-wrap;
-      min-height: 120px;
+      line-height: 1.4;
     }
-    .status { color: var(--muted); margin: 8px 0; }
+
+    .move-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 8px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.075);
+      border: 1px solid var(--play-line);
+      color: var(--play-ink);
+      font-weight: 700;
+    }
+
+    .empty-state {
+      color: var(--play-muted);
+      font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 920px) {
+      .play-hero,
+      .player-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-stats {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .details-panel {
+        order: -1;
+      }
+    }
+
+    @media (max-width: 680px) {
+      body.theme-light {
+        background:
+          linear-gradient(180deg, rgba(8, 13, 21, 0.94), rgba(8, 13, 21, 0.84)),
+          url("img/custom-chess/background.jpg") center bottom / cover scroll no-repeat;
+      }
+
+      .page-shell {
+        width: min(100% - 20px, 1180px);
+        padding-top: 12px;
+      }
+
+      .play-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .header-nav {
+        width: 100%;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .hero-stats,
+      .info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .board-panel,
+      .details-panel {
+        padding: 12px;
+      }
+
+      .board-top {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .status-card {
+        max-width: none;
+        width: 100%;
+      }
+
+      .board-stage {
+        padding: 8px;
+      }
+
+      .control-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .control-bar button,
+      .button-row button {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .hero-stats,
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .button-row {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
-  <link rel="stylesheet" href="css/theme-light.css">
 </head>
 <body class="theme-light">
-  <h1>Chess Puzzle Player (API-backed)</h1>
-  <div class="wrap">
-    <div class="panel">
-      <div id="board"></div>
-      <div class="row">
-        <button class="primary" id="btnLoad">Load puzzle</button>
-        <input id="puzzleId" type="number" min="1" placeholder="Puzzle id (e.g. 1)">
-      </div>
-      <div class="row">
-        <button id="btnReset">Reset</button>
-        <button id="btnFlip">Flip</button>
-      </div>
-      <div class="status" id="pStatus">Ready.</div>
-    </div>
+  <div class="page-shell">
+    <header class="play-header">
+      <a class="brand-link" href="dashboard.html" aria-label="Go to dashboard">
+        <img src="logo.png" alt="">
+        <span>EduChess</span>
+      </a>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="puzzle.html">Puzzles</a>
+        <a href="analysis.html">Analysis</a>
+        <a href="puzzle-workbench.html">Workbench</a>
+      </nav>
+    </header>
 
-    <div class="panel">
-      <div class="title" id="pTitle">Puzzle</div>
-      <div class="small" id="pInfo">Drag a piece to find the best move.</div>
-      <div class="moves" id="moveList">(moves will appear here)</div>
-    </div>
+    <main>
+      <section class="play-hero" aria-labelledby="pageTitle">
+        <div>
+          <p class="kicker">Puzzle Training</p>
+          <h1 id="pageTitle">Chess Puzzle Player</h1>
+          <p class="hero-copy">Load a position, play the line, and track each move as the board responds.</p>
+        </div>
+        <div class="hero-stats" aria-label="Puzzle summary" style="grid-template-columns: repeat(auto-fit, minmax(0,1fr));">
+          <div class="stat-pill">
+            <span>Theme</span>
+            <strong id="metaTheme">-</strong>
+          </div>
+          <div class="stat-pill">
+            <span>Difficulty</span>
+            <strong id="metaDifficulty">-</strong>
+          </div>
+          <div class="stat-pill">
+            <span>Turn</span>
+            <strong id="metaTurn">-</strong>
+          </div>
+          <div class="stat-pill">
+            <span>Progress</span>
+            <strong id="metaProgress">0/0</strong>
+          </div>
+          <div class="stat-pill" id="ratingPill">
+            <span>My Rating</span>
+            <strong id="metaRating">—</strong>
+          </div>
+        </div>
+      </section>
+
+      <div class="player-layout">
+        <section class="panel board-panel" aria-label="Puzzle board">
+          <div class="board-top">
+            <div class="board-title">
+              <span>Current board</span>
+              <strong>Find the best move</strong>
+            </div>
+            <div class="status-card" role="status" aria-live="polite">
+              <span class="status-dot" aria-hidden="true"></span>
+              <span class="status-text" id="pStatus">Ready.</span>
+            </div>
+          </div>
+
+          <div class="board-stage">
+            <div id="board"></div>
+          </div>
+
+          <div class="control-bar">
+            <div class="field">
+              <label for="puzzleId">Puzzle ID</label>
+              <input id="puzzleId" type="number" min="1" inputmode="numeric" placeholder="e.g. 1">
+            </div>
+            <button class="primary" id="btnLoad" type="button">Load Puzzle</button>
+          </div>
+
+          <div class="button-row">
+            <button class="secondary" id="btnReset" type="button">Reset</button>
+            <button class="secondary" id="btnFlip" type="button">Flip Board</button>
+          </div>
+        </section>
+
+        <aside class="panel details-panel" aria-label="Puzzle details">
+          <div class="panel-heading">
+            <p class="eyebrow">Current Puzzle</p>
+            <h2 class="title" id="pTitle">Puzzle</h2>
+            <p class="small" id="pInfo">Loading puzzle...</p>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <span>Theme</span>
+              <strong id="detailTheme">-</strong>
+            </div>
+            <div class="info-item">
+              <span>Difficulty</span>
+              <strong id="detailDifficulty">-</strong>
+            </div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-label">
+              <span>Line progress</span>
+              <span id="progressText">0%</span>
+            </div>
+            <div class="progress-track" aria-hidden="true">
+              <span class="progress-fill" id="progressFill"></span>
+            </div>
+          </div>
+
+          <div class="moves-panel">
+            <div class="eyebrow">Move History</div>
+            <div class="moves" id="moveList">
+              <span class="empty-state">Moves will appear here</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
   </div>
 
   <script src="lib/chess.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
   <script src="lib/chessboard-1.0.0.min.js"></script>
   <script>
+    const authToken   = localStorage.getItem("authToken");
+    const authHeaders = authToken ? { "Authorization": "Bearer " + authToken } : {};
+
     let board;
     let game = new Chess();
-    let puzzle = null;   // API puzzle
-    let step = 0;        // which solution move index we are on
-    let moveText = [];   // SAN list for right panel
+    let puzzle = null;
+    let step = 0;
+    let moveText = [];
+    let wrongMoves = 0;
 
     const elTitle = document.getElementById("pTitle");
     const elInfo  = document.getElementById("pInfo");
     const elMoves = document.getElementById("moveList");
     const elStatus = document.getElementById("pStatus");
+    const elStatusCard = elStatus?.closest(".status-card");
     const idInput = document.getElementById("puzzleId");
+    const elMetaTheme = document.getElementById("metaTheme");
+    const elMetaDifficulty = document.getElementById("metaDifficulty");
+    const elMetaTurn = document.getElementById("metaTurn");
+    const elMetaProgress = document.getElementById("metaProgress");
+    const elMetaRating = document.getElementById("metaRating");
+    const elDetailTheme = document.getElementById("detailTheme");
+    const elDetailDifficulty = document.getElementById("detailDifficulty");
+    const elProgressText = document.getElementById("progressText");
+    const elProgressFill = document.getElementById("progressFill");
     const storedRole = (localStorage.getItem("userRole") || "STUDENT").toUpperCase();
-    const roleHeaders = { "X-User-Role": storedRole };
+    const roleHeaders = { "X-User-Role": storedRole, ...authHeaders };
 
-    const setStatus = (msg) => { elStatus.textContent = msg; };
+    // Load and display current rating
+    let currentRating = parseInt(localStorage.getItem("userRating") || "0", 10) || null;
+
+    const updateRatingDisplay = (rating, delta) => {
+      if (!elMetaRating) return;
+      currentRating = rating;
+      localStorage.setItem("userRating", String(rating));
+      elMetaRating.textContent = String(rating);
+      if (delta !== undefined) {
+        const flash = document.createElement("span");
+        flash.textContent = " " + (delta >= 0 ? "+" : "") + delta;
+        flash.style.cssText = `color:${delta >= 0 ? "#5cf5a5" : "#f87171"};font-size:13px;transition:opacity 1s ease;`;
+        elMetaRating.appendChild(flash);
+        setTimeout(() => { flash.style.opacity = "0"; }, 1500);
+        setTimeout(() => { flash.remove(); }, 2500);
+      }
+    };
+
+    // Fetch rating from server on load (source of truth)
+    if (authToken) {
+      fetch("/api/users/me", { headers: authHeaders })
+        .then((r) => r.ok ? r.json() : null)
+        .then((u) => { if (u && u.rating != null) updateRatingDisplay(u.rating); })
+        .catch(() => { if (currentRating) updateRatingDisplay(currentRating); });
+    } else if (currentRating) {
+      updateRatingDisplay(currentRating);
+    }
+
+    const setText = (el, value) => {
+      if (el) el.textContent = value;
+    };
+    const formatMeta = (value) => {
+      const text = value === null || value === undefined || value === "" ? "-" : String(value);
+      return text;
+    };
+    const statusTone = (msg) => {
+      if (/wrong|could not|failed|no moves/i.test(msg)) return "warn";
+      if (/correct|solved|checkmate/i.test(msg)) return "success";
+      return "neutral";
+    };
+    const setStatus = (msg) => {
+      setText(elStatus, msg);
+      if (elStatusCard) elStatusCard.dataset.state = statusTone(msg);
+    };
     const renderMoves = () => {
-      elMoves.textContent = moveText.length ? moveText.join("\\n") : "(moves will appear here)";
+      elMoves.replaceChildren();
+      if (!moveText.length) {
+        const empty = document.createElement("span");
+        empty.className = "empty-state";
+        empty.textContent = "Moves will appear here";
+        elMoves.appendChild(empty);
+        return;
+      }
+      moveText.forEach((text) => {
+        const item = document.createElement("span");
+        item.className = "move-pill";
+        item.textContent = text;
+        elMoves.appendChild(item);
+      });
+    };
+    const updateTurnLabel = () => {
+      setText(elMetaTurn, puzzle ? (game.turn() === "w" ? "White" : "Black") : "-");
+    };
+    const updateProgress = () => {
+      const total = puzzle?._movesUci?.length || 0;
+      const current = total ? Math.min(step, total) : 0;
+      const percent = total ? Math.round((current / total) * 100) : 0;
+      setText(elMetaProgress, `${current}/${total}`);
+      setText(elProgressText, `${percent}%`);
+      if (elProgressFill) elProgressFill.style.width = `${percent}%`;
+    };
+    const updateMeta = () => {
+      const theme = formatMeta(puzzle?.theme);
+      const difficulty = formatMeta(puzzle?.difficulty);
+      setText(elMetaTheme, theme);
+      setText(elMetaDifficulty, difficulty);
+      setText(elDetailTheme, theme);
+      setText(elDetailDifficulty, difficulty);
+      updateTurnLabel();
+      updateProgress();
+    };
+    const isUciMove = (token) => /^[a-h][1-8][a-h][1-8][qrbn]?$/i.test(token);
+    const splitSolutionMoves = (value) => {
+      const tokens = (value || "").trim().split(/[,\s]+/).filter(Boolean);
+      if (!tokens.length) return [];
+      const allUci = tokens.every(isUciMove);
+      if (allUci) return tokens;
+      return [value.trim()];
     };
 
     function resetPuzzle() {
       if (!puzzle) return;
       step = 0;
       moveText = [];
+      wrongMoves = 0;
       game.load(puzzle.fen);
-      board.position(puzzle.fen);
+      if (puzzle._autoFirst && puzzle._movesUci.length) {
+        const first = puzzle._movesUci[0];
+        const firstMove = game.move({ from: first.slice(0, 2), to: first.slice(2, 4), promotion: first[4] });
+        if (firstMove) {
+          moveText.push(`... ${firstMove.san}`);
+          step = 1;
+        } else {
+          puzzle._autoFirst = false;
+        }
+      }
+      board.position(game.fen());
+      board.orientation(game.turn() === "b" ? "black" : "white");
+      updateMeta();
       setStatus("Ready. " + (game.turn() === "w" ? "White" : "Black") + " to move.");
-      elInfo.textContent = "Drag a piece to find the best move.";
+      const infoPrefix = puzzle._infoBase ? `${puzzle._infoBase} | ` : "";
+      setText(elInfo, infoPrefix + (puzzle._autoFirst
+        ? "Computer played the first move. Best reply is ready."
+        : "Best move is ready."));
       renderMoves();
     }
 
@@ -147,16 +899,26 @@
           ? (typeof puzzle.moves[0] === "string" ? puzzle.moves : puzzle.moves.map((m) => m.moveUci))
           : [];
         if (!moves.length && puzzle.solutionMove) {
-          moves = [puzzle.solutionMove];
+          moves = splitSolutionMoves(puzzle.solutionMove);
         }
         if (!moves.length) throw new Error("No moves for this puzzle");
-        puzzle._movesUci = moves;
+        puzzle._movesUci = moves.map((mv) => (typeof mv === "string" ? mv.toLowerCase() : mv));
+        const title = (puzzle.title || "").trim().toLowerCase();
+        puzzle._autoFirst = moves.length > 1 && title.startsWith("lichess ");
 
-        elTitle.textContent = puzzle.title || `Puzzle #${id}`;
-        elInfo.textContent = `Theme: ${puzzle.theme || "-"} | Difficulty: ${puzzle.difficulty || "-"}`;
+        setText(elTitle, puzzle.title || `Puzzle #${id}`);
+        puzzle._infoBase = `Theme: ${puzzle.theme || "-"} | Difficulty: ${puzzle.difficulty || "-"}`;
+        updateMeta();
         resetPuzzle();
       } catch (e) {
         setStatus("Could not load puzzle: " + e.message);
+        puzzle = null;
+        step = 0;
+        moveText = [];
+        setText(elTitle, "Puzzle unavailable");
+        setText(elInfo, "Check the puzzle ID or backend connection.");
+        renderMoves();
+        updateMeta();
       }
     }
 
@@ -178,11 +940,19 @@
 
       if (attempted !== expected) {
         game.undo();
+        wrongMoves++;
         setStatus("Wrong move. Try again.");
+        if (authToken) {
+          fetch("/api/attempts/wrong-move", { method: "POST", headers: authHeaders })
+            .then((r) => r.ok ? r.json() : null)
+            .then((d) => { if (d) updateRatingDisplay(d.ratingAfter, d.ratingDelta); })
+            .catch(() => {});
+        }
         return "snapback";
       }
 
-      moveText.push(`${step + 1}. ${move.san}`);
+      const moveNumber = Math.floor(step / 2) + 1;
+      moveText.push(`${moveNumber}. ${move.san}`);
       step++;
 
       // optional reply (for longer lines)
@@ -195,10 +965,12 @@
 
       board.position(game.fen());
       renderMoves();
+      updateMeta();
 
       if (step >= puzzle._movesUci.length) {
         const msg = game.in_checkmate() ? "Checkmate! Solved." : "Solved!";
         setStatus(msg);
+        submitAttempt(true);
       } else {
         setStatus("Correct. Continue...");
       }
@@ -224,8 +996,21 @@
       const id = idInput.value || "1";
       loadPuzzleById(id);
     });
+    idInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      const id = idInput.value || "1";
+      loadPuzzleById(id);
+    });
     document.getElementById("btnFlip").addEventListener("click", () => {
       if (board) board.flip();
+    });
+    let resizeTimer;
+    window.addEventListener("resize", () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        if (board?.resize) board.resize();
+      }, 120);
     });
 
     const initialId = new URLSearchParams(window.location.search).get("id");
@@ -234,6 +1019,53 @@
       loadPuzzleById(initialId);
     } else {
       loadPuzzleById(1);
+    }
+
+    // Rating toast element
+    const ratingToast = document.createElement("div");
+    ratingToast.style.cssText = [
+      "position:fixed", "bottom:24px", "right:24px", "z-index:9999",
+      "padding:14px 20px", "border-radius:12px", "font-weight:700", "font-size:15px",
+      "border:1px solid rgba(92,245,165,0.35)", "background:rgba(10,24,18,0.92)",
+      "color:#5cf5a5", "box-shadow:0 12px 32px rgba(0,0,0,0.45)",
+      "backdrop-filter:blur(10px)", "transition:opacity 400ms ease",
+      "opacity:0", "pointer-events:none"
+    ].join(";");
+    document.body.appendChild(ratingToast);
+
+    function showRatingToast(delta, ratingBefore, ratingAfter, stars) {
+      const sign = delta >= 0 ? "+" : "";
+      const starStr = "★".repeat(stars) + "☆".repeat(3 - stars);
+      ratingToast.textContent = `${starStr}  Rating: ${sign}${delta}  (${ratingBefore} → ${ratingAfter})`;
+      ratingToast.style.color = delta >= 0 ? "#5cf5a5" : "#f87171";
+      ratingToast.style.borderColor = delta >= 0 ? "rgba(92,245,165,0.35)" : "rgba(248,113,113,0.35)";
+      ratingToast.style.opacity = "1";
+      clearTimeout(ratingToast._timer);
+      ratingToast._timer = setTimeout(() => { ratingToast.style.opacity = "0"; }, 4000);
+      updateRatingDisplay(ratingAfter);   // keep the pill in sync after solve
+    }
+
+    async function submitAttempt(solved) {
+      if (!authToken || !puzzle) return;
+      try {
+        const res = await fetch("/api/attempts/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify({
+            puzzleId: puzzle.id,
+            solved,
+            wrongMoves,
+            theme: puzzle.theme || null
+          })
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        showRatingToast(data.ratingDelta, data.ratingBefore, data.ratingAfter, data.stars);
+        // Keep localStorage rating in sync so the dashboard shows the new value
+        if (data.ratingAfter !== undefined) {
+          localStorage.setItem("userRating", String(data.ratingAfter));
+        }
+      } catch (_) { /* non-fatal */ }
     }
   </script>
 </body>

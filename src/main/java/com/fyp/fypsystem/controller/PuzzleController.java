@@ -4,10 +4,14 @@ import com.fyp.fypsystem.model.Puzzle;
 import com.fyp.fypsystem.model.PuzzleMove;
 import com.fyp.fypsystem.repository.PuzzleRepository;
 import com.fyp.fypsystem.service.LichessPuzzleImportService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,6 +59,8 @@ public class PuzzleController {
                                @RequestParam(required = false) String theme,
                                @RequestParam(required = false) Integer difficulty,
                                @RequestParam(required = false) Boolean published,
+                               @RequestParam(required = false) Integer limit,
+                               @RequestParam(required = false) Integer offset,
                                @RequestParam(required = false) String sortBy,
                                @RequestParam(required = false) String sortDir,
                                @RequestHeader(value = ROLE_HEADER, required = false) String role) {
@@ -64,6 +70,12 @@ public class PuzzleController {
         boolean allowAll = isCoachOrAdmin(normalizedRole);
         boolean publishedOnly = !allowAll || Boolean.TRUE.equals(published);
         Sort sort = buildSort(sortBy, sortDir);
+
+        Pageable pageable = buildPageable(limit, offset, sort);
+
+        if (pageable != null) {
+            return fetchPaged(resolvedTopic, resolvedLevel, publishedOnly, pageable);
+        }
 
         if (publishedOnly) {
             if (resolvedTopic != null && resolvedLevel != null) {
@@ -165,6 +177,17 @@ public class PuzzleController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Puzzle not found"));
         puzzle.setPublished(payload.published());
         return puzzleRepository.save(puzzle);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id,
+                                       @RequestHeader(value = ROLE_HEADER, required = false) String role) {
+        requireCoachOrAdmin(role);
+        if (!puzzleRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Puzzle not found");
+        }
+        puzzleRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     public record PublishRequest(Boolean published) {
@@ -302,5 +325,43 @@ public class PuzzleController {
         }
         Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
         return Sort.by(direction, normalized);
+    }
+
+    private Pageable buildPageable(Integer limit, Integer offset, Sort sort) {
+        if (limit == null || limit <= 0) {
+            return null;
+        }
+        int safeOffset = offset != null && offset >= 0 ? offset : 0;
+        int page = safeOffset / limit;
+        if (sort == null || sort.isUnsorted()) {
+            return PageRequest.of(page, limit);
+        }
+        return PageRequest.of(page, limit, sort);
+    }
+
+    private List<Puzzle> fetchPaged(String theme, Integer difficulty, boolean publishedOnly, Pageable pageable) {
+        Page<Puzzle> page;
+        if (publishedOnly) {
+            if (theme != null && difficulty != null) {
+                page = puzzleRepository.findByPublishedTrueAndThemeContainingIgnoreCaseAndDifficulty(theme, difficulty, pageable);
+            } else if (theme != null) {
+                page = puzzleRepository.findByPublishedTrueAndThemeContainingIgnoreCase(theme, pageable);
+            } else if (difficulty != null) {
+                page = puzzleRepository.findByPublishedTrueAndDifficulty(difficulty, pageable);
+            } else {
+                page = puzzleRepository.findByPublishedTrue(pageable);
+            }
+        } else {
+            if (theme != null && difficulty != null) {
+                page = puzzleRepository.findByThemeContainingIgnoreCaseAndDifficulty(theme, difficulty, pageable);
+            } else if (theme != null) {
+                page = puzzleRepository.findByThemeContainingIgnoreCase(theme, pageable);
+            } else if (difficulty != null) {
+                page = puzzleRepository.findByDifficulty(difficulty, pageable);
+            } else {
+                page = puzzleRepository.findAll(pageable);
+            }
+        }
+        return page.getContent();
     }
 }

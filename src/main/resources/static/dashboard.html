@@ -15,6 +15,7 @@
   <!-- CDN fallbacks to guarantee the board renders even if local files fail -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
       --bg: #060b18;
@@ -94,7 +95,9 @@
     .mini-board { width: 100%; aspect-ratio: 4/3; border-radius: 14px; background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); border: 1px dashed var(--stroke); display: grid; place-items: center; color: var(--muted); }
     .login-card { margin-top: 12px; background: linear-gradient(145deg, var(--panel-2), var(--panel)); border: 1px solid var(--stroke); border-radius: 16px; padding: 16px; transition: opacity 160ms ease, transform 160ms ease; }
     label { display: grid; gap: 6px; color: var(--muted); font-size: 14px; }
-    input, select, textarea { padding: 10px 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--stroke); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 14px; }
+    input, select, textarea { padding: 10px 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--stroke); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 14px; color-scheme: dark; }
+    select option, select optgroup { background-color: #0a1024; color: var(--text); }
+    select option:checked { background-color: #1e3a5f; }
     .hidden { display: none !important; }
 
     footer.site-footer {
@@ -186,18 +189,283 @@
     }
   </style>
   <link rel="stylesheet" href="css/theme-light.css">
+  <style>
+    body.dashboard-scene {
+      --text: #f6f8ff;
+      --muted: #aab4c4;
+      --accent: #82bd4a;
+      --accent-2: #f4c95d;
+      --brand: #82bd4a;
+      --stroke: rgba(184, 199, 219, 0.16);
+      --panel: rgba(15, 23, 35, 0.76);
+      --panel-2: rgba(9, 14, 23, 0.82);
+      --shadow: 0 24px 54px rgba(0, 0, 0, 0.38);
+      color: var(--text);
+      background:
+        linear-gradient(90deg, rgba(8, 13, 21, 0.95) 0%, rgba(14, 22, 33, 0.86) 24%, rgba(20, 29, 42, 0.72) 56%, rgba(8, 13, 21, 0.95) 100%),
+        linear-gradient(180deg, rgba(10, 15, 24, 0.3) 0%, rgba(6, 9, 15, 0.82) 100%),
+        url("img/custom-chess/background.jpg") center bottom / cover fixed no-repeat;
+      background-color: #0b111b;
+      overflow-x: hidden;
+    }
+
+    body.dashboard-scene::before,
+    body.dashboard-scene::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    body.dashboard-scene::before {
+      z-index: 0;
+      background:
+        linear-gradient(152deg, rgba(130, 154, 184, 0.16) 0 18%, transparent 18% 32%, rgba(74, 91, 116, 0.18) 32% 48%, transparent 48% 70%, rgba(130, 189, 74, 0.08) 70% 84%, transparent 84%),
+        linear-gradient(26deg, transparent 0 40%, rgba(255, 255, 255, 0.04) 40% 48%, transparent 48% 100%);
+    }
+
+    body.dashboard-scene::after {
+      z-index: 0;
+      background:
+        radial-gradient(circle at 52% 56%, rgba(0, 0, 0, 0.28), transparent 32%),
+        linear-gradient(90deg, rgba(6, 10, 16, 0.48), transparent 28%, transparent 70%, rgba(6, 10, 16, 0.58));
+    }
+
+    body.dashboard-scene header.site-header,
+    body.dashboard-scene .app,
+    body.dashboard-scene footer.site-footer {
+      position: relative;
+      z-index: 1;
+    }
+
+    body.dashboard-scene header.site-header {
+      background: rgba(5, 36, 39, 0.84);
+      border-bottom: 1px solid rgba(130, 189, 74, 0.18);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(16px);
+    }
+
+    body.dashboard-scene .brand,
+    body.dashboard-scene .logo {
+      color: #ffffff;
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.4);
+    }
+
+    body.dashboard-scene .header-nav a {
+      color: rgba(246, 248, 255, 0.86);
+    }
+
+    body.dashboard-scene .header-nav a:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+
+    body.dashboard-scene .app {
+      background: transparent;
+      min-height: calc(100vh - 49px);
+    }
+
+    body.dashboard-scene aside {
+      background: rgba(11, 17, 27, 0.86);
+      border-right: 1px solid rgba(184, 199, 219, 0.13);
+      box-shadow: 14px 0 34px rgba(0, 0, 0, 0.34);
+      backdrop-filter: blur(18px);
+    }
+
+    body.dashboard-scene .logo {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    body.dashboard-scene .nav-title {
+      color: rgba(170, 180, 196, 0.82);
+    }
+
+    body.dashboard-scene .nav-link {
+      color: rgba(246, 248, 255, 0.84);
+    }
+
+    body.dashboard-scene .nav-link:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    body.dashboard-scene .nav-link.active {
+      background: linear-gradient(180deg, rgba(130, 189, 74, 0.24), rgba(130, 189, 74, 0.12));
+      border-color: rgba(130, 189, 74, 0.38);
+      color: #d9ffae;
+    }
+
+    body.dashboard-scene main {
+      background: rgba(7, 10, 16, 0.18);
+    }
+
+    body.dashboard-scene .topbar {
+      padding: 14px 16px;
+      border: 1px solid rgba(184, 199, 219, 0.13);
+      border-radius: 12px;
+      background: rgba(10, 16, 25, 0.58);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    body.dashboard-scene .topbar h1,
+    body.dashboard-scene h2,
+    body.dashboard-scene h3,
+    body.dashboard-scene .stat .value {
+      color: #ffffff;
+    }
+
+    body.dashboard-scene .greeting {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(130, 189, 74, 0.16);
+      border: 1px solid rgba(130, 189, 74, 0.24);
+      color: #d9ffae;
+      font-weight: 700;
+    }
+
+    body.dashboard-scene .panel,
+    body.dashboard-scene .card,
+    body.dashboard-scene .stat,
+    body.dashboard-scene .puzzle-card,
+    body.dashboard-scene .analysis,
+    body.dashboard-scene .metric {
+      background: linear-gradient(145deg, rgba(24, 34, 49, 0.82), rgba(10, 15, 24, 0.76));
+      border: 1px solid rgba(184, 199, 219, 0.14);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      backdrop-filter: blur(14px);
+    }
+
+    body.dashboard-scene .panel {
+      border-radius: 12px;
+    }
+
+    body.dashboard-scene .panel:hover,
+    body.dashboard-scene .card:hover,
+    body.dashboard-scene .puzzle-card:hover {
+      border-color: rgba(130, 189, 74, 0.32);
+      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.44);
+    }
+
+    body.dashboard-scene .muted,
+    body.dashboard-scene .meta,
+    body.dashboard-scene .small,
+    body.dashboard-scene .hint,
+    body.dashboard-scene .status,
+    body.dashboard-scene .stat .label {
+      color: rgba(205, 214, 225, 0.74);
+    }
+
+    body.dashboard-scene .timeline li,
+    body.dashboard-scene .empty,
+    body.dashboard-scene .level-list li,
+    body.dashboard-scene .board-placeholder,
+    body.dashboard-scene .chart-placeholder,
+    body.dashboard-scene .table-placeholder {
+      background: rgba(255, 255, 255, 0.045);
+      border-color: rgba(184, 199, 219, 0.14);
+      color: rgba(246, 248, 255, 0.9);
+    }
+
+    body.dashboard-scene .btn.primary,
+    body.dashboard-scene button.primary,
+    body.dashboard-scene .tab.active {
+      background: linear-gradient(180deg, #94ca5c, #6ca340);
+      border-color: rgba(148, 202, 92, 0.62);
+      color: #081207;
+      box-shadow: 0 14px 28px rgba(88, 145, 44, 0.32);
+    }
+
+    body.dashboard-scene .btn.ghost,
+    body.dashboard-scene button,
+    body.dashboard-scene .tab,
+    body.dashboard-scene input,
+    body.dashboard-scene select,
+    body.dashboard-scene textarea {
+      background: rgba(255, 255, 255, 0.075);
+      border: 1px solid rgba(184, 199, 219, 0.16);
+      color: #f6f8ff;
+    }
+
+    /* Force the native drop-down list to use dark colours in all browsers */
+    body.dashboard-scene select {
+      color-scheme: dark;
+    }
+    body.dashboard-scene select option,
+    body.dashboard-scene select optgroup {
+      background-color: #111d30;
+      color: #f6f8ff;
+    }
+    body.dashboard-scene select option:hover,
+    body.dashboard-scene select option:focus,
+    body.dashboard-scene select option:checked {
+      background-color: #1e3a5f;
+      color: #ffffff;
+    }
+
+    body.dashboard-scene .btn.ghost:hover,
+    body.dashboard-scene button:hover,
+    body.dashboard-scene .tab:hover {
+      background: rgba(255, 255, 255, 0.11);
+      border-color: rgba(130, 189, 74, 0.28);
+    }
+
+    body.dashboard-scene input::placeholder,
+    body.dashboard-scene textarea::placeholder {
+      color: rgba(205, 214, 225, 0.58);
+    }
+
+    body.dashboard-scene .badge {
+      background: rgba(130, 189, 74, 0.18);
+      border-color: rgba(130, 189, 74, 0.34);
+      color: #d9ffae;
+    }
+
+    body.dashboard-scene table {
+      color: var(--text);
+    }
+
+    body.dashboard-scene th,
+    body.dashboard-scene td {
+      border-bottom-color: rgba(184, 199, 219, 0.14);
+    }
+
+    body.dashboard-scene th {
+      color: rgba(205, 214, 225, 0.72);
+    }
+
+    body.dashboard-scene footer.site-footer {
+      background: rgba(7, 10, 16, 0.74);
+      border-top-color: rgba(184, 199, 219, 0.14);
+      backdrop-filter: blur(14px);
+    }
+
+    @media (max-width: 900px) {
+      body.dashboard-scene {
+        background:
+          linear-gradient(180deg, rgba(8, 13, 21, 0.94), rgba(8, 13, 21, 0.84)),
+          url("img/custom-chess/background.jpg") center bottom / cover scroll no-repeat;
+      }
+
+      body.dashboard-scene aside {
+        background: rgba(11, 17, 27, 0.9);
+      }
+    }
+  </style>
 </head>
-<body class="theme-light">
+<body class="theme-light dashboard-scene">
   <header class="site-header">
     <div class="header-wrap">
       <div class="brand"><img src="logo.png" alt="EduChess logo">EduChess</div>
     </div>
     <nav class="header-nav" id="headerNav">
-      <a href="dashboard.html">Home</a>
+      <a href="#" data-target="dashboard">Home</a>
       <a href="puzzle.html">Puzzles</a>
       <a href="analysis.html">Analysis</a>
-      <a href="lessons.html">Lessons</a>
-      <a href="progress.html">Progress</a>
+      <a href="#" data-target="lessons">Lessons</a>
+      <a href="#" data-target="progress">Progress</a>
     </nav>
   </header>
 
@@ -205,28 +473,38 @@
     <aside>
       <div class="logo"><img src="logo.png" alt="EduChess logo">EduChess</div>
       <nav>
-        <div class="nav-title">Main</div>
-        <a href="dashboard.html" class="nav-link active">Dashboard</a>
+        <!-- Student-only overview links -->
+        <div class="nav-title student-only">Overview</div>
+        <a href="#" data-target="dashboard" class="nav-link student-only active">Home</a>
+        <a href="#" data-target="progress" class="nav-link student-only">My Progress</a>
+        <a href="#" data-target="payments" class="nav-link student-only">My Payments</a>
+        <a href="#" data-target="messages" class="nav-link student-only">Messages <span id="chatUnreadBadge" style="display:none;background:#f87171;color:#fff;border-radius:999px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;"></span></a>
+
+        <!-- Practice — visible to all roles -->
+        <div class="nav-title">Practice</div>
         <a href="puzzle.html" class="nav-link">Puzzles</a>
         <a href="analysis.html" class="nav-link">Game Analysis</a>
-        <a href="lessons.html" class="nav-link">Lessons</a>
-        <a href="progress.html" class="nav-link">Progress</a>
+        <a href="#" data-target="lessons" class="nav-link">Lessons</a>
 
-        <div class="nav-title coach-only">Coach</div>
-        <a href="coach-dashboard.html" class="nav-link coach-only">Coach Dashboard</a>
-        <a href="lesson-management.html" class="nav-link coach-only">Lesson Management</a>
-        <a href="exercise-sets.html" class="nav-link coach-only">Exercise Generator</a>
-        <a href="students.html" class="nav-link coach-only">Students</a>
-        <a href="reports.html" class="nav-link coach-only">Reports</a>
+        <!-- Coach Tools — coach only -->
+        <div class="nav-title coach-only">Coach Tools</div>
+        <a href="#" data-target="coach-dashboard" class="nav-link coach-only">Overview</a>
+        <a href="#" data-target="classes" class="nav-link coach-only">My Classes</a>
+        <a href="#" data-target="students" class="nav-link coach-only">My Students</a>
+        <a href="#" data-target="exercise-sets" class="nav-link coach-only">Assign Exercises</a>
+        <a href="#" data-target="lesson-management" class="nav-link coach-only">Lesson Management</a>
+        <a href="#" data-target="messages" class="nav-link coach-only">Messages <span id="chatUnreadBadgeCoach" style="display:none;background:#f87171;color:#fff;border-radius:999px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;"></span></a>
+        <a href="#" data-target="reports" class="nav-link coach-only">Reports</a>
 
-        <div class="nav-title admin-only">Admin</div>
-        <a href="admin-dashboard.html" class="nav-link admin-only">Admin Dashboard</a>
-        <a href="users.html" class="nav-link admin-only">User Management</a>
-        <a href="settings.html" class="nav-link admin-only">System Settings</a>
-        <a href="logs.html" class="nav-link admin-only">Audit Logs</a>
+        <!-- Administration — admin only -->
+        <div class="nav-title admin-only">Administration</div>
+        <a href="#" data-target="admin-dashboard" class="nav-link admin-only">Dashboard</a>
+        <a href="#" data-target="users" class="nav-link admin-only">User Management</a>
+        <a href="#" data-target="settings" class="nav-link admin-only">System Settings</a>
+        <a href="#" data-target="logs" class="nav-link admin-only">Audit Logs</a>
       </nav>
       <div class="footer-links">
-        <a href="profile.html" class="nav-link">Profile</a>
+        <a href="#" data-target="profile" class="nav-link">Profile</a>
         <a href="index.html" class="nav-link" id="logoutLink">Logout</a>
       </div>
     </aside>
@@ -234,7 +512,10 @@
     <main>
       <div class="topbar">
         <h1>Smart Chess Education & Trainer System</h1>
-        <div class="greeting" id="greetingUser">Hi, player</div>
+        <div class="greeting" id="greetingUser" style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="switchView('profile')">
+          <img id="greetingAvatar" src="" alt="" style="display:none;width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid rgba(130,189,74,0.5);">
+          <span id="greetingText">Hi, player</span>
+        </div>
       </div>
 
       <div class="views">
@@ -245,10 +526,10 @@
               <h2>Progress overview</h2>
               <div class="muted">Landing snapshot for students</div>
               <div class="stat-grid">
-                <div class="stat"><div class="label">Accuracy</div><div class="value" id="statAccuracy">82%</div></div>
+                <div class="stat"><div class="label">Accuracy</div><div class="value" id="statAccuracy">—</div></div>
                 <div class="stat"><div class="label">Rating</div><div class="value" id="statRating">—</div></div>
-                <div class="stat"><div class="label">Lessons done</div><div class="value">12</div></div>
-                <div class="stat"><div class="label">Exercises</div><div class="value">48</div></div>
+                <div class="stat"><div class="label">Puzzles solved</div><div class="value" id="statSolved">—</div></div>
+                <div class="stat"><div class="label">Attempted</div><div class="value" id="statAttempted">—</div></div>
               </div>
               <div class="quick-actions">
                 <a class="btn primary" href="puzzle.html">Attempt Puzzle</a>
@@ -257,19 +538,15 @@
               </div>
             </div>
             <div class="panel">
-              <h2>Notifications</h2>
-              <ul class="timeline" id="notifications">
-                <li>Coach added a new lesson on Endgames.</li>
-                <li>New puzzle set assigned: Tactics 1500-1700.</li>
-                <li>Feedback posted on your last PGN upload.</li>
+              <h2>My Exercises</h2>
+              <ul class="timeline" id="assignmentsList">
+                <li class="muted">Loading assigned exercises...</li>
               </ul>
             </div>
             <div class="panel">
-              <h2>Recent activity</h2>
-              <ul class="timeline">
-                <li>Puzzle streak: 7 correct in a row.</li>
-                <li>Uploaded game vs RapidBot (blunders: 2).</li>
-                <li>Completed Lesson: Sicilian Najdorf plans.</li>
+              <h2>Upcoming Sessions</h2>
+              <ul class="timeline" id="upcomingSessionsList">
+                <li class="muted">Loading sessions...</li>
               </ul>
             </div>
           </div>
@@ -353,26 +630,34 @@
         <!-- Progress & Reports -->
         <section id="section-progress">
           <div class="grid">
+            <div class="panel" style="grid-column: 1 / -1;">
+              <h2>Summary</h2>
+              <div class="stat-grid" id="progressSummary">
+                <div class="stat"><div class="label">Total attempted</div><div class="value" id="progressAttempted">—</div></div>
+                <div class="stat"><div class="label">Total solved</div><div class="value" id="progressSolved">—</div></div>
+                <div class="stat"><div class="label">Overall accuracy</div><div class="value" id="progressAccuracy">—</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="grid">
             <div class="panel">
-              <h2>Accuracy over time</h2>
-              <div class="chart-placeholder">Chart placeholder</div>
+              <h2>Daily activity (last 14 days)</h2>
+              <canvas id="chartDaily" height="160"></canvas>
             </div>
             <div class="panel">
-              <h2>Rating progression</h2>
-              <div class="chart-placeholder">Chart placeholder</div>
+              <h2>Accuracy by theme</h2>
+              <canvas id="chartTheme" height="160"></canvas>
             </div>
-            <div class="panel">
-              <h2>Session history</h2>
-              <div class="table-placeholder">
-                <table>
-                  <thead><tr><th>Date</th><th>Mode</th><th>Accuracy</th><th>Notes</th></tr></thead>
-                  <tbody>
-                    <tr><td>Today</td><td>Puzzles</td><td>86%</td><td>Strong tactics</td></tr>
-                    <tr><td>Yesterday</td><td>PGN Review</td><td>74%</td><td>2 blunders</td></tr>
-                  </tbody>
+          </div>
+          <div class="grid">
+            <div class="panel" style="grid-column: 1 / -1;">
+              <h2>Theme breakdown</h2>
+              <div class="table-placeholder" style="min-height:unset; display:block; padding:0;">
+                <table id="themeTable">
+                  <thead><tr><th>Theme</th><th>Attempted</th><th>Solved</th><th>Accuracy</th></tr></thead>
+                  <tbody><tr><td colspan="4" class="muted" style="text-align:center;">Loading...</td></tr></tbody>
                 </table>
               </div>
-              <div class="quick-actions"><button class="btn ghost">Export PDF</button><button class="btn ghost">Share with coach</button></div>
             </div>
           </div>
         </section>
@@ -396,6 +681,24 @@
             <div class="panel">
               <h2>Student overview</h2>
               <div class="cards" id="studentsListCoach"><div class="empty">Loading students...</div></div>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="panel" style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+              <div style="font-size:32px;opacity:0.6;flex-shrink:0;">📅</div>
+              <div style="flex:1;">
+                <div style="font-weight:600;margin-bottom:6px;">Session Scheduling & Billing</div>
+                <div class="muted" style="font-size:14px;line-height:1.6;margin-bottom:12px;">
+                  Manage individual session plans, set monthly sessions per student, and handle billing from <strong style="color:var(--text);">Lesson Management</strong>.
+                </div>
+                <button class="btn primary" onclick="switchView('lesson-management')">Go to Lesson Management</button>
+              </div>
+            </div>
+            <div class="panel">
+              <h2>My Sessions</h2>
+              <ul class="timeline" id="coachSessionsList">
+                <li class="muted">Loading sessions...</li>
+              </ul>
             </div>
           </div>
           <div class="grid">
@@ -438,63 +741,297 @@
 
         <!-- Lesson Management -->
         <section id="section-lesson-management">
-          <div class="grid">
-            <div class="panel">
-              <h2>Lessons (draft/published)</h2>
-              <ul class="timeline">
-                <li>Najdorf Plans - Published</li>
-                <li>Defensive Ideas - Draft</li>
-                <li>Endgame Tablebases - Published</li>
-              </ul>
+          <style>
+            .lm-tabs { display:flex; gap:4px; margin-bottom:20px; border-bottom:1px solid var(--stroke); padding-bottom:0; }
+            .lm-tab { padding:8px 18px; border-radius:10px 10px 0 0; font-size:14px; font-weight:600; cursor:pointer; border:none; background:transparent; color:var(--muted); transition:color 120ms,background 120ms; }
+            .lm-tab.active { background:rgba(130,189,74,0.14); color:var(--accent-2); }
+            .lm-tab-content { display:none; }
+            .lm-tab-content.active { display:block; }
+            .plan-card { padding:16px; border-radius:14px; border:1px solid var(--stroke); background:rgba(255,255,255,0.04); margin-bottom:12px; display:flex; align-items:flex-start; gap:14px; }
+            .plan-card .pc-info { flex:1; }
+            .plan-card .pc-name { font-weight:700; font-size:15px; margin-bottom:4px; }
+            .plan-card .pc-meta { font-size:13px; color:var(--muted); margin-bottom:6px; }
+            .plan-card .pc-actions { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+          </style>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+            <h2 style="margin:0;">Lesson Management</h2>
+          </div>
+
+          <div class="lm-tabs">
+            <button class="lm-tab active" onclick="switchLmTab('plans',this)">Session Plans</button>
+            <button class="lm-tab" onclick="switchLmTab('schedule',this)">Schedule Session</button>
+            <button class="lm-tab" onclick="switchLmTab('lessons',this)">Lessons</button>
+          </div>
+
+          <!-- Tab: Session Plans -->
+          <div id="lm-tab-plans" class="lm-tab-content active">
+            <div class="grid" style="margin-bottom:20px;">
+              <div class="panel" style="grid-column:1/-1;">
+                <div style="margin-bottom:16px;">
+                  <div style="font-weight:600;font-size:15px;margin-bottom:4px;">Create Session Plan</div>
+                  <div class="muted" style="font-size:13px;">Assign sessions per student and generate an invoice. The student must pay to activate.</div>
+                </div>
+
+                <!-- Create plan form — always visible -->
+                <form id="sessionPlanForm">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px;">
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">Student
+                      <div style="display:flex;gap:6px;align-items:center;">
+                        <select id="planStudentSelect" name="studentId" required style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--stroke);background:var(--bg-card);color:var(--text);">
+                          <option value="">— select student —</option>
+                        </select>
+                        <button type="button" onclick="loadPlanStudents()" title="Refresh student list" style="padding:7px 10px;border-radius:8px;border:1px solid var(--stroke);background:var(--bg-card);color:var(--text);cursor:pointer;font-size:13px;">&#x21bb;</button>
+                      </div>
+                      <span id="planStudentStatus" style="font-size:11px;color:var(--muted);margin-top:2px;"></span>
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">Month
+                      <input type="month" id="planMonth" name="month" style="padding:8px;border-radius:8px;border:1px solid var(--stroke);background:var(--bg-card);color:var(--text);">
+                      <script>(function(){var n=new Date(),el=document.getElementById('planMonth');if(el&&!el.value)el.value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');})()</script>
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">Sessions / month
+                      <input type="number" id="planSessions" name="sessionsPerMonth" value="4" min="1" max="20" style="padding:8px;border-radius:8px;border:1px solid var(--stroke);background:var(--bg-card);color:var(--text);">
+                    </label>
+                    <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;">Price / session (RM)
+                      <input type="number" id="planPrice" name="pricePerSession" value="50" min="0" step="0.50" style="padding:8px;border-radius:8px;border:1px solid var(--stroke);background:var(--bg-card);color:var(--text);">
+                    </label>
+                  </div>
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;margin-bottom:12px;">Notes (optional)
+                    <input type="text" id="planNotes" name="notes" placeholder="e.g. weekly Saturday 10am" style="padding:8px;border-radius:8px;border:1px solid var(--stroke);background:var(--bg-card);color:var(--text);">
+                  </label>
+                  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <div style="font-size:13px;color:var(--muted);">Total: <strong id="planTotalPreview" style="color:var(--accent-2);">RM 200.00</strong></div>
+                    <div style="flex:1;"></div>
+                    <button class="btn primary" type="submit">Create Plan &amp; Invoice</button>
+                  </div>
+                  <div class="status" id="planFormStatus" style="margin-top:8px;"></div>
+                </form>
+
+                <hr style="border:none;border-top:1px solid var(--stroke);margin:20px 0;">
+
+                <!-- Plans list -->
+                <div style="font-weight:600;font-size:14px;margin-bottom:10px;">Session Plans</div>
+                <div id="sessionPlansList">
+                  <div class="empty muted" style="text-align:center;padding:32px;">No session plans yet.</div>
+                </div>
+              </div>
             </div>
-            <div class="panel">
-              <h2>Lesson editor</h2>
-              <form>
-                <label>Title<input placeholder="Lesson title"></label>
-                <label>Objectives<textarea rows="3"></textarea></label>
-                <label>Content<textarea rows="4" placeholder="Rich text or markdown"></textarea></label>
-                <label>Puzzle set<input placeholder="Link or ID"></label>
-                <div class="quick-actions"><button class="btn primary" type="button">Publish</button><button class="btn ghost" type="button">Save draft</button></div>
-              </form>
+          </div>
+
+          <!-- Tab: Schedule Session -->
+          <div id="lm-tab-schedule" class="lm-tab-content">
+            <div class="grid">
+              <div class="panel">
+                <h2>Schedule a Zoom Session</h2>
+                <div class="muted" style="margin-bottom:16px;">Create a Zoom session for your students.</div>
+                <form id="sessionForm">
+                  <label>Session title<input name="title" placeholder="Weekly tactics review" required></label>
+                  <label>Zoom link<input name="zoomLink" type="url" placeholder="https://zoom.us/j/..." required></label>
+                  <div class="grid-2">
+                    <label>Date & time<input name="scheduledAt" type="datetime-local" required></label>
+                    <label>Description (optional)<input name="description" placeholder="Topics we'll cover..."></label>
+                  </div>
+                  <div class="quick-actions">
+                    <button class="btn primary" type="submit">Schedule session</button>
+                  </div>
+                  <div class="status" id="sessionFormStatus"></div>
+                </form>
+              </div>
+              <div class="panel">
+                <h2>My Sessions</h2>
+                <ul class="timeline" id="lmSessionsList">
+                  <li class="muted">Loading sessions...</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Lessons -->
+          <div id="lm-tab-lessons" class="lm-tab-content">
+            <div class="grid">
+              <div class="panel">
+                <h2>Lessons (draft/published)</h2>
+                <ul class="timeline">
+                  <li>Najdorf Plans - Published</li>
+                  <li>Defensive Ideas - Draft</li>
+                  <li>Endgame Tablebases - Published</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h2>Lesson editor</h2>
+                <form>
+                  <label>Title<input placeholder="Lesson title"></label>
+                  <label>Objectives<textarea rows="3"></textarea></label>
+                  <label>Content<textarea rows="4" placeholder="Rich text or markdown"></textarea></label>
+                  <label>Puzzle set<input placeholder="Link or ID"></label>
+                  <div class="quick-actions"><button class="btn primary" type="button">Publish</button><button class="btn ghost" type="button">Save draft</button></div>
+                </form>
+              </div>
             </div>
           </div>
         </section>
 
-        <!-- Exercise Generator -->
+        <!-- Exercise Generator / Assignment -->
         <section id="section-exercise-sets">
           <div class="grid">
             <div class="panel">
-              <h2>Exercise generator</h2>
-              <form>
-                <label>Theme<select><option>Forks</option><option>Pins</option><option>Endgames</option></select></label>
-                <label>Rating range<input placeholder="1400-1700"></label>
-                <label>Number of puzzles<input type="number" value="10"></label>
-                <label>Assign to<select><option>Individual student</option><option>Cohort</option></select></label>
-                <div class="quick-actions"><button class="btn primary" type="button">Generate set</button></div>
+              <h2>Assign a puzzle</h2>
+              <form id="assignForm">
+                <label>Student ID<input name="studentId" type="number" placeholder="Student user ID" required></label>
+                <label>Puzzle ID<input name="puzzleId" type="number" placeholder="Puzzle ID" required></label>
+                <label>Due date (optional)<input name="dueDate" type="datetime-local"></label>
+                <div class="quick-actions">
+                  <button class="btn primary" type="submit">Assign puzzle</button>
+                </div>
+                <div class="status" id="assignStatus"></div>
               </form>
             </div>
-            <div class="panel"><h2>Preview</h2><div class="empty">Generated set preview goes here.</div></div>
+            <div class="panel">
+              <h2>Assignments made</h2>
+              <ul class="timeline" id="coachAssignmentsList">
+                <li class="muted">Loading...</li>
+              </ul>
+            </div>
           </div>
         </section>
 
         <!-- Students (Coach) -->
         <section id="section-students">
-          <div class="grid">
-            <div class="panel">
-              <h2>Students</h2>
-              <div class="muted">GET /api/students</div>
-              <div class="cards" id="studentsList"><div class="empty">Loading students...</div></div>
+
+          <!-- Stats strip -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px;">
+            <div class="panel stat" style="padding:14px 16px;">
+              <div class="label">Total Students</div>
+              <div class="value" id="coachStatTotal">0</div>
             </div>
-            <div class="panel">
-              <h2>Add student</h2>
-              <div class="muted">POST /api/students</div>
-              <form id="studentForm">
-                <div class="grid-2">
-                  <label>Name<input name="name" placeholder="Student name" required></label>
-                  <label>Email<input type="email" name="email" placeholder="student@academy.com" required></label>
+            <div class="panel stat" style="padding:14px 16px;">
+              <div class="label">Rated</div>
+              <div class="value" id="coachStatRated">0</div>
+            </div>
+            <div class="panel stat" style="padding:14px 16px;">
+              <div class="label">Avg Rating</div>
+              <div class="value" id="coachStatAvg">—</div>
+            </div>
+          </div>
+
+          <!-- Full-width student table -->
+          <div class="grid">
+            <div class="panel" style="grid-column:1/-1;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+                <h2 style="margin:0;">My Students</h2>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <input id="studentSearch" placeholder="Search name or email..." style="width:220px;padding:7px 12px;font-size:13px;" oninput="filterStudentTable(this.value)">
+                  <span id="studentCountBadge" class="badge" style="font-size:13px;white-space:nowrap;">0 students</span>
                 </div>
-                <button class="btn ghost" type="submit">Add student</button>
-              </form>
+              </div>
+              <div id="studentsList">
+                <div style="text-align:center;padding:48px 20px;">
+                  <div style="font-size:54px;margin-bottom:12px;opacity:0.45;">👥</div>
+                  <div style="font-size:16px;font-weight:600;margin-bottom:6px;">No students assigned yet</div>
+                  <div class="muted" style="font-size:14px;max-width:360px;margin:0 auto;">Students are assigned to you by the admin. Contact your administrator to have students added to your account.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- How students get assigned -->
+          <div class="panel" style="margin-top:16px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+            <div style="font-size:32px;opacity:0.5;flex-shrink:0;">ℹ️</div>
+            <div>
+              <div style="font-weight:600;margin-bottom:6px;">How students are assigned</div>
+              <div class="muted" style="font-size:14px;line-height:1.6;">
+                Student accounts are created and assigned by the <strong style="color:var(--text);">administrator</strong>. Once assigned, students appear in your list above automatically.<br>
+                To request a new student, contact your admin with the student's name and email.
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- My Classes (Coach) -->
+        <section id="section-classes">
+          <style>
+            .day-col { min-width:220px; display:flex; flex-direction:column; gap:10px; }
+            .day-col-header { font-weight:700; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); padding:6px 10px; border-radius:8px; background:rgba(255,255,255,0.04); border:1px solid var(--stroke); display:flex; justify-content:space-between; align-items:center; }
+            .class-card { padding:14px; border-radius:14px; border:1px solid var(--stroke); background:rgba(255,255,255,0.04); cursor:pointer; transition:transform 100ms, border 120ms, box-shadow 120ms; }
+            .class-card:hover { transform:translateY(-2px); border-color:rgba(130,189,74,0.4); box-shadow:0 12px 28px rgba(0,0,0,0.3); }
+            .class-card .cc-name { font-weight:700; font-size:15px; margin-bottom:6px; }
+            .class-card .cc-row { font-size:12px; color:var(--muted); display:flex; justify-content:space-between; gap:6px; margin-top:3px; }
+            .class-card .cc-active { color:#5cf5a5; font-weight:600; }
+            .class-card .cc-pending { color:var(--accent); font-weight:600; }
+            .status-pill { display:inline-flex; align-items:center; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; }
+            .status-active { background:rgba(92,245,165,0.15); color:#5cf5a5; border:1px solid rgba(92,245,165,0.3); }
+            .status-inactive { background:rgba(248,113,113,0.15); color:#f87171; border:1px solid rgba(248,113,113,0.3); }
+            .status-pending { background:rgba(245,184,65,0.15); color:var(--accent); border:1px solid rgba(245,184,65,0.3); }
+            /* Modal */
+            .cls-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(6px); z-index:200; display:flex; align-items:flex-start; justify-content:center; padding:32px 16px; overflow-y:auto; }
+            .cls-modal-overlay.hidden { display:none; }
+            .cls-modal { background:linear-gradient(145deg,#0f1c33,#0a1220); border:1px solid rgba(184,199,219,0.18); border-radius:20px; padding:28px; width:100%; max-width:720px; position:relative; }
+            .cls-modal h3 { margin:0 0 4px; font-size:22px; }
+            .cls-modal .modal-close { position:absolute; top:16px; right:18px; background:rgba(255,255,255,0.08); border:none; border-radius:8px; color:var(--text); font-size:18px; padding:4px 10px; cursor:pointer; }
+            .att-table { width:100%; border-collapse:collapse; margin-top:8px; }
+            .att-table th, .att-table td { padding:8px 10px; border-bottom:1px solid rgba(184,199,219,0.1); font-size:13px; text-align:left; }
+            .att-table th { color:var(--muted); font-weight:600; }
+          </style>
+
+          <!-- Header -->
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+            <div>
+              <h2 style="margin:0 0 2px;">My Classes</h2>
+              <div class="muted" style="font-size:13px;" id="classesSubtitle">Loading…</div>
+            </div>
+            <button class="btn primary" onclick="toggleCreateClassForm()">+ New Class</button>
+          </div>
+
+          <!-- Create class form (hidden by default) -->
+          <div id="createClassPanel" class="panel" style="display:none;margin-bottom:20px;">
+            <h3 style="margin:0 0 14px;">Create New Class</h3>
+            <form id="createClassForm">
+              <div class="grid-2">
+                <label>Class name / label<input name="name" placeholder="e.g. Ahmad-1234" required></label>
+                <label>Day<select name="dayOfWeek" required>
+                  <option value="">— select day —</option>
+                  <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+                  <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+                </select></label>
+              </div>
+              <div class="grid-2">
+                <label>Start time<input name="startTime" type="time" required></label>
+                <label>End time<input name="endTime" type="time"></label>
+              </div>
+              <div class="grid-2">
+                <label>Class type<select name="classType">
+                  <option value="Individual">Individual</option>
+                  <option value="Group">Group</option>
+                </select></label>
+                <label>Monthly sessions<input name="monthlySessionCount" type="number" min="1" max="31" placeholder="4"></label>
+              </div>
+              <label>Session dates (free text)<input name="sessionDates" placeholder="e.g. 5, 12, 19 &amp; 26 Jun 2026"></label>
+              <div class="grid-2">
+                <label>Zoom account<input name="zoomAccount" placeholder="coach@email.com"></label>
+                <label>Meeting ID<input name="meetingId" placeholder="84678751472"></label>
+              </div>
+              <label>Zoom / Meet link<input name="zoomLink" type="url" placeholder="https://zoom.us/j/..."></label>
+              <div class="quick-actions">
+                <button class="btn primary" type="submit">Create class</button>
+                <button class="btn ghost" type="button" onclick="toggleCreateClassForm()">Cancel</button>
+              </div>
+              <div class="status" id="createClassStatus"></div>
+            </form>
+          </div>
+
+          <!-- Day-column Kanban board -->
+          <div id="classBoardWrap" style="overflow-x:auto;padding-bottom:8px;">
+            <div id="classBoard" style="display:flex;gap:14px;min-width:max-content;">
+              <div class="empty" style="width:100%;padding:40px;text-align:center;">Loading classes…</div>
+            </div>
+          </div>
+
+          <!-- Class detail modal -->
+          <div id="classDetailOverlay" class="cls-modal-overlay hidden" onclick="closeClassModal(event)">
+            <div class="cls-modal" id="classDetailBox">
+              <button class="modal-close" onclick="closeClassModal()">✕</button>
+              <div id="classDetailContent">Loading…</div>
             </div>
           </div>
         </section>
@@ -502,13 +1039,12 @@
         <!-- Reports (Coach) -->
         <section id="section-reports">
           <div class="grid">
-            <div class="panel">
-              <h2>Reports & analytics</h2>
-              <form class="grid-2">
-                <label>Student<select><option>All</option><option>Sample Student</option></select></label>
-                <label>Date range<input type="date"></label>
-              </form>
-              <div class="chart-placeholder">Chart/table placeholder</div>
+            <div class="panel" style="grid-column:1/-1;">
+              <h2>Student Progress Reports</h2>
+              <div class="muted" style="margin-bottom:10px;">Showing attempt stats for all your students.</div>
+              <div id="coachReportsContent">
+                <div class="empty">Loading reports...</div>
+              </div>
             </div>
           </div>
         </section>
@@ -534,14 +1070,28 @@
         <!-- User Management (Admin) -->
         <section id="section-users">
           <div class="grid">
-            <div class="panel">
-              <h2>User management</h2>
-              <div class="muted">GET /api/users</div>
-              <div class="cards" id="usersListAdmin"><div class="empty">Loading users...</div></div>
+            <div class="panel" style="grid-column:1/-1;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+                <div>
+                  <h2 style="margin:0 0 2px;">User Management</h2>
+                  <div class="muted" style="font-size:13px;" id="userListSubtitle">Loading...</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <input id="userSearch" placeholder="Search name or email..." style="width:210px;padding:7px 12px;font-size:13px;" oninput="filterUserTable(this.value)">
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;" id="userRoleTabs">
+                    <button class="tab active" data-filter="ALL">All</button>
+                    <button class="tab" data-filter="STUDENT">Students</button>
+                    <button class="tab" data-filter="COACH">Coaches</button>
+                    <button class="tab" data-filter="ADMIN">Admins</button>
+                  </div>
+                </div>
+              </div>
+              <div id="usersListAdmin"><div class="empty">Loading users...</div></div>
             </div>
+          </div>
+          <div class="grid">
             <div class="panel">
               <h2>Register user</h2>
-              <div class="muted">POST /api/users/register</div>
               <form id="userForm">
                 <div class="grid-2">
                   <label>Full name<input name="name" placeholder="Judit Polgar" required></label>
@@ -556,6 +1106,30 @@
                   <label>Goals (optional)<input name="goals" placeholder="Sharpen endgames, play more Sicilian..."></label>
                 </div>
                 <button class="btn primary" type="submit">Create user</button>
+                <div class="status" id="userFormStatus"></div>
+              </form>
+            </div>
+            <div class="panel">
+              <h2>Assign Coach to Student</h2>
+              <form id="assignCoachForm">
+                <label>
+                  Student
+                  <select name="studentId" id="studentDropdown" required>
+                    <option value="">— select student —</option>
+                  </select>
+                </label>
+                <div class="muted" id="currentCoachLabel" style="font-size:13px;margin-top:-4px;min-height:18px;"></div>
+                <label>
+                  Coach
+                  <select name="coachId" id="coachDropdown" required>
+                    <option value="">— select coach —</option>
+                  </select>
+                </label>
+                <div class="quick-actions">
+                  <button class="btn primary" type="submit">Assign Coach</button>
+                  <button class="btn ghost" type="button" id="removeCoachBtn">Remove Assignment</button>
+                </div>
+                <div class="status" id="assignCoachStatus"></div>
               </form>
             </div>
           </div>
@@ -567,27 +1141,263 @@
         <!-- Logs -->
         <section id="section-logs"><div class="grid"><div class="panel"><h2>Audit logs</h2><div class="table-placeholder"><table><thead><tr><th>Time</th><th>User</th><th>Action</th></tr></thead><tbody><tr><td>10:02</td><td>admin</td><td>Enabled coach account</td></tr><tr><td>09:50</td><td>system</td><td>Backup complete</td></tr></tbody></table></div></div></div></section>
 
-        <!-- Profile / Logout -->
-        <section id="section-profile"><div class="panel"><h2>Profile</h2><div class="empty">Profile details go here.</div></div></section>
-        <section id="section-logout"><div class="panel"><h2>Logout</h2><div class="empty">Hook to your auth/logout flow.</div></div></section>
+        <!-- My Payments (Student) -->
+        <section id="section-payments">
+          <style>
+            .pay-card { padding:18px 20px; border-radius:14px; border:1px solid var(--stroke); background:rgba(255,255,255,0.04); margin-bottom:12px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+            .pay-card.pay-pending { border-color:rgba(245,184,65,0.45); background:rgba(245,184,65,0.06); }
+            .pay-card.pay-paid { border-color:rgba(92,245,165,0.35); background:rgba(92,245,165,0.04); }
+            .pay-card .pay-info { flex:1; min-width:180px; }
+            .pay-card .pay-title { font-weight:700; font-size:15px; margin-bottom:4px; }
+            .pay-card .pay-meta { font-size:13px; color:var(--muted); }
+            .pay-card .pay-amount { font-size:22px; font-weight:800; }
+            .pay-card.pay-pending .pay-amount { color:var(--accent); }
+            .pay-card.pay-paid .pay-amount { color:#5cf5a5; }
+          </style>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+            <h2 style="margin:0;">My Payments</h2>
+          </div>
+
+          <div id="paymentsList">
+            <div class="empty muted" style="text-align:center;padding:48px;">Loading payments...</div>
+          </div>
+        </section>
+
+        <!-- Messages / Chat -->
+        <section id="section-messages">
+          <style>
+            .chat-layout { display:grid; grid-template-columns:260px 1fr; height:580px; border-radius:16px; overflow:hidden; border:1px solid var(--stroke); background:rgba(255,255,255,0.02); }
+            .chat-sidebar { border-right:1px solid var(--stroke); overflow-y:auto; display:flex; flex-direction:column; }
+            .chat-sidebar-header { padding:14px 16px; font-weight:700; font-size:14px; border-bottom:1px solid var(--stroke); flex-shrink:0; }
+            .chat-person { padding:12px 16px; display:flex; align-items:center; gap:10px; cursor:pointer; border-bottom:1px solid rgba(184,199,219,0.07); transition:background 120ms; }
+            .chat-person:hover, .chat-person.active { background:rgba(130,189,74,0.1); }
+            .chat-person .cp-avatar { width:36px; height:36px; border-radius:50%; background:rgba(130,189,74,0.25); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; color:var(--accent-2); flex-shrink:0; }
+            .chat-person .cp-name { font-size:14px; font-weight:600; }
+            .chat-person .cp-sub { font-size:12px; color:var(--muted); }
+            .chat-person .cp-unread { background:#f87171; color:#fff; border-radius:999px; font-size:10px; font-weight:700; padding:1px 6px; margin-left:auto; }
+            .chat-main { display:flex; flex-direction:column; }
+            .chat-header { padding:14px 18px; border-bottom:1px solid var(--stroke); font-weight:700; font-size:15px; flex-shrink:0; display:flex; align-items:center; gap:10px; }
+            .chat-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:10px; }
+            .chat-bubble { max-width:70%; padding:10px 14px; border-radius:14px; font-size:14px; line-height:1.5; word-break:break-word; }
+            .chat-bubble.mine { background:rgba(130,189,74,0.22); color:var(--text); align-self:flex-end; border-bottom-right-radius:4px; }
+            .chat-bubble.theirs { background:rgba(255,255,255,0.07); color:var(--text); align-self:flex-start; border-bottom-left-radius:4px; }
+            .chat-bubble .cb-time { font-size:10px; color:var(--muted); margin-top:4px; }
+            .chat-input-row { padding:12px 14px; border-top:1px solid var(--stroke); display:flex; gap:10px; flex-shrink:0; }
+            .chat-input-row input { flex:1; padding:10px 14px; border-radius:10px; border:1px solid var(--stroke); background:rgba(255,255,255,0.06); color:var(--text); font-size:14px; }
+            .chat-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; color:var(--muted); font-size:14px; gap:8px; }
+            @media (max-width:640px) { .chat-layout { grid-template-columns:1fr; } .chat-sidebar { height:180px; border-right:none; border-bottom:1px solid var(--stroke); } }
+          </style>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+            <h2 style="margin:0;">Messages</h2>
+          </div>
+
+          <!-- Coach view: student list + chat window -->
+          <div id="chatCoachLayout" class="chat-layout coach-only" style="display:none;">
+            <div class="chat-sidebar">
+              <div class="chat-sidebar-header">Students</div>
+              <div id="chatStudentListItems"></div>
+            </div>
+            <div class="chat-main" id="chatMainPanel">
+              <div class="chat-placeholder">
+                <div style="font-size:36px;opacity:0.35;">💬</div>
+                <div>Select a student to start chatting</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Student view: direct chat with coach -->
+          <div id="chatStudentLayout" class="student-only" style="display:none;">
+            <div class="chat-layout" style="grid-template-columns:1fr;">
+              <div class="chat-main" id="chatStudentMainPanel">
+                <div class="chat-header" id="chatStudentHeader">Chat with your coach</div>
+                <div class="chat-messages" id="chatStudentMessages">
+                  <div class="chat-placeholder">
+                    <div style="font-size:36px;opacity:0.35;">💬</div>
+                    <div>Loading chat...</div>
+                  </div>
+                </div>
+                <div class="chat-input-row">
+                  <input id="chatStudentInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendStudentMessage()">
+                  <button class="btn primary" onclick="sendStudentMessage()">Send</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Profile -->
+        <section id="section-profile">
+          <style>
+            .profile-header { display:flex; gap:24px; align-items:flex-start; flex-wrap:wrap; padding:22px; background:rgba(255,255,255,0.03); border:1px solid var(--stroke); border-radius:18px; margin-bottom:20px; }
+            .avatar-wrap { position:relative; flex-shrink:0; }
+            .avatar-circle { width:90px; height:90px; border-radius:50%; border:3px solid rgba(130,189,74,0.45); display:flex; align-items:center; justify-content:center; font-size:34px; font-weight:800; background:linear-gradient(135deg,#1a2f4a,#0d1c33); color:rgba(184,199,219,0.55); overflow:hidden; cursor:pointer; }
+            .avatar-circle img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+            .avatar-edit-btn { position:absolute; bottom:0; right:0; width:26px; height:26px; border-radius:50%; background:#1e3a5f; border:2px solid var(--bg); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; }
+            .avatar-edit-btn:hover { background:#2a4f7a; }
+            .profile-name-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+            .profile-name { font-size:24px; font-weight:800; }
+            .chess-title-badge { padding:2px 9px; border-radius:6px; font-size:12px; font-weight:700; background:rgba(245,184,65,0.18); color:var(--accent); border:1px solid rgba(245,184,65,0.35); }
+            .profile-meta { display:flex; gap:16px; flex-wrap:wrap; margin-top:8px; }
+            .profile-meta-item { font-size:13px; color:var(--muted); display:flex; align-items:center; gap:4px; }
+            .profile-tabs { display:flex; gap:0; border-bottom:1px solid rgba(184,199,219,0.12); margin-bottom:20px; overflow-x:auto; }
+            .profile-tab { padding:10px 20px; font-size:14px; font-weight:600; background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-1px; color:var(--muted); cursor:pointer; white-space:nowrap; transition:color 150ms, border-color 150ms; }
+            .profile-tab.active { color:var(--text); border-bottom-color:#82bd4a; }
+            .profile-tab-content { display:none; }
+            .profile-tab-content.active { display:block; }
+            .pf-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+            @media(max-width:580px) { .pf-grid { grid-template-columns:1fr; } }
+          </style>
+
+          <!-- Avatar + name header -->
+          <div class="profile-header">
+            <div class="avatar-wrap">
+              <div class="avatar-circle" onclick="document.getElementById('avatarInput').click()" title="Click to change photo">
+                <span id="avatarInitials">?</span>
+                <img id="avatarImg" src="" style="display:none;" alt="Profile">
+              </div>
+              <button class="avatar-edit-btn" onclick="document.getElementById('avatarInput').click()" title="Change photo">📷</button>
+              <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="handleAvatarChange(event)">
+            </div>
+            <div style="flex:1;min-width:160px;">
+              <div class="profile-name-row">
+                <span class="profile-name" id="profileDisplayName">—</span>
+                <span class="chess-title-badge" id="profileChessTitleBadge" style="display:none;"></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                <span class="badge" id="profileRoleBadge" style="font-size:12px;"></span>
+                <span class="muted" style="font-size:13px;" id="profileLocationMeta"></span>
+              </div>
+              <div class="profile-meta">
+                <div class="profile-meta-item">⭐ <strong id="profileRatingMeta">—</strong></div>
+                <div class="profile-meta-item" id="profileChessUserMeta" style="display:none;">♟ <strong id="profileChessUserMetaVal"></strong></div>
+                <div class="profile-meta-item" id="profileStyleMeta" style="display:none;">🎯 <strong id="profileStyleMetaVal"></strong></div>
+                <div class="profile-meta-item" id="profileJoinedMeta" style="display:none;">📅 Since <strong id="profileJoinedMetaVal"></strong></div>
+                <div class="profile-meta-item" id="profileFideMeta" style="display:none;">🏅 FIDE <strong id="profileFideMetaVal"></strong></div>
+              </div>
+              <div style="margin-top:10px;font-size:13px;color:var(--muted);font-style:italic;max-width:460px;line-height:1.5;" id="profileBioMeta"></div>
+            </div>
+          </div>
+
+          <!-- Tab bar -->
+          <div class="profile-tabs">
+            <button class="profile-tab active" onclick="switchProfileTab('personal',this)">Personal Info</button>
+            <button class="profile-tab" onclick="switchProfileTab('chess',this)">Chess Profile</button>
+            <button class="profile-tab" onclick="switchProfileTab('goals',this)">Goals</button>
+            <button class="profile-tab" onclick="switchProfileTab('security',this)">Security</button>
+          </div>
+
+          <!-- Personal Info -->
+          <div class="profile-tab-content active" id="profile-tab-personal">
+            <form id="profileForm" class="panel">
+              <div class="pf-grid">
+                <label>Full name<input name="name" id="profileNameInput" placeholder="Your full name"></label>
+                <label>Phone / WhatsApp<input name="phone" id="profilePhoneInput" placeholder="+60 12-345 6789" type="tel"></label>
+              </div>
+              <label>Location / City<input name="location" id="profileLocationInput" placeholder="e.g. Kuala Lumpur, Malaysia"></label>
+              <label>Bio<textarea name="bio" id="profileBioInput" rows="3" placeholder="Tell others a bit about yourself…"></textarea></label>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px;">
+                <button class="btn primary" type="submit">Save profile</button>
+                <div class="status" id="profileStatus" style="min-height:18px;"></div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Chess Profile -->
+          <div class="profile-tab-content" id="profile-tab-chess">
+            <form id="chessProfileForm" class="panel">
+              <div class="pf-grid">
+                <label>Chess Title
+                  <select name="chessTitle" id="profileChessTitleInput">
+                    <option value="">— Untitled —</option>
+                    <option value="CM">CM — Candidate Master</option>
+                    <option value="NM">NM — National Master</option>
+                    <option value="FM">FM — FIDE Master</option>
+                    <option value="IM">IM — International Master</option>
+                    <option value="GM">GM — Grandmaster</option>
+                  </select>
+                </label>
+                <label>Playing Style
+                  <select name="playingStyle" id="profilePlayingStyleInput">
+                    <option value="">— Select —</option>
+                    <option value="Aggressive">Aggressive / Attacking</option>
+                    <option value="Positional">Positional / Strategic</option>
+                    <option value="Tactical">Tactical / Combinative</option>
+                    <option value="Solid">Solid / Defensive</option>
+                    <option value="Universal">Universal / Adaptive</option>
+                  </select>
+                </label>
+                <label>Lichess / Chess.com username<input name="chessUsername" id="profileChessUsernameInput" placeholder="e.g. MagnusCarlsen99"></label>
+                <label>FIDE ID<input name="fideId" id="profileFideIdInput" placeholder="e.g. 12345678"></label>
+                <label>Favourite opening as White<input name="favouriteWhiteOpening" id="profileWhiteOpeningInput" placeholder="e.g. King's Indian Attack"></label>
+                <label>Favourite opening as Black<input name="favouriteBlackOpening" id="profileBlackOpeningInput" placeholder="e.g. Sicilian Defence"></label>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;">
+                <button class="btn primary" type="submit">Save chess profile</button>
+                <div class="status" id="chessProfileStatus" style="min-height:18px;"></div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Goals -->
+          <div class="profile-tab-content" id="profile-tab-goals">
+            <form id="goalsForm" class="panel">
+              <label style="font-weight:600;font-size:14px;display:block;margin-bottom:10px;">Training Goals &amp; Notes
+                <textarea name="goals" id="profileGoalsInput" rows="5" style="margin-top:8px;font-weight:400;" placeholder="e.g. Improve endgame technique, learn Sicilian Najdorf, reach 1800 rating by December…"></textarea>
+              </label>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <button class="btn primary" type="submit">Save goals</button>
+                <div class="status" id="goalsStatus" style="min-height:18px;"></div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Security -->
+          <div class="profile-tab-content" id="profile-tab-security">
+            <div class="panel">
+              <h3 style="margin:0 0 16px;">Change Password</h3>
+              <form id="passwordForm">
+                <label>New password<input type="password" name="newPassword" placeholder="New password" required minlength="6"></label>
+                <label>Confirm password<input type="password" name="confirmPassword" placeholder="Repeat new password" required></label>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px;">
+                  <button class="btn primary" type="submit">Update password</button>
+                  <div class="status" id="passwordStatus" style="min-height:18px;"></div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </section>
       </div>
     </main>
   </div>
 
 <script>
-  const endpoints = { users: "/api/users", register: "/api/users/register", students: "/api/students" };
+  // Shared state — declared first to avoid any temporal dead zone issues
+  var _allUsersCache = [];
+
+  // Auth guard — bounce to login if no token
+  const authToken = localStorage.getItem("authToken");
+  if (!authToken) { window.location.href = "index.html"; }
+
+  const endpoints = { users: "/api/users", students: "/api/students" };
   const storedRole = (localStorage.getItem("userRole") || "STUDENT").toUpperCase();
-  const roleHeaders = { "X-User-Role": storedRole };
+  const authHeaders = {
+    "Authorization": "Bearer " + (authToken || ""),
+    "X-User-Role": storedRole
+  };
+  const roleHeaders = authHeaders;
+  const greetingEl = document.getElementById("greetingUser");
   const views = document.querySelectorAll(".views > section");
-    const navLinks = document.querySelectorAll(".nav-link[data-target]");
-    const logoutLink = document.getElementById("logoutLink");
+  const navLinks = document.querySelectorAll(".nav-link[data-target]");
+  const logoutLink = document.getElementById("logoutLink");
   const statusBox = document.getElementById("status");
   const usersList = document.getElementById("usersList");
   const usersListAdmin = document.getElementById("usersListAdmin");
   const studentsList = document.getElementById("studentsList");
   const studentsListCoach = document.getElementById("studentsListCoach");
   const userForm = document.getElementById("userForm");
-  const studentForm = document.getElementById("studentForm");
   const statPlayers = document.getElementById("statPlayers");
   const statStudents = document.getElementById("statStudents");
   const statRating = document.getElementById("statRating");
@@ -622,6 +1432,18 @@
   const coachPuzzleUseFenBtn = document.getElementById("coachPuzzleUseFen");
   const coachPuzzleCreateBtn = document.getElementById("coachPuzzleCreate");
   const coachPuzzleStatus = document.getElementById("coachPuzzleStatus");
+  const updateGreeting = (nameOverride = "") => {
+    const textEl = document.getElementById("greetingText") || greetingEl;
+    if (!textEl) return;
+    const role = (localStorage.getItem("userRole") || "STUDENT").toUpperCase();
+    const savedName = (nameOverride || localStorage.getItem("userName") || "").trim();
+    if (role === "ADMIN") { textEl.textContent = "Hi Admin"; return; }
+    if (role === "COACH") { textEl.textContent = savedName ? `Hi, Coach ${savedName}` : "Hi, Coach"; return; }
+    textEl.textContent = `Hi, ${savedName || "player"}`;
+  };
+
+  updateGreeting();
+
   let isAuthenticated = true;
   let activeCategory = "tactic";
   let activeThemeId = null;
@@ -869,71 +1691,181 @@
     }
   };
 
+  const call = (fn) => { if (typeof fn === "function") fn(); };
+
   const switchView = (targetId) => {
     views.forEach((v) => v.classList.toggle("active", v.id === `section-${targetId}`));
-    navLinks.forEach((link) => link.classList.toggle("active", link.dataset.target === targetId));
-    if (targetId === "coach-dashboard") {
-      ensureCoachBoard();
-    }
+    document.querySelectorAll("a[data-target]").forEach((link) => link.classList.toggle("active", link.dataset.target === targetId));
+    if (targetId === "coach-dashboard") { ensureCoachBoard(); call(fetchCoachSessions); call(fetchStudents); }
+    if (targetId === "students")        { call(fetchStudents); }
+    if (targetId === "exercise-sets")   { call(fetchCoachAssignments); }
+    if (targetId === "progress")        { call(fetchProgressData); }
+    if (targetId === "dashboard")       { if (storedRole === "STUDENT") { call(fetchMyAssignments); call(fetchUpcomingSessions); call(fetchProgressData); } }
+    if (targetId === "reports")         { call(fetchCoachReports); }
+    if (targetId === "classes")         { call(fetchCoachClasses); }
+    if (targetId === "profile")         { call(fetchMyProfile); }
+    if (targetId === "users")           { call(fetchAllUsersAdmin); }
+    if (targetId === "lesson-management") { call(fetchSessionPlans); call(fetchLmSessions); call(initPlanForm); }
+    if (targetId === "payments")        { call(fetchMyPayments); }
+    if (targetId === "messages")        { call(initMessages); }
   };
 
-  navLinks.forEach((link) => {
+  // Wire sidebar + header nav (any [data-target] link inside the page)
+  document.querySelectorAll("a[data-target]").forEach((link) => {
     link.addEventListener("click", (e) => { e.preventDefault(); switchView(link.dataset.target); });
   });
 
     const enforceRoleVisibility = (role) => {
-      const coachItems = document.querySelectorAll(".coach-only");
-      const adminItems = document.querySelectorAll(".admin-only");
-      coachItems.forEach((el) => el.style.display = (role === "COACH" || role === "ADMIN") ? "" : "none");
-      adminItems.forEach((el) => el.style.display = role === "ADMIN" ? "" : "none");
-      const activeLink = document.querySelector(".nav-link.active");
-      if (activeLink && activeLink.style.display === "none") switchView("dashboard");
+      const studentItems = document.querySelectorAll(".student-only");
+      const coachItems   = document.querySelectorAll(".coach-only");
+      const adminItems   = document.querySelectorAll(".admin-only");
+      studentItems.forEach((el) => el.style.display = role === "STUDENT" ? "" : "none");
+      coachItems.forEach((el)   => el.style.display = role === "COACH"   ? "" : "none");
+      adminItems.forEach((el)   => el.style.display = role === "ADMIN"   ? "" : "none");
+      // If the currently-active nav link is now hidden, the main init block below handles
+      // routing to the correct home view — no switchView call here to avoid TDZ errors
+      // (functions like fetchCoachSessions are defined later in the script)
     };
 
+  let activeUserFilter = "ALL";
+
+  const roleBadgeStyle = (role) => {
+    if (role === "COACH") return "background:rgba(10,139,255,0.18);color:#69bfff;border-color:rgba(10,139,255,0.35);";
+    if (role === "ADMIN") return "background:rgba(245,184,65,0.20);color:#f5c842;border-color:rgba(245,184,65,0.38);";
+    return "";
+  };
+
+  const renderUserTable = (container, users, coachById, filter) => {
+    if (!container) return;
+    const filtered = (filter && filter !== "ALL") ? (users || []).filter((u) => u.role === filter) : (users || []);
+    const subtitle = document.getElementById("userListSubtitle");
+    if (subtitle) {
+      const counts = { ALL: (users||[]).length, STUDENT: 0, COACH: 0, ADMIN: 0 };
+      (users||[]).forEach((u) => { if (counts[u.role] !== undefined) counts[u.role]++; });
+      subtitle.textContent = `${counts.STUDENT} students · ${counts.COACH} coaches · ${counts.ADMIN} admins`;
+    }
+    if (!filtered.length) {
+      container.innerHTML = `<div class="empty">No ${filter !== "ALL" ? filter.toLowerCase() + "s" : "users"} found.</div>`;
+      return;
+    }
+    container.innerHTML = `<div style="overflow-x:auto;">
+      <table>
+        <thead><tr>
+          <th style="width:32px;">#</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Rating</th>
+          <th>Coach</th>
+        </tr></thead>
+        <tbody>
+          ${filtered.map((u, i) => `<tr>
+            <td style="color:var(--muted);font-size:13px;">${i + 1}</td>
+            <td><strong>${u.name || "—"}</strong></td>
+            <td style="color:var(--muted);font-size:13px;">${u.email || "—"}</td>
+            <td><span class="badge" style="${roleBadgeStyle(u.role)}">${u.role || "STUDENT"}</span></td>
+            <td>${u.rating ? `<span class="badge" style="background:rgba(245,184,65,0.14);color:var(--accent);border-color:rgba(245,184,65,0.3);">${u.rating}</span>` : '<span style="color:var(--muted);">—</span>'}</td>
+            <td>${u.coachId ? (coachById[u.coachId] || `<span style="color:var(--muted);">ID ${u.coachId}</span>`) : '<span style="color:var(--muted);">—</span>'}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>`;
+  };
+
   const renderUsers = (users) => {
-    const render = (container) => {
-      if (!container) return;
-      if (!users || !users.length) { container.innerHTML = '<div class="empty">No players yet. Add one to start tracking.</div>'; return; }
-      container.innerHTML = users.map((u) => `
-        <div class="card">
-          <h3>${u.name || "Unnamed player"}</h3>
-          <div class="meta">${u.email || "No email on record"}</div>
-          <div class="meta">
-            <span class="badge">${u.role || "STUDENT"}</span>
-            ${u.rating ? `<span class="badge" style="background: rgba(245, 184, 65, 0.16); color: ${u.rating >= 2000 ? '#ffcc67' : 'var(--accent)'};">${u.rating} Elo</span>` : ""}
+    const coachById = {};
+    (users || []).filter((u) => u.role === "COACH").forEach((c) => { coachById[c.id] = c.name; });
+
+    // Admin panel — filterable table
+    renderUserTable(usersListAdmin, users, coachById, activeUserFilter);
+
+    // Student dashboard roster overview — compact cards, students only
+    if (usersList) {
+      const students = (users || []).filter((u) => u.role === "STUDENT");
+      if (!students.length) {
+        usersList.innerHTML = '<div class="empty">No players yet.</div>';
+      } else {
+        usersList.innerHTML = students.map((u) => `
+          <div class="card">
+            <h3>${u.name || "Unnamed"}</h3>
+            <div class="meta">${u.email || "—"}</div>
+            ${u.rating ? `<div class="meta"><span class="badge" style="background:rgba(245,184,65,0.14);color:var(--accent);">${u.rating} Elo</span></div>` : ""}
           </div>
-          ${u.goals ? `<div class="meta">Goals: ${u.goals}</div>` : ""}
-        </div>
-      `).join("");
-    };
-    render(usersList); render(usersListAdmin);
+        `).join("");
+      }
+    }
+
     if (statPlayers) statPlayers.textContent = users ? users.length : 0;
-    const ratings = (users || []).map((u) => u.rating).filter((r) => typeof r === "number");
-    if (ratings.length && statRating) { const min = Math.min(...ratings); const max = Math.max(...ratings); statRating.textContent = `${min} - ${max}`; } else if (statRating) { statRating.textContent = "—"; }
   };
 
   const renderStudents = (students) => {
-    const render = (container) => {
-      if (!container) return;
-      if (!students || !students.length) { container.innerHTML = '<div class="empty">No students yet. Log one to track progress.</div>'; return; }
-      container.innerHTML = students.map((s) => `
-        <div class="card">
-          <h3>${s.name || "Unnamed student"}</h3>
-          <div class="meta">${s.email || "No email on record"}</div>
-          <div class="meta">${s.id ? `ID: ${s.id}` : ""} ${typeof s.puzzlesSolved === "number" ? ` | Puzzles: ${s.puzzlesSolved}` : ""}</div>
-          <div class="meta">${s.coachId ? `Coach ID: ${s.coachId}` : ""}</div>
-          ${s.id ? `<button class="small-action" data-del-student="${s.id}" data-name="${s.name || ""}">Delete</button>` : ""}
-        </div>
-      `).join("");
-      container.querySelectorAll("[data-del-student]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const id = btn.getAttribute("data-del-student");
-          const name = btn.getAttribute("data-name") || "";
-          deleteStudent(id, name);
-        });
-      });
-    };
-    render(studentsList); render(studentsListCoach);
+    const coachMap = {};
+    (_allUsersCache || []).filter((u) => u.role === "COACH").forEach((c) => { coachMap[c.id] = c.name; });
+
+    // Stat pills
+    const arr = students || [];
+    const rated = arr.filter((s) => s.rating);
+    const avgRating = rated.length ? Math.round(rated.reduce((sum, s) => sum + s.rating, 0) / rated.length) : null;
+    const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setEl("coachStatTotal", arr.length);
+    setEl("coachStatRated", rated.length);
+    setEl("coachStatAvg", avgRating != null ? avgRating : "—");
+
+    // Students section — full table
+    if (studentsList) {
+      const countBadge = document.getElementById("studentCountBadge");
+      const n = arr.length;
+      if (countBadge) countBadge.textContent = `${n} student${n !== 1 ? "s" : ""}`;
+      if (!students || !students.length) {
+        studentsList.innerHTML = `<div style="text-align:center;padding:48px 20px;">
+          <div style="font-size:54px;margin-bottom:12px;opacity:0.45;">👥</div>
+          <div style="font-size:16px;font-weight:600;margin-bottom:6px;">No students assigned yet</div>
+          <div class="muted" style="font-size:14px;max-width:360px;margin:0 auto;">Students are assigned to you by the admin. Contact your administrator to have students added to your account.</div>
+        </div>`;
+      } else {
+        studentsList.innerHTML = `<div style="overflow-x:auto;">
+          <table>
+            <thead><tr>
+              <th style="width:32px;">#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Rating</th>
+              <th>Coach</th>
+              <th>Goals</th>
+            </tr></thead>
+            <tbody>
+              ${students.map((s, i) => `<tr>
+                <td style="color:var(--muted);font-size:13px;">${i + 1}</td>
+                <td><strong>${s.name || "—"}</strong></td>
+                <td style="color:var(--muted);font-size:13px;">${s.email || "—"}</td>
+                <td>${s.rating ? `<span class="badge" style="background:rgba(245,184,65,0.14);color:var(--accent);border-color:rgba(245,184,65,0.3);">${s.rating}</span>` : '<span style="color:var(--muted);">—</span>'}</td>
+                <td>${s.coachId ? (coachMap[s.coachId] || `<span style="color:var(--muted);">ID ${s.coachId}</span>`) : '<span style="color:#f87171;">No coach</span>'}</td>
+                <td style="color:var(--muted);font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.goals || "—"}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>`;
+      }
+    }
+
+    // Coach dashboard overview panel — compact cards
+    if (studentsListCoach) {
+      if (!students || !students.length) {
+        studentsListCoach.innerHTML = '<div class="empty">No students assigned yet.</div>';
+      } else {
+        studentsListCoach.innerHTML = students.map((s) => `
+          <div class="card">
+            <h3>${s.name || "Unnamed"}</h3>
+            <div class="meta">${s.email || "—"}</div>
+            <div class="meta" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+              ${s.rating ? `<span class="badge" style="background:rgba(245,184,65,0.14);color:var(--accent);">${s.rating} Elo</span>` : ""}
+              ${s.coachId ? "" : '<span style="color:#f87171;font-size:12px;">No coach</span>'}
+            </div>
+          </div>
+        `).join("");
+      }
+    }
+
     if (statStudents) statStudents.textContent = students ? students.length : 0;
   };
 
@@ -950,58 +1882,62 @@
       .catch(() => setStatus("Could not delete student. Check the API.", "warn"));
   };
 
+  const refreshGreetingFromUsers = (users) => {
+    if (!users || !users.length) return;
+    const email = (localStorage.getItem("userEmail") || "").toLowerCase();
+    const currentName = (localStorage.getItem("userName") || "").trim();
+    if (!email || currentName) return;
+    const match = users.find((u) => (u.email || "").toLowerCase() === email);
+    if (match && match.name) {
+      localStorage.setItem("userName", match.name);
+      updateGreeting(match.name);
+    }
+  };
+
   const fetchUsers = () => {
     fetch(endpoints.users)
       .then((res) => res.json())
-      .then((data) => renderUsers(data))
+      .then((data) => {
+        renderUsers(data);
+        refreshGreetingFromUsers(data);
+      })
       .catch(() => setStatus("Could not load users. Is the backend running?", "warn"));
   };
 
   const fetchStudents = () => {
-    fetch(endpoints.students)
-      .then((res) => res.json())
-      .then((data) => renderStudents(data))
-      .catch(() => setStatus("Could not load students. Is the backend running?", "warn"));
+    const url = storedRole === "COACH" ? "/api/users/my-students" : endpoints.students;
+    const badge = document.getElementById("studentCountBadge");
+    if (badge) badge.textContent = "loading…";
+    fetch(url, { headers: authHeaders })
+      .then(async (res) => {
+        if (!res.ok) {
+          let msg = `HTTP ${res.status}`;
+          try { const e = await res.json(); msg += `: ${e.error || JSON.stringify(e)}`; } catch (_) {}
+          if (studentsList) studentsList.innerHTML = `<div class="empty" style="color:#f87171;padding:24px;">
+            <strong>Could not load students (${msg})</strong><br>
+            <span style="font-size:13px;opacity:0.8;">Restart the server and try again.</span>
+            <br><button class="btn ghost" style="margin-top:12px;font-size:13px;" onclick="fetchStudents()">Retry</button>
+          </div>`;
+          if (badge) badge.textContent = "error";
+          return;
+        }
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          renderStudents(data);
+        }
+      })
+      .catch((err) => {
+        const errMsg = err ? (err.message || String(err)) : "unknown";
+        console.error("fetchStudents failed:", err);
+        if (studentsList) studentsList.innerHTML = `<div class="empty" style="color:#f87171;padding:24px;">
+          <strong>JS Error: ${errMsg}</strong><br>
+          <span style="font-size:13px;opacity:0.8;">Open browser console (F12) for details.</span>
+          <br><button class="btn ghost" style="margin-top:12px;font-size:13px;" onclick="fetchStudents()">Retry</button>
+        </div>`;
+        if (badge) badge.textContent = "error";
+      });
   };
 
-  if (userForm) {
-    userForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const formData = new FormData(userForm);
-      const rating = formData.get("rating");
-      const payload = { name: formData.get("name"), email: formData.get("email"), password: formData.get("password"), role: formData.get("role") || "STUDENT", goals: formData.get("goals") || null, rating: rating ? Number(rating) : null };
-      fetch(endpoints.register, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-        .then((res) => res.json())
-        .then(() => { setStatus("Player registered via /api/users/register", "success"); userForm.reset(); fetchUsers(); })
-        .catch(() => setStatus("Could not register player. Check the API logs.", "warn"));
-    });
-  }
-
-  if (studentForm) {
-    studentForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const formData = new FormData(studentForm);
-      const payload = { name: formData.get("name"), email: formData.get("email") };
-      fetch(endpoints.students, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-        .then(async (res) => {
-          if (!res.ok) {
-            if (res.status === 409) throw new Error("duplicate");
-            throw new Error("create-failed");
-          }
-          return res.json();
-        })
-        .then(() => { setStatus("Student created via /api/students", "success"); studentForm.reset(); fetchStudents(); })
-        .catch((err) => {
-          if (err.message === "duplicate") {
-            alert("Email already exists for another student.");
-            setStatus("Email already exists for another student.", "warn");
-          } else {
-            alert("Could not create student. Please check the API or logs.");
-            setStatus("Could not create student. Check the API logs.", "warn");
-          }
-        });
-    });
-  }
 
   const ensureBoard = () => {
     if (!puzzleBoardEl || !window.Chessboard || !window.Chess) return;
@@ -1254,6 +2190,42 @@
   };
 
   enforceRoleVisibility(storedRole);
+
+  // Route to the correct default view — deferred so all const functions are initialized first
+  setTimeout(() => {
+    if (storedRole === "ADMIN") {
+      switchView("admin-dashboard");
+      document.querySelector('.nav-link[href="admin-dashboard.html"]')?.classList.add("active");
+    } else if (storedRole === "COACH") {
+      switchView("coach-dashboard");
+      ensureCoachBoard();
+      populatePlanStudentDropdown();
+    }
+  }, 0);
+
+  // Fetch current user — stores userId, populates profile header avatar/name, and student rating
+  fetch("/api/users/me", { headers: authHeaders })
+    .then((r) => r.ok ? r.json() : null)
+    .then((u) => {
+      if (!u) return;
+      if (u.id) localStorage.setItem("userId", String(u.id));
+      if (storedRole === "STUDENT" && u.rating != null && statRating) {
+        statRating.textContent = String(u.rating);
+        localStorage.setItem("userRating", String(u.rating));
+      }
+      // Pre-populate profile UI and show avatar in top greeting
+      if (typeof loadProfileUI === "function") loadProfileUI(u);
+      // Show avatar in greeting bar
+      if (u.profilePicture) {
+        const ga = document.getElementById("greetingAvatar");
+        if (ga) { ga.src = u.profilePicture; ga.style.display = ""; }
+      }
+    })
+    .catch(() => {
+      const cached = localStorage.getItem("userRating");
+      if (cached && statRating) statRating.textContent = cached;
+    });
+
   fetchUsers();
   fetchStudents();
   renderTabs();
@@ -1370,8 +2342,11 @@
     if (logoutLink) {
       logoutLink.addEventListener("click", (e) => {
         e.preventDefault();
+        localStorage.removeItem("authToken");
         localStorage.removeItem("userRole");
         localStorage.removeItem("userEmail");
+        localStorage.removeItem("userName");
+        localStorage.removeItem("userId");
         window.location.href = "index.html";
       });
     }
@@ -1444,6 +2419,1457 @@
 
   ensureCoachBoard();
   setTimeout(initAcBoard, 120);
+
+  // --- Assignments ---
+  const assignmentsList    = document.getElementById("assignmentsList");
+  const coachAssignmentsList = document.getElementById("coachAssignmentsList");
+  const assignForm         = document.getElementById("assignForm");
+  const assignStatus       = document.getElementById("assignStatus");
+
+  const statusColor = { PENDING: "var(--accent)", COMPLETED: "var(--accent-2)", OVERDUE: "#f87171" };
+
+  const fetchMyAssignments = () => {
+    if (!assignmentsList) return;
+    fetch("/api/assignments/my-assignments", { headers: authHeaders })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data || !data.length) {
+          assignmentsList.innerHTML = "<li class='muted'>No exercises assigned yet.</li>";
+          return;
+        }
+        assignmentsList.innerHTML = data.map((a) => `
+          <li style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <strong>${a.puzzleTitle || "Puzzle #" + a.puzzleId}</strong>
+              <div class="meta">${a.puzzleTheme || ""} ${a.dueDate ? "· Due: " + a.dueDate.slice(0, 10) : ""}</div>
+            </div>
+            <span style="color:${statusColor[a.status] || "var(--muted)"}; font-weight:600; font-size:13px;">${a.status}</span>
+            ${a.status === "PENDING"
+              ? `<button class="small-action" onclick="completeAssignment(${a.id})">Mark done</button>`
+              : ""}
+          </li>
+        `).join("");
+      })
+      .catch(() => { if (assignmentsList) assignmentsList.innerHTML = "<li class='muted'>Could not load exercises.</li>"; });
+  };
+
+  window.completeAssignment = (id) => {
+    fetch(`/api/assignments/${id}/complete`, { method: "PUT", headers: authHeaders })
+      .then((r) => { if (r.ok) fetchMyAssignments(); })
+      .catch(() => {});
+  };
+
+  const fetchCoachAssignments = () => {
+    if (!coachAssignmentsList) return;
+    fetch("/api/assignments/coach", { headers: authHeaders })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data || !data.length) {
+          coachAssignmentsList.innerHTML = "<li class='muted'>No assignments created yet.</li>";
+          return;
+        }
+        coachAssignmentsList.innerHTML = data.map((a) => `
+          <li style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <strong>${a.puzzleTitle || "Puzzle #" + a.puzzleId}</strong>
+              <div class="meta">Student ID: ${a.studentId} · ${a.dueDate ? "Due: " + a.dueDate.slice(0, 10) : "No due date"}</div>
+            </div>
+            <span style="color:${statusColor[a.status] || "var(--muted)"}; font-weight:600; font-size:13px;">${a.status}</span>
+          </li>
+        `).join("");
+      })
+      .catch(() => { if (coachAssignmentsList) coachAssignmentsList.innerHTML = "<li class='muted'>Could not load assignments.</li>"; });
+  };
+
+  if (assignForm) {
+    assignForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(assignForm);
+      const payload = {
+        studentId: fd.get("studentId"),
+        puzzleId: fd.get("puzzleId"),
+        dueDate: fd.get("dueDate") || null
+      };
+      try {
+        const res = await fetch("/api/assignments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          assignStatus.textContent = err.error || "Failed to assign.";
+          assignStatus.style.color = "var(--accent)";
+          return;
+        }
+        assignStatus.textContent = "Puzzle assigned successfully.";
+        assignStatus.style.color = "var(--accent-2)";
+        assignForm.reset();
+        fetchCoachAssignments();
+      } catch (_) {
+        assignStatus.textContent = "Network error. Check the server.";
+        assignStatus.style.color = "var(--accent)";
+      }
+    });
+  }
+
+  if (storedRole === "STUDENT") fetchMyAssignments();
+  if (storedRole === "COACH")   fetchCoachAssignments();
+
+  // --- Zoom sessions ---
+  const upcomingSessionsList = document.getElementById("upcomingSessionsList");
+  const coachSessionsList    = document.getElementById("coachSessionsList");
+  const sessionForm          = document.getElementById("sessionForm");
+  const sessionFormStatus    = document.getElementById("sessionFormStatus");
+
+  const fmtDateTime = (iso) => {
+    if (!iso) return "TBD";
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
+
+  const fetchUpcomingSessions = () => {
+    if (!upcomingSessionsList) return;
+    fetch("/api/sessions/upcoming", { headers: authHeaders })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data || !data.length) {
+          upcomingSessionsList.innerHTML = "<li class='muted'>No upcoming sessions scheduled.</li>";
+          return;
+        }
+        upcomingSessionsList.innerHTML = data.map((s) => `
+          <li>
+            <strong>${s.title}</strong>
+            <div class="meta">${fmtDateTime(s.scheduledAt)} · Coach: ${s.coachName || "Your coach"}</div>
+            ${s.description ? `<div class="meta">${s.description}</div>` : ""}
+            <a href="${s.zoomLink}" target="_blank" rel="noopener" class="btn ghost" style="margin-top:6px;padding:4px 10px;font-size:13px;">Join Zoom</a>
+          </li>
+        `).join("");
+      })
+      .catch(() => { if (upcomingSessionsList) upcomingSessionsList.innerHTML = "<li class='muted'>Could not load sessions.</li>"; });
+  };
+
+  const fetchCoachSessions = () => {
+    if (!coachSessionsList) return;
+    fetch("/api/sessions/coach", { headers: authHeaders })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data || !data.length) {
+          coachSessionsList.innerHTML = "<li class='muted'>No sessions created yet.</li>";
+          return;
+        }
+        coachSessionsList.innerHTML = data.map((s) => `
+          <li style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div>
+              <strong>${s.title}</strong>
+              <div class="meta">${fmtDateTime(s.scheduledAt)}</div>
+              ${s.description ? `<div class="meta">${s.description}</div>` : ""}
+              <div class="meta" style="word-break:break-all;"><a href="${s.zoomLink}" target="_blank" rel="noopener" style="color:var(--brand);">${s.zoomLink}</a></div>
+            </div>
+            <button class="small-action" style="flex-shrink:0;" onclick="deleteSession(${s.id})">Delete</button>
+          </li>
+        `).join("");
+      })
+      .catch(() => { if (coachSessionsList) coachSessionsList.innerHTML = "<li class='muted'>Could not load sessions.</li>"; });
+  };
+
+  window.deleteSession = (id) => {
+    if (!confirm("Delete this session?")) return;
+    fetch(`/api/sessions/${id}`, { method: "DELETE", headers: authHeaders })
+      .then((r) => { if (r.ok) fetchCoachSessions(); })
+      .catch(() => {});
+  };
+
+  // sessionForm listener is defined in the Lesson Management JS block below
+
+  if (storedRole === "STUDENT") fetchUpcomingSessions();
+  if (storedRole === "COACH")   fetchCoachSessions();
+
+  // --- Progress charts ---
+  let chartDailyInstance = null;
+  let chartThemeInstance = null;
+
+  const fetchProgressData = async () => {
+    try {
+      const res = await fetch("/api/attempts/my-progress", { headers: authHeaders });
+      if (!res.ok) return;
+      const data = await res.json();
+
+      // Update summary stats
+      const fmt = (n) => (n === undefined || n === null) ? "—" : n;
+      const el = (id) => document.getElementById(id);
+      if (el("progressAttempted")) el("progressAttempted").textContent = fmt(data.totalAttempted);
+      if (el("progressSolved"))    el("progressSolved").textContent    = fmt(data.totalSolved);
+      if (el("progressAccuracy"))  el("progressAccuracy").textContent  = data.totalAttempted > 0 ? data.accuracyPct + "%" : "—";
+      // also update student landing card stats
+      if (el("statAccuracy")) el("statAccuracy").textContent = data.totalAttempted > 0 ? data.accuracyPct + "%" : "—";
+      if (el("statSolved"))   el("statSolved").textContent   = fmt(data.totalSolved);
+      if (el("statAttempted")) el("statAttempted").textContent = fmt(data.totalAttempted);
+
+      // Daily activity bar chart
+      const dailyLabels = (data.dailyActivity || []).map((d) => d.date.slice(5)); // MM-DD
+      const dailySolved = (data.dailyActivity || []).map((d) => d.solved);
+      const dailyFailed = (data.dailyActivity || []).map((d) => d.failed);
+
+      const ctxDaily = document.getElementById("chartDaily");
+      if (ctxDaily && window.Chart) {
+        if (chartDailyInstance) chartDailyInstance.destroy();
+        chartDailyInstance = new Chart(ctxDaily, {
+          type: "bar",
+          data: {
+            labels: dailyLabels,
+            datasets: [
+              { label: "Solved", data: dailySolved, backgroundColor: "rgba(92,245,165,0.7)", borderRadius: 4 },
+              { label: "Failed", data: dailyFailed,  backgroundColor: "rgba(248,113,113,0.6)", borderRadius: 4 }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: "#c8d4e8" } } },
+            scales: {
+              x: { stacked: true, ticks: { color: "#9ba6c5" }, grid: { color: "rgba(255,255,255,0.05)" } },
+              y: { stacked: true, ticks: { color: "#9ba6c5", stepSize: 1 }, grid: { color: "rgba(255,255,255,0.05)" }, beginAtZero: true }
+            }
+          }
+        });
+      }
+
+      // Theme accuracy horizontal bar chart (top 8 themes)
+      const topThemes = (data.themeBreakdown || []).slice(0, 8);
+      const themeLabels = topThemes.map((t) => t.theme);
+      const themeAccuracy = topThemes.map((t) => t.accuracyPct);
+
+      const ctxTheme = document.getElementById("chartTheme");
+      if (ctxTheme && window.Chart) {
+        if (chartThemeInstance) chartThemeInstance.destroy();
+        chartThemeInstance = new Chart(ctxTheme, {
+          type: "bar",
+          data: {
+            labels: themeLabels,
+            datasets: [{
+              label: "Accuracy %",
+              data: themeAccuracy,
+              backgroundColor: themeAccuracy.map((v) => v >= 70 ? "rgba(92,245,165,0.7)" : v >= 40 ? "rgba(245,184,65,0.7)" : "rgba(248,113,113,0.65)"),
+              borderRadius: 4
+            }]
+          },
+          options: {
+            indexAxis: "y",
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { min: 0, max: 100, ticks: { color: "#9ba6c5", callback: (v) => v + "%" }, grid: { color: "rgba(255,255,255,0.05)" } },
+              y: { ticks: { color: "#c8d4e8" }, grid: { display: false } }
+            }
+          }
+        });
+      }
+
+      // Theme table
+      const tbody = document.querySelector("#themeTable tbody");
+      if (tbody) {
+        if (!data.themeBreakdown || !data.themeBreakdown.length) {
+          tbody.innerHTML = '<tr><td colspan="4" class="muted" style="text-align:center;">No attempts yet.</td></tr>';
+        } else {
+          tbody.innerHTML = data.themeBreakdown.map((t) => `
+            <tr>
+              <td>${t.theme}</td>
+              <td>${t.total}</td>
+              <td>${t.solved}</td>
+              <td style="color:${t.accuracyPct >= 70 ? 'var(--accent-2)' : t.accuracyPct >= 40 ? 'var(--accent)' : '#f87171'}">${t.accuracyPct}%</td>
+            </tr>
+          `).join("");
+        }
+      }
+    } catch (err) {
+      // silently fail — charts remain empty rather than breaking the page
+    }
+  };
+
+  if (storedRole === "STUDENT") fetchProgressData();
+
+  // --- Coach Reports ---
+  const fetchCoachReports = () => {
+    const el = document.getElementById("coachReportsContent");
+    if (!el || storedRole !== "COACH") return;
+    fetch("/api/users/my-students", { headers: authHeaders })
+      .then((r) => r.ok ? r.json() : [])
+      .then(async (students) => {
+        if (!students.length) { el.innerHTML = '<div class="empty">No students assigned yet.</div>'; return; }
+        const rows = await Promise.all(students.map(async (s) => {
+          try {
+            const sr = await fetch(`/api/attempts/stats?userId=${s.id}`, { headers: authHeaders });
+            const stats = sr.ok ? await sr.json() : {};
+            const total = stats.total || 0;
+            const byTheme = stats.byTheme || {};
+            const solved = Object.values(byTheme).reduce((acc, t) => acc + (t.solved || 0), 0);
+            const acc = total ? Math.round((solved / total) * 100) : 0;
+            return `<tr>
+              <td>${s.name || "—"}</td>
+              <td>${s.email || "—"}</td>
+              <td>${s.rating || "—"}</td>
+              <td>${total}</td>
+              <td>${solved}</td>
+              <td style="color:${acc>=70?"var(--accent-2)":acc>=40?"var(--accent)":"#f87171"}">${total ? acc+"%" : "—"}</td>
+            </tr>`;
+          } catch (_) { return `<tr><td>${s.name}</td><td colspan="5" class="muted">Could not load</td></tr>`; }
+        }));
+        el.innerHTML = `<table>
+          <thead><tr><th>Student</th><th>Email</th><th>Rating</th><th>Attempted</th><th>Solved</th><th>Accuracy</th></tr></thead>
+          <tbody>${rows.join("")}</tbody>
+        </table>`;
+      })
+      .catch(() => { el.innerHTML = '<div class="empty">Could not load reports.</div>'; });
+  };
+
+  // --- Admin: All Users refresh ---
+  const fetchAllUsersAdmin = () => {
+    if (storedRole !== "ADMIN") return;
+    fetch("/api/users", { headers: authHeaders })
+      .then((r) => r.ok ? r.json() : [])
+      .then((users) => {
+        renderUsers(users);
+        populateAssignDropdowns(users);
+      })
+      .catch(() => {});
+  };
+
+  // --- Admin: Assign coach form (dropdowns) ---
+  const assignCoachForm   = document.getElementById("assignCoachForm");
+  const assignCoachStatus = document.getElementById("assignCoachStatus");
+  const removeCoachBtn    = document.getElementById("removeCoachBtn");
+  const studentDropdown   = document.getElementById("studentDropdown");
+  const coachDropdown     = document.getElementById("coachDropdown");
+  const currentCoachLabel = document.getElementById("currentCoachLabel");
+
+  // Live search helpers — filter table rows without a re-fetch
+  window.filterStudentTable = (q) => {
+    const query = (q || "").toLowerCase().trim();
+    const rows = document.querySelectorAll("#studentsList tbody tr");
+    let visible = 0;
+    rows.forEach((row) => {
+      const match = !query || row.textContent.toLowerCase().includes(query);
+      row.style.display = match ? "" : "none";
+      if (match) visible++;
+    });
+    const badge = document.getElementById("studentCountBadge");
+    if (badge) badge.textContent = query ? `${visible} of ${rows.length}` : `${rows.length} student${rows.length !== 1 ? "s" : ""}`;
+  };
+
+  window.filterUserTable = (q) => {
+    const query = (q || "").toLowerCase().trim();
+    document.querySelectorAll("#usersListAdmin tbody tr").forEach((row) => {
+      row.style.display = (!query || row.textContent.toLowerCase().includes(query)) ? "" : "none";
+    });
+  };
+
+  // Wire role filter tabs (User Management)
+  document.querySelectorAll("#userRoleTabs .tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#userRoleTabs .tab").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeUserFilter = btn.dataset.filter;
+      const coachById = {};
+      (_allUsersCache || []).filter((u) => u.role === "COACH").forEach((c) => { coachById[c.id] = c.name; });
+      renderUserTable(usersListAdmin, _allUsersCache, coachById, activeUserFilter);
+    });
+  });
+
+  const populateAssignDropdowns = (users) => {
+    _allUsersCache = users;
+    const students = users.filter((u) => u.role === "STUDENT");
+    const coaches  = users.filter((u) => u.role === "COACH");
+
+    if (studentDropdown) {
+      studentDropdown.innerHTML = '<option value="">— select student —</option>' +
+        students.map((s) => `<option value="${s.id}">${s.name} (${s.email})</option>`).join("");
+    }
+    if (coachDropdown) {
+      coachDropdown.innerHTML = '<option value="">— select coach —</option>' +
+        coaches.map((c) => `<option value="${c.id}">${c.name} (${c.email})</option>`).join("");
+    }
+  };
+
+  // When a student is selected, show their current coach assignment
+  if (studentDropdown) {
+    studentDropdown.addEventListener("change", () => {
+      const sid = Number(studentDropdown.value);
+      const student = _allUsersCache.find((u) => u.id === sid);
+      if (!student || !currentCoachLabel) return;
+      if (student.coachId) {
+        const coach = _allUsersCache.find((u) => u.id === student.coachId);
+        currentCoachLabel.textContent = coach
+          ? `Current coach: ${coach.name} (${coach.email})`
+          : `Current coach ID: ${student.coachId}`;
+      } else {
+        currentCoachLabel.textContent = "No coach assigned yet.";
+      }
+    });
+  }
+
+  if (assignCoachForm) {
+    assignCoachForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const studentId = studentDropdown?.value;
+      const coachId   = coachDropdown?.value;
+      if (!studentId || !coachId) {
+        assignCoachStatus.textContent = "Please select both a student and a coach.";
+        assignCoachStatus.style.color = "var(--accent)";
+        return;
+      }
+      const sName = studentDropdown.options[studentDropdown.selectedIndex]?.text || studentId;
+      const cName = coachDropdown.options[coachDropdown.selectedIndex]?.text || coachId;
+      try {
+        const res = await fetch(`/api/users/${studentId}/assign-coach/${coachId}`, {
+          method: "PUT", headers: authHeaders
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          assignCoachStatus.textContent = data.error || "Failed.";
+          assignCoachStatus.style.color = "var(--accent)";
+          return;
+        }
+        assignCoachStatus.textContent = `Assigned ${cName} as coach for ${sName}.`;
+        assignCoachStatus.style.color = "var(--accent-2)";
+        if (currentCoachLabel) currentCoachLabel.textContent = `Current coach: ${cName}`;
+        fetchAllUsersAdmin();
+      } catch (_) {
+        assignCoachStatus.textContent = "Network error.";
+        assignCoachStatus.style.color = "var(--accent)";
+      }
+    });
+  }
+
+  if (removeCoachBtn) {
+    removeCoachBtn.addEventListener("click", async () => {
+      const studentId = studentDropdown?.value;
+      if (!studentId) {
+        assignCoachStatus.textContent = "Select a student first.";
+        assignCoachStatus.style.color = "var(--accent)";
+        return;
+      }
+      const res = await fetch(`/api/users/${studentId}/assign-coach`, { method: "DELETE", headers: authHeaders });
+      if (res.ok) {
+        assignCoachStatus.textContent = "Coach assignment removed.";
+        assignCoachStatus.style.color = "var(--accent-2)";
+        if (currentCoachLabel) currentCoachLabel.textContent = "No coach assigned.";
+        fetchAllUsersAdmin();
+      }
+    });
+  }
+
+  if (userForm) {
+    const userFormStatus = document.getElementById("userFormStatus");
+    userForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(userForm);
+      const rating = fd.get("rating");
+      const payload = { name: fd.get("name"), email: fd.get("email"), password: fd.get("password"), role: fd.get("role") || "STUDENT", goals: fd.get("goals") || null, rating: rating ? Number(rating) : null };
+      try {
+        const res = await fetch("/api/users/register", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders }, body: JSON.stringify(payload) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          if (userFormStatus) { userFormStatus.textContent = data.error || (res.status === 409 ? "Email already exists." : "Failed."); userFormStatus.style.color = "var(--accent)"; }
+          return;
+        }
+        if (userFormStatus) { userFormStatus.textContent = `User "${payload.name}" (${payload.role}) created successfully.`; userFormStatus.style.color = "var(--accent-2)"; }
+        userForm.reset();
+        fetchAllUsersAdmin();
+      } catch (_) { if (userFormStatus) { userFormStatus.textContent = "Network error."; userFormStatus.style.color = "var(--accent)"; } }
+    });
+  }
+
+  // --- Profile section ---
+  let _profileData = {};
+
+  window.switchProfileTab = (tab, btn) => {
+    document.querySelectorAll(".profile-tab").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".profile-tab-content").forEach(c => c.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+    const tc = document.getElementById("profile-tab-" + tab);
+    if (tc) tc.classList.add("active");
+  };
+
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ""; };
+  const setText2 = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v || ""; };
+  const showEl = (id, show) => { const el = document.getElementById(id); if (el) el.style.display = show ? "" : "none"; };
+
+  const loadProfileUI = (u) => {
+    _profileData = u;
+    // Header
+    const initials = (u.name || "?").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+    const avatarImg = document.getElementById("avatarImg");
+    const avatarInitials = document.getElementById("avatarInitials");
+    if (u.profilePicture && avatarImg) {
+      avatarImg.src = u.profilePicture; avatarImg.style.display = ""; if (avatarInitials) avatarInitials.textContent = "";
+    } else {
+      if (avatarImg) avatarImg.style.display = "none"; if (avatarInitials) avatarInitials.textContent = initials;
+    }
+    setText2("profileDisplayName", u.name);
+    const tb = document.getElementById("profileChessTitleBadge");
+    if (tb) { if (u.chessTitle) { tb.textContent = u.chessTitle; tb.style.display = ""; } else { tb.style.display = "none"; } }
+    const rb = document.getElementById("profileRoleBadge");
+    if (rb) rb.textContent = u.role || "—";
+    const lm = document.getElementById("profileLocationMeta");
+    if (lm) lm.textContent = u.location || "";
+    setText2("profileRatingMeta", u.rating != null ? String(u.rating) : "—");
+    const bm = document.getElementById("profileBioMeta");
+    if (bm) bm.textContent = u.bio || "";
+    showEl("profileChessUserMeta", !!u.chessUsername); setText2("profileChessUserMetaVal", u.chessUsername);
+    showEl("profileStyleMeta", !!u.playingStyle); setText2("profileStyleMetaVal", u.playingStyle);
+    showEl("profileJoinedMeta", !!u.joinedAt); setText2("profileJoinedMetaVal", u.joinedAt || "");
+    showEl("profileFideMeta", !!u.fideId); setText2("profileFideMetaVal", u.fideId);
+    // Form fields
+    setVal("profileNameInput", u.name);
+    setVal("profilePhoneInput", u.phone);
+    setVal("profileLocationInput", u.location);
+    setVal("profileBioInput", u.bio);
+    setVal("profileChessTitleInput", u.chessTitle);
+    setVal("profilePlayingStyleInput", u.playingStyle);
+    setVal("profileChessUsernameInput", u.chessUsername);
+    setVal("profileFideIdInput", u.fideId);
+    setVal("profileWhiteOpeningInput", u.favouriteWhiteOpening);
+    setVal("profileBlackOpeningInput", u.favouriteBlackOpening);
+    setVal("profileGoalsInput", u.goals);
+    // Update top greeting avatar if exists
+    const greetingAvatar = document.getElementById("greetingAvatar");
+    if (greetingAvatar) {
+      if (u.profilePicture) { greetingAvatar.src = u.profilePicture; greetingAvatar.style.display = ""; }
+      else { greetingAvatar.style.display = "none"; }
+    }
+  };
+
+  const fetchMyProfile = () => {
+    fetch("/api/users/me", { headers: authHeaders })
+      .then((r) => r.ok ? r.json() : null)
+      .then((u) => { if (u) loadProfileUI(u); })
+      .catch(() => {});
+  };
+
+  // Avatar upload: resize to 256px JPEG before base64 to keep DB size small
+  window.handleAvatarChange = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 256;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+        const avatarImg = document.getElementById("avatarImg");
+        if (avatarImg) { avatarImg.src = dataUrl; avatarImg.style.display = ""; }
+        const ai = document.getElementById("avatarInitials"); if (ai) ai.textContent = "";
+        fetch("/api/users/me/profile", {
+          method: "PUT", headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify({ profilePicture: dataUrl })
+        }).then(r => r.ok ? r.json() : null).then(u => { if (u) loadProfileUI(u); });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Personal info form
+  const profileForm = document.getElementById("profileForm");
+  const profileStatus = document.getElementById("profileStatus");
+  if (profileForm) {
+    profileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(profileForm);
+      if (profileStatus) { profileStatus.textContent = "Saving…"; profileStatus.style.color = "var(--muted)"; }
+      const payload = { name: fd.get("name"), phone: fd.get("phone"), location: fd.get("location"), bio: fd.get("bio") };
+      const res = await fetch("/api/users/me/profile", { method: "PUT", headers: { "Content-Type": "application/json", ...authHeaders }, body: JSON.stringify(payload) });
+      const data = await res.json().catch(() => ({}));
+      if (profileStatus) { profileStatus.textContent = res.ok ? "✓ Profile saved." : (data.error || "Failed."); profileStatus.style.color = res.ok ? "var(--accent-2)" : "var(--accent)"; }
+      if (res.ok) loadProfileUI({ ..._profileData, ...payload });
+    });
+  }
+
+  // Chess profile form
+  const chessProfileForm = document.getElementById("chessProfileForm");
+  const chessProfileStatus = document.getElementById("chessProfileStatus");
+  if (chessProfileForm) {
+    chessProfileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(chessProfileForm);
+      if (chessProfileStatus) { chessProfileStatus.textContent = "Saving…"; chessProfileStatus.style.color = "var(--muted)"; }
+      const payload = {
+        chessTitle: fd.get("chessTitle"), playingStyle: fd.get("playingStyle"),
+        chessUsername: fd.get("chessUsername"), fideId: fd.get("fideId"),
+        favouriteWhiteOpening: fd.get("favouriteWhiteOpening"), favouriteBlackOpening: fd.get("favouriteBlackOpening")
+      };
+      const res = await fetch("/api/users/me/profile", { method: "PUT", headers: { "Content-Type": "application/json", ...authHeaders }, body: JSON.stringify(payload) });
+      const data = await res.json().catch(() => ({}));
+      if (chessProfileStatus) { chessProfileStatus.textContent = res.ok ? "✓ Saved." : (data.error || "Failed."); chessProfileStatus.style.color = res.ok ? "var(--accent-2)" : "var(--accent)"; }
+      if (res.ok) loadProfileUI({ ..._profileData, ...payload });
+    });
+  }
+
+  // Goals form
+  const goalsForm = document.getElementById("goalsForm");
+  const goalsStatus = document.getElementById("goalsStatus");
+  if (goalsForm) {
+    goalsForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const goals = goalsForm.querySelector("[name=goals]").value;
+      if (goalsStatus) { goalsStatus.textContent = "Saving…"; goalsStatus.style.color = "var(--muted)"; }
+      const res = await fetch("/api/users/me/profile", { method: "PUT", headers: { "Content-Type": "application/json", ...authHeaders }, body: JSON.stringify({ goals }) });
+      if (goalsStatus) { goalsStatus.textContent = res.ok ? "✓ Goals saved." : "Failed."; goalsStatus.style.color = res.ok ? "var(--accent-2)" : "var(--accent)"; }
+      if (res.ok) loadProfileUI({ ..._profileData, goals });
+    });
+  }
+
+  // Password form
+  const passwordForm = document.getElementById("passwordForm");
+  const passwordStatus = document.getElementById("passwordStatus");
+  if (passwordForm) {
+    passwordForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const newPassword = passwordForm.querySelector("[name=newPassword]").value;
+      const confirmPassword = passwordForm.querySelector("[name=confirmPassword]").value;
+      if (newPassword !== confirmPassword) {
+        if (passwordStatus) { passwordStatus.textContent = "Passwords do not match."; passwordStatus.style.color = "var(--accent)"; }
+        return;
+      }
+      const res = await fetch("/api/users/me/password", { method: "PUT", headers: { "Content-Type": "application/json", ...authHeaders }, body: JSON.stringify({ newPassword }) });
+      const data = await res.json().catch(() => ({}));
+      if (passwordStatus) { passwordStatus.textContent = res.ok ? "Password updated." : (data.error || "Failed."); passwordStatus.style.color = res.ok ? "var(--accent-2)" : "var(--accent)"; }
+      if (res.ok) passwordForm.reset();
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  MY CLASSES — class slots, enrollment, attendance
+  // ═══════════════════════════════════════════════════════════════
+  const DAYS_ORDER = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
+  let _classesCache = [];
+  let _openClassId  = null;
+
+  // ── toggle create form ──────────────────────────────────────────
+  window.toggleCreateClassForm = () => {
+    const p = document.getElementById("createClassPanel");
+    if (p) p.style.display = p.style.display === "none" ? "" : "none";
+  };
+
+  // ── fetch & render board ────────────────────────────────────────
+  const fetchCoachClasses = async () => {
+    if (storedRole !== "COACH") return;
+    try {
+      const res = await fetch("/api/classes/coach", { headers: authHeaders });
+      if (!res.ok) return;
+      _classesCache = await res.json();
+      renderClassBoard(_classesCache);
+    } catch (_) {}
+  };
+
+  const renderClassBoard = (classes) => {
+    const board = document.getElementById("classBoard");
+    const subtitle = document.getElementById("classesSubtitle");
+    if (!board) return;
+    if (subtitle) subtitle.textContent = `${classes.length} class${classes.length !== 1 ? "es" : ""} total`;
+
+    if (!classes.length) {
+      board.innerHTML = `<div class="empty" style="width:100%;padding:48px 20px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:12px;opacity:0.4;">📋</div>
+        <div style="font-weight:600;margin-bottom:6px;">No classes yet</div>
+        <div class="muted" style="font-size:13px;">Click <strong>+ New Class</strong> above to create your first class slot.</div>
+      </div>`;
+      return;
+    }
+
+    // Group by day
+    const byDay = {};
+    DAYS_ORDER.forEach((d) => { byDay[d] = []; });
+    classes.forEach((c) => { (byDay[c.dayOfWeek] || (byDay[c.dayOfWeek] = [])).push(c); });
+
+    board.innerHTML = DAYS_ORDER
+      .filter((d) => byDay[d].length)
+      .map((day) => `
+        <div class="day-col">
+          <div class="day-col-header">
+            <span>${day}</span>
+            <span>${byDay[day].length}</span>
+          </div>
+          ${byDay[day].map((c) => `
+            <div class="class-card" onclick="openClassDetail(${c.id})">
+              <div class="cc-name">${c.name || "Unnamed"}</div>
+              <div class="cc-row"><span>${c.classType || "—"}</span><span>${c.startTime || ""}${c.endTime ? "–" + c.endTime : ""}</span></div>
+              ${c.activeCount > 0 ? `<div class="cc-row"><span class="cc-active">● ${c.activeCount} active</span></div>` : ""}
+              ${(c.students||[]).filter(s=>s.status==="PENDING").length > 0 ? `<div class="cc-row"><span class="cc-pending">⏳ ${(c.students||[]).filter(s=>s.status==="PENDING").length} pending</span></div>` : ""}
+              ${c.sessionDates ? `<div class="cc-row" style="color:var(--muted);font-size:11px;margin-top:4px;">${c.sessionDates}</div>` : ""}
+              <div style="margin-top:8px;"><span class="status-pill ${c.status === 'ACTIVE' ? 'status-active' : 'status-inactive'}">${c.status}</span></div>
+            </div>
+          `).join("")}
+        </div>
+      `).join("");
+  };
+
+  // ── open class detail modal ─────────────────────────────────────
+  window.openClassDetail = async (classId) => {
+    _openClassId = classId;
+    const overlay = document.getElementById("classDetailOverlay");
+    const content = document.getElementById("classDetailContent");
+    if (!overlay || !content) return;
+    overlay.classList.remove("hidden");
+    content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">Loading…</div>`;
+    try {
+      const res = await fetch(`/api/classes/${classId}`, { headers: authHeaders });
+      if (!res.ok) throw new Error();
+      const cls = await res.json();
+      renderClassDetail(cls);
+    } catch (_) {
+      content.innerHTML = `<div class="empty">Failed to load class details.</div>`;
+    }
+  };
+
+  const statusPill = (s) => {
+    const map = { ACTIVE:"status-active", INACTIVE:"status-inactive", PENDING:"status-pending" };
+    return `<span class="status-pill ${map[s]||""}">${s}</span>`;
+  };
+
+  const renderClassDetail = (cls) => {
+    const content = document.getElementById("classDetailContent");
+    if (!content) return;
+    // Fetch coach's students for the enroll dropdown
+    const myStudents = _classesCache.length > 0 ? [] : [];
+    const enrolledIds = new Set((cls.students||[]).map(s=>s.studentId));
+    const att = cls.attendance || [];
+
+    content.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        <div>
+          <h3>${cls.name || "Unnamed class"}</h3>
+          <div class="muted" style="font-size:13px;">${cls.dayOfWeek} · ${cls.startTime||""}${cls.endTime?"–"+cls.endTime:""} · ${cls.classType||"—"}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          ${statusPill(cls.status)}
+          <button class="small-action" onclick="toggleClassStatus(${cls.id},'${cls.status==="ACTIVE"?"INACTIVE":"ACTIVE"}')">
+            ${cls.status==="ACTIVE" ? "Deactivate" : "Activate"}
+          </button>
+          <button class="small-action" style="color:#f87171;" onclick="deleteClass(${cls.id})">Delete</button>
+        </div>
+      </div>
+
+      <!-- Info grid -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:18px;">
+        ${cls.sessionDates ? `<div class="stat panel" style="padding:10px 14px;"><div class="label" style="font-size:12px;">Session dates</div><div style="font-size:13px;font-weight:600;">${cls.sessionDates}</div></div>` : ""}
+        ${cls.monthlySessionCount ? `<div class="stat panel" style="padding:10px 14px;"><div class="label" style="font-size:12px;">Monthly sessions</div><div style="font-size:22px;font-weight:700;">${cls.monthlySessionCount}×</div></div>` : ""}
+        ${cls.zoomAccount ? `<div class="stat panel" style="padding:10px 14px;"><div class="label" style="font-size:12px;">Zoom account</div><div style="font-size:13px;font-weight:600;">${cls.zoomAccount}</div></div>` : ""}
+        ${cls.meetingId ? `<div class="stat panel" style="padding:10px 14px;"><div class="label" style="font-size:12px;">Meeting ID</div><div style="font-size:13px;font-weight:600;">${cls.meetingId}</div></div>` : ""}
+      </div>
+      ${cls.zoomLink ? `<div style="margin-bottom:16px;"><a href="${cls.zoomLink}" target="_blank" class="btn ghost" style="font-size:13px;padding:6px 14px;">🔗 Open Zoom / Meet</a></div>` : ""}
+
+      <!-- Students section -->
+      <div style="border-top:1px solid rgba(184,199,219,0.12);padding-top:16px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <h4 style="margin:0;">Students (${(cls.students||[]).length})</h4>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <select id="enrollStudentSel" style="width:220px;padding:6px 10px;font-size:13px;">
+              <option value="">— add student —</option>
+            </select>
+            <button class="btn primary" style="padding:6px 14px;font-size:13px;" onclick="enrollStudentToClass(${cls.id})">Enroll</button>
+          </div>
+        </div>
+        ${(cls.students||[]).length === 0 ? `<div class="empty" style="font-size:13px;">No students enrolled. Use the dropdown above.</div>` : `
+        <table class="att-table">
+          <thead><tr><th>Student</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${(cls.students||[]).map(s=>`
+              <tr id="row-stu-${s.studentId}">
+                <td><strong>${s.studentName||"—"}</strong></td>
+                <td style="color:var(--muted);">${s.studentEmail||"—"}</td>
+                <td>${statusPill(s.status)}</td>
+                <td style="display:flex;gap:6px;flex-wrap:wrap;padding:6px 0;">
+                  ${s.status !== "ACTIVE" ? `<button class="small-action" style="color:#5cf5a5;" onclick="setEnrollmentStatus(${cls.id},${s.studentId},'ACTIVE')">✓ Activate</button>` : ""}
+                  ${s.status === "ACTIVE" ? `<button class="small-action" onclick="setEnrollmentStatus(${cls.id},${s.studentId},'INACTIVE')">Deactivate</button>` : ""}
+                  <button class="small-action" style="color:#f87171;" onclick="removeStudentFromClass(${cls.id},${s.studentId})">Remove</button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>`}
+        <div class="status" id="enrollStatus" style="margin-top:8px;min-height:18px;"></div>
+      </div>
+
+      <!-- Attendance section -->
+      <div style="border-top:1px solid rgba(184,199,219,0.12);padding-top:16px;">
+        <h4 style="margin:0 0 12px;">Attendance</h4>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
+          <label style="font-size:13px;color:var(--muted);display:grid;gap:4px;">Session date
+            <input type="date" id="attDatePicker" style="padding:6px 10px;font-size:13px;" value="${new Date().toISOString().slice(0,10)}">
+          </label>
+          <button class="btn primary" style="padding:6px 14px;font-size:13px;" onclick="recordAttendanceAll(${cls.id})">Mark all present</button>
+          <button class="btn ghost" style="padding:6px 14px;font-size:13px;" onclick="loadAttendanceForDate(${cls.id})">Load date</button>
+        </div>
+        <!-- Per-student attendance checkboxes for selected date -->
+        <div id="attCheckboxList" style="display:grid;gap:6px;margin-bottom:14px;">
+          ${(cls.students||[]).map(s=>`
+            <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;border:1px solid rgba(184,199,219,0.1);background:rgba(255,255,255,0.02);font-size:14px;cursor:pointer;">
+              <input type="checkbox" id="att-${s.studentId}" checked style="width:16px;height:16px;accent-color:#5cf5a5;">
+              <span>${s.studentName||"Unknown"}</span>
+              <span style="color:var(--muted);font-size:12px;">${s.studentEmail||""}</span>
+            </label>
+          `).join("")}
+          ${(cls.students||[]).length === 0 ? `<div class="muted" style="font-size:13px;">Enroll students first.</div>` : ""}
+        </div>
+        <button class="btn primary" style="padding:8px 18px;" onclick="submitAttendance(${cls.id})">Save Attendance</button>
+        <div class="status" id="attStatus" style="margin-top:8px;min-height:18px;"></div>
+
+        <!-- History table -->
+        ${att.length > 0 ? `
+        <div style="margin-top:16px;">
+          <div style="font-weight:600;margin-bottom:8px;font-size:13px;color:var(--muted);">ATTENDANCE HISTORY</div>
+          <table class="att-table">
+            <thead><tr><th>Date</th><th>Student</th><th>Status</th></tr></thead>
+            <tbody>
+              ${att.slice(0,20).map(a=>`
+                <tr>
+                  <td>${a.sessionDate}</td>
+                  <td>${a.studentName||"—"}</td>
+                  <td>${a.present ? '<span style="color:#5cf5a5;font-weight:600;">Present</span>' : '<span style="color:#f87171;font-weight:600;">Absent</span>'}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+          ${att.length > 20 ? `<div class="muted" style="font-size:12px;margin-top:6px;">Showing latest 20 of ${att.length} records.</div>` : ""}
+        </div>` : ""}
+      </div>
+    `;
+
+    // Populate enroll dropdown from coach's student list
+    populateEnrollDropdown(cls.id, enrolledIds);
+  };
+
+  const populateEnrollDropdown = async (classId, alreadyEnrolled) => {
+    const sel = document.getElementById("enrollStudentSel");
+    if (!sel) return;
+    try {
+      const res = await fetch("/api/users/my-students", { headers: authHeaders });
+      const students = res.ok ? await res.json() : [];
+      const available = students.filter(s => !alreadyEnrolled.has(s.id));
+      sel.innerHTML = '<option value="">— add student —</option>' +
+        available.map(s => `<option value="${s.id}">${s.name} (${s.email})</option>`).join("");
+      if (!available.length) sel.innerHTML = '<option value="">All students enrolled</option>';
+    } catch (_) {}
+  };
+
+  // ── enroll a student ────────────────────────────────────────────
+  window.enrollStudentToClass = async (classId) => {
+    const sel = document.getElementById("enrollStudentSel");
+    const status = document.getElementById("enrollStatus");
+    const studentId = sel?.value;
+    if (!studentId) { if (status) { status.textContent = "Select a student first."; status.style.color = "var(--accent)"; } return; }
+    try {
+      const res = await fetch(`/api/classes/${classId}/enroll`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ studentId: Number(studentId) })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { if (status) { status.textContent = data.error || "Failed."; status.style.color = "var(--accent)"; } return; }
+      if (status) { status.textContent = "Student enrolled (PENDING — activate after payment)."; status.style.color = "var(--accent-2)"; }
+      openClassDetail(classId);
+    } catch (_) { if (status) { status.textContent = "Network error."; status.style.color = "var(--accent)"; } }
+  };
+
+  // ── set enrollment status (Activate / Deactivate) ───────────────
+  window.setEnrollmentStatus = async (classId, studentId, newStatus) => {
+    try {
+      await fetch(`/api/classes/${classId}/students/${studentId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ status: newStatus })
+      });
+      openClassDetail(classId);
+    } catch (_) {}
+  };
+
+  // ── remove student from class ───────────────────────────────────
+  window.removeStudentFromClass = async (classId, studentId) => {
+    if (!confirm("Remove this student from the class?")) return;
+    await fetch(`/api/classes/${classId}/students/${studentId}`, { method: "DELETE", headers: authHeaders });
+    openClassDetail(classId);
+  };
+
+  // ── toggle class status ─────────────────────────────────────────
+  window.toggleClassStatus = async (classId, newStatus) => {
+    await fetch(`/api/classes/${classId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...authHeaders },
+      body: JSON.stringify({ status: newStatus })
+    });
+    fetchCoachClasses();
+    openClassDetail(classId);
+  };
+
+  // ── delete class ────────────────────────────────────────────────
+  window.deleteClass = async (classId) => {
+    if (!confirm("Delete this class and all its attendance records?")) return;
+    await fetch(`/api/classes/${classId}`, { method: "DELETE", headers: authHeaders });
+    closeClassModal();
+    fetchCoachClasses();
+  };
+
+  // ── record attendance ───────────────────────────────────────────
+  window.submitAttendance = async (classId) => {
+    const dateInput = document.getElementById("attDatePicker");
+    const attStatus = document.getElementById("attStatus");
+    const date = dateInput?.value;
+    if (!date) { if (attStatus) { attStatus.textContent = "Pick a date first."; attStatus.style.color = "var(--accent)"; } return; }
+    const checkboxes = document.querySelectorAll("#attCheckboxList input[type=checkbox]");
+    if (!checkboxes.length) { if (attStatus) { attStatus.textContent = "No students enrolled."; attStatus.style.color = "var(--accent)"; } return; }
+    if (attStatus) { attStatus.textContent = "Saving…"; attStatus.style.color = "var(--muted)"; }
+    const calls = Array.from(checkboxes).map((cb) => {
+      const studentId = cb.id.replace("att-","");
+      return fetch(`/api/classes/${classId}/attendance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({ studentId: Number(studentId), sessionDate: date, present: cb.checked })
+      });
+    });
+    try {
+      await Promise.all(calls);
+      if (attStatus) { attStatus.textContent = `✓ Attendance saved for ${date}.`; attStatus.style.color = "var(--accent-2)"; }
+      openClassDetail(classId); // refresh to show new records
+    } catch (_) { if (attStatus) { attStatus.textContent = "Error saving attendance."; attStatus.style.color = "var(--accent)"; } }
+  };
+
+  window.recordAttendanceAll = () => {
+    document.querySelectorAll("#attCheckboxList input[type=checkbox]").forEach(cb => cb.checked = true);
+  };
+
+  window.loadAttendanceForDate = async (classId) => {
+    const dateInput = document.getElementById("attDatePicker");
+    const date = dateInput?.value;
+    if (!date) return;
+    try {
+      const res = await fetch(`/api/classes/${classId}/attendance`, { headers: authHeaders });
+      const records = res.ok ? await res.json() : [];
+      const presentOnDate = new Set(records.filter(r => r.sessionDate === date && r.present).map(r => r.studentId));
+      document.querySelectorAll("#attCheckboxList input[type=checkbox]").forEach(cb => {
+        const sid = Number(cb.id.replace("att-",""));
+        cb.checked = presentOnDate.has(sid);
+      });
+    } catch (_) {}
+  };
+
+  // ── close modal ─────────────────────────────────────────────────
+  window.closeClassModal = (e) => {
+    if (e && e.target !== document.getElementById("classDetailOverlay")) return;
+    document.getElementById("classDetailOverlay")?.classList.add("hidden");
+    _openClassId = null;
+  };
+
+  // ── create class form ───────────────────────────────────────────
+  const createClassForm = document.getElementById("createClassForm");
+  if (createClassForm) {
+    createClassForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(createClassForm);
+      const status = document.getElementById("createClassStatus");
+      const payload = {
+        name: fd.get("name"), dayOfWeek: fd.get("dayOfWeek"),
+        startTime: fd.get("startTime"), endTime: fd.get("endTime"),
+        classType: fd.get("classType"),
+        monthlySessionCount: fd.get("monthlySessionCount") || null,
+        sessionDates: fd.get("sessionDates"),
+        zoomAccount: fd.get("zoomAccount"), zoomLink: fd.get("zoomLink"),
+        meetingId: fd.get("meetingId")
+      };
+      try {
+        const res = await fetch("/api/classes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { if (status) { status.textContent = data.error || "Failed."; status.style.color = "var(--accent)"; } return; }
+        if (status) { status.textContent = `✓ Class "${payload.name}" created.`; status.style.color = "var(--accent-2)"; }
+        createClassForm.reset();
+        toggleCreateClassForm();
+        fetchCoachClasses();
+      } catch (_) { if (status) { status.textContent = "Network error."; status.style.color = "var(--accent)"; } }
+    });
+  }
+
+  // ─── LESSON MANAGEMENT TAB SWITCHER ───────────────────────────────────────
+  window.switchLmTab = (tab, btn) => {
+    document.querySelectorAll(".lm-tab").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".lm-tab-content").forEach(c => c.classList.remove("active"));
+    if (btn) btn.classList.add("active");
+    const tc = document.getElementById("lm-tab-" + tab);
+    if (tc) tc.classList.add("active");
+    if (tab === "schedule") { call(fetchLmSessions); }
+  };
+
+  // ─── SESSION PLANS (COACH) ─────────────────────────────────────────────────
+  // Populate student dropdown and set default month when Lesson Management loads
+  const initPlanForm = () => {
+    const monthInput = document.getElementById("planMonth");
+    if (monthInput && !monthInput.value) {
+      const now = new Date();
+      monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    }
+    populatePlanStudentDropdown();
+    updatePlanTotal();
+  };
+
+  const populatePlanStudentDropdown = () => {
+    const sel = document.getElementById("planStudentSelect");
+    if (!sel) { console.warn("[SCETS] planStudentSelect not found"); return; }
+    const statusEl = document.getElementById("planStudentStatus");
+    const tok = authToken ? authToken.substring(0, 20) + "…" : "MISSING";
+    console.log("[SCETS] populatePlanStudentDropdown called. token=" + tok + " role=" + storedRole);
+    if (statusEl) { statusEl.textContent = "Loading…"; statusEl.style.color = "var(--muted)"; }
+    fetch("/api/users/my-students", { headers: authHeaders })
+      .then(r => {
+        console.log("[SCETS] /api/users/my-students status=" + r.status);
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(students => {
+        console.log("[SCETS] students received:", students);
+        const list = Array.isArray(students) ? students : [];
+        sel.innerHTML = '<option value="">— select student —</option>';
+        list.forEach(s => {
+          const opt = document.createElement("option");
+          opt.value = s.id;
+          opt.textContent = s.name || s.email;
+          sel.appendChild(opt);
+        });
+        if (statusEl) {
+          statusEl.textContent = list.length ? list.length + " student(s) loaded ✓" : "No students assigned to you";
+          statusEl.style.color = list.length ? "#5cf5a5" : "#f5b841";
+        }
+      }).catch(err => {
+        console.error("[SCETS] my-students error:", err);
+        if (statusEl) { statusEl.textContent = "Error: " + err.message; statusEl.style.color = "#e74c3c"; }
+        const opt = document.createElement("option");
+        opt.value = ""; opt.disabled = true;
+        opt.textContent = "Error: " + err.message;
+        sel.appendChild(opt);
+      });
+  };
+
+  window.loadPlanStudents = populatePlanStudentDropdown;
+
+  window.updatePlanTotal = () => {
+    const sessions = parseInt(document.getElementById("planSessions")?.value || "4", 10);
+    const price = parseFloat(document.getElementById("planPrice")?.value || "50");
+    const preview = document.getElementById("planTotalPreview");
+    if (preview) preview.textContent = `RM ${(sessions * price).toFixed(2)}`;
+  };
+
+  const fetchSessionPlans = () => {
+    populatePlanStudentDropdown();
+    fetch("/api/session-plans/coach", { headers: authHeaders })
+      .then(r => r.json()).then(plans => renderSessionPlans(plans))
+      .catch(() => {});
+  };
+
+  const renderSessionPlans = (plans) => {
+    const container = document.getElementById("sessionPlansList");
+    if (!container) return;
+    if (!plans || !plans.length) {
+      container.innerHTML = '<div class="empty muted" style="text-align:center;padding:32px;">No session plans yet. Create one above to generate a student invoice.</div>';
+      return;
+    }
+    const statusCls = s => s === "ACTIVE" ? "status-active" : s === "PENDING_PAYMENT" ? "status-pending" : "status-inactive";
+    const statusLabel = s => s === "ACTIVE" ? "Active" : s === "PENDING_PAYMENT" ? "Awaiting payment" : s;
+    const payBadge = pay => {
+      if (!pay) return "";
+      const cls = pay.status === "PAID" ? "status-active" : "status-pending";
+      return `<span class="status-pill ${cls}" style="font-size:11px;">${pay.status === "PAID" ? "✓ Paid" : "⏳ Unpaid"}</span>`;
+    };
+    container.innerHTML = plans.map(p => `
+      <div class="plan-card">
+        <div style="font-size:28px;opacity:0.5;flex-shrink:0;">👤</div>
+        <div class="pc-info">
+          <div class="pc-name">${p.studentName || "Student"}</div>
+          <div class="pc-meta">${p.month || "—"} &nbsp;·&nbsp; ${p.sessionsPerMonth} sessions &nbsp;·&nbsp; RM ${(p.pricePerSession || 0).toFixed(2)}/session</div>
+          <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span class="status-pill ${statusCls(p.status)}">${statusLabel(p.status)}</span>
+            ${payBadge(p.payment)}
+            <span style="font-size:13px;color:var(--muted);">Total: <strong style="color:var(--text);">RM ${(p.totalAmount || 0).toFixed(2)}</strong></span>
+          </div>
+          ${p.notes ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">📝 ${p.notes}</div>` : ""}
+        </div>
+        <div style="flex-shrink:0;">
+          <button class="btn ghost" style="font-size:12px;padding:6px 12px;" onclick="deletePlan(${p.id})">Delete</button>
+        </div>
+      </div>
+    `).join("");
+  };
+
+  window.deletePlan = (id) => {
+    if (!confirm("Delete this session plan? If unpaid, the invoice will also be removed.")) return;
+    fetch(`/api/session-plans/${id}`, { method: "DELETE", headers: authHeaders })
+      .then(r => { if (r.ok) fetchSessionPlans(); })
+      .catch(() => {});
+  };
+
+  const planForm = document.getElementById("sessionPlanForm");
+  if (planForm) {
+    // Live total preview
+    ["planSessions", "planPrice"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("input", updatePlanTotal);
+    });
+
+    planForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const status = document.getElementById("planFormStatus");
+      const fd = new FormData(planForm);
+      const payload = {
+        studentId: fd.get("studentId"),
+        month: fd.get("month"),
+        sessionsPerMonth: parseInt(fd.get("sessionsPerMonth"), 10),
+        pricePerSession: parseFloat(fd.get("pricePerSession")),
+        notes: fd.get("notes") || null
+      };
+      if (!payload.studentId) { if (status) { status.textContent = "Please select a student."; status.style.color = "var(--accent)"; } return; }
+      try {
+        const res = await fetch("/api/session-plans", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { if (status) { status.textContent = data.error || "Failed."; status.style.color = "var(--accent)"; } return; }
+        if (status) { status.textContent = "✓ Plan created and invoice sent to student."; status.style.color = "var(--accent-2)"; }
+        planForm.reset();
+        fetchSessionPlans();
+        setTimeout(() => { if (status) status.textContent = ""; }, 4000);
+      } catch (_) { if (status) { status.textContent = "Network error."; status.style.color = "var(--accent)"; } }
+    });
+  }
+
+  // Schedule session list inside Lesson Management tab
+  const fetchLmSessions = () => {
+    fetch("/api/sessions/coach", { headers: authHeaders })
+      .then(r => r.json()).then(sessions => {
+        const list = document.getElementById("lmSessionsList");
+        if (!list) return;
+        if (!sessions || !sessions.length) { list.innerHTML = '<li class="muted">No sessions scheduled yet.</li>'; return; }
+        list.innerHTML = (sessions || []).slice(0, 10).map(s => {
+          const dt = s.scheduledAt ? new Date(s.scheduledAt).toLocaleString() : "TBD";
+          return `<li>
+            <strong>${s.title}</strong><br>
+            <span class="muted" style="font-size:12px;">${dt}</span>
+            ${s.zoomLink ? `<br><a href="${s.zoomLink}" target="_blank" style="font-size:12px;color:var(--accent-2);">Join Zoom</a>` : ""}
+            <button class="btn ghost" style="font-size:11px;padding:3px 8px;margin-left:8px;" onclick="deleteSession(${s.id})">✕</button>
+          </li>`;
+        }).join("");
+      }).catch(() => {});
+  };
+
+  // sessionForm was captured above (line 2522); attach listener for Lesson Management tab
+  if (sessionForm) {
+    sessionForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(sessionForm);
+      const status = document.getElementById("sessionFormStatus");
+      const payload = { title: fd.get("title"), zoomLink: fd.get("zoomLink"), scheduledAt: fd.get("scheduledAt"), description: fd.get("description") };
+      try {
+        const res = await fetch("/api/sessions", { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders }, body: JSON.stringify(payload) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { if (status) { status.textContent = data.error || "Failed."; status.style.color = "var(--accent)"; } return; }
+        if (status) { status.textContent = "✓ Session scheduled."; status.style.color = "var(--accent-2)"; }
+        sessionForm.reset();
+        fetchLmSessions();
+        fetchCoachSessions();
+      } catch (_) { if (status) { status.textContent = "Network error."; status.style.color = "var(--accent)"; } }
+    });
+  }
+
+  window.deleteSession = (id) => {
+    if (!confirm("Delete this session?")) return;
+    fetch(`/api/sessions/${id}`, { method: "DELETE", headers: authHeaders })
+      .then(r => { if (r.ok) { fetchLmSessions(); fetchCoachSessions(); } })
+      .catch(() => {});
+  };
+
+  // ─── PAYMENTS (STUDENT) ────────────────────────────────────────────────────
+  const fetchMyPayments = () => {
+    fetch("/api/payments/student", { headers: authHeaders })
+      .then(r => r.json()).then(payments => renderPayments(payments))
+      .catch(() => {
+        const c = document.getElementById("paymentsList");
+        if (c) c.innerHTML = '<div class="empty muted" style="text-align:center;padding:32px;">Could not load payments.</div>';
+      });
+  };
+
+  const renderPayments = (payments) => {
+    const container = document.getElementById("paymentsList");
+    if (!container) return;
+    if (!payments || !payments.length) {
+      container.innerHTML = `<div style="text-align:center;padding:48px 20px;">
+        <div style="font-size:48px;margin-bottom:12px;opacity:0.4;">💳</div>
+        <div style="font-weight:600;margin-bottom:6px;">No payments yet</div>
+        <div class="muted" style="font-size:14px;">Your coach will create a session plan and invoice for you here.</div>
+      </div>`;
+      return;
+    }
+    const fmtMonth = m => { if (!m) return "—"; const [y, mo] = m.split("-"); const names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; return `${names[parseInt(mo,10)-1]} ${y}`; };
+    container.innerHTML = payments.map(p => {
+      const isPaid = p.status === "PAID";
+      return `<div class="pay-card ${isPaid ? "pay-paid" : "pay-pending"}">
+        <div style="font-size:32px;flex-shrink:0;">${isPaid ? "✅" : "⏳"}</div>
+        <div class="pay-info">
+          <div class="pay-title">${fmtMonth(p.month)} — ${p.sessionCount || 0} sessions</div>
+          <div class="pay-meta">${isPaid ? `Paid on ${p.paidAt ? p.paidAt.slice(0,10) : "—"}` : "Payment pending — pay to activate your sessions"}</div>
+        </div>
+        <div class="pay-amount">RM ${(p.totalAmount || 0).toFixed(2)}</div>
+        ${!isPaid ? `<button class="btn primary" onclick="payNow(${p.id})">Pay Now</button>` : '<span class="status-pill status-active">Paid</span>'}
+      </div>`;
+    }).join("");
+  };
+
+  window.payNow = async (paymentId) => {
+    if (!confirm("Confirm payment? This will activate your session plan for the month.")) return;
+    try {
+      const res = await fetch(`/api/payments/${paymentId}/pay`, { method: "POST", headers: authHeaders });
+      if (res.ok) {
+        fetchMyPayments();
+        // Also show payment alert on home
+        fetchPendingPaymentBanner();
+      }
+    } catch (_) {}
+  };
+
+  const fetchPendingPaymentBanner = () => {
+    if (storedRole !== "STUDENT") return;
+    fetch("/api/payments/student", { headers: authHeaders })
+      .then(r => r.json()).then(payments => {
+        const pending = (payments || []).filter(p => p.status === "PENDING");
+        renderPaymentBanner(pending);
+      }).catch(() => {});
+  };
+
+  const renderPaymentBanner = (pendingList) => {
+    let banner = document.getElementById("paymentBanner");
+    const target = document.getElementById("section-dashboard");
+    if (!target) return;
+    if (!pendingList || !pendingList.length) { if (banner) banner.remove(); return; }
+    if (!banner) {
+      banner = document.createElement("div");
+      banner.id = "paymentBanner";
+      target.insertBefore(banner, target.firstChild);
+    }
+    const total = pendingList.reduce((s, p) => s + (p.totalAmount || 0), 0);
+    banner.innerHTML = `<div style="background:rgba(245,184,65,0.12);border:1px solid rgba(245,184,65,0.4);border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="font-size:24px;">💳</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;margin-bottom:2px;">Payment required — RM ${total.toFixed(2)}</div>
+        <div style="font-size:13px;color:var(--muted);">You have ${pendingList.length} pending invoice${pendingList.length > 1 ? "s" : ""}. Pay to activate your sessions for the month.</div>
+      </div>
+      <button class="btn primary" onclick="switchView('payments')">View Payments</button>
+    </div>`;
+  };
+
+  // ─── CHAT / MESSAGES ───────────────────────────────────────────────────────
+  var _chatPartnerId = null;
+  var _chatPartnerName = "";
+  var _chatPollTimer = null;
+
+  const initMessages = () => {
+    if (storedRole === "COACH") {
+      const layout = document.getElementById("chatCoachLayout");
+      const studentLayout = document.getElementById("chatStudentLayout");
+      if (layout) layout.style.display = "";
+      if (studentLayout) studentLayout.style.display = "none";
+      loadCoachChatStudents();
+    } else {
+      const layout = document.getElementById("chatStudentLayout");
+      const coachLayout = document.getElementById("chatCoachLayout");
+      if (layout) layout.style.display = "";
+      if (coachLayout) coachLayout.style.display = "none";
+      initStudentChat();
+    }
+  };
+
+  // Coach: load student list in sidebar
+  const loadCoachChatStudents = () => {
+    fetch("/api/users/my-students", { headers: authHeaders })
+      .then(r => r.json()).then(students => {
+        const list = document.getElementById("chatStudentListItems");
+        if (!list) return;
+        if (!students || !students.length) {
+          list.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--muted);">No students yet.</div>';
+          return;
+        }
+        list.innerHTML = students.map(s => {
+          const initials = (s.name || "?").split(" ").map(w => w[0]).slice(0,2).join("").toUpperCase();
+          return `<div class="chat-person" id="chat-person-${s.id}" onclick="openCoachChat(${s.id},'${(s.name || "Student").replace(/'/g, "\\'")}')">
+            <div class="cp-avatar">${initials}</div>
+            <div>
+              <div class="cp-name">${s.name || "—"}</div>
+              <div class="cp-sub">${s.email || ""}</div>
+            </div>
+          </div>`;
+        }).join("");
+      }).catch(() => {});
+  };
+
+  window.openCoachChat = (studentId, studentName) => {
+    _chatPartnerId = studentId;
+    _chatPartnerName = studentName;
+    document.querySelectorAll(".chat-person").forEach(el => el.classList.remove("active"));
+    const person = document.getElementById(`chat-person-${studentId}`);
+    if (person) person.classList.add("active");
+
+    const panel = document.getElementById("chatMainPanel");
+    if (!panel) return;
+    panel.innerHTML = `
+      <div class="chat-header">
+        <div style="width:32px;height:32px;border-radius:50%;background:rgba(130,189,74,0.25);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--accent-2);">${studentName.split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase()}</div>
+        ${studentName}
+      </div>
+      <div class="chat-messages" id="chatWindowMessages"></div>
+      <div class="chat-input-row">
+        <input id="chatCoachInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendCoachMessage()">
+        <button class="btn primary" onclick="sendCoachMessage()">Send</button>
+      </div>
+    `;
+    loadChatMessages();
+    startChatPolling();
+  };
+
+  const loadChatMessages = () => {
+    if (!_chatPartnerId) return;
+    const userId = parseInt(localStorage.getItem("userId") || "0", 10);
+    fetch(`/api/chat/with/${_chatPartnerId}`, { headers: authHeaders })
+      .then(r => r.json()).then(messages => {
+        const containerId = storedRole === "COACH" ? "chatWindowMessages" : "chatStudentMessages";
+        renderMessages(messages, userId, containerId);
+      }).catch(() => {});
+  };
+
+  const renderMessages = (messages, myId, containerId) => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (!messages || !messages.length) {
+      container.innerHTML = '<div class="chat-placeholder"><div style="font-size:28px;opacity:0.3;">💬</div><div>No messages yet. Say hello!</div></div>';
+      return;
+    }
+    container.innerHTML = messages.map(m => {
+      const mine = m.fromId === myId;
+      const time = m.sentAt ? m.sentAt.slice(0, 16).replace("T", " ") : "";
+      return `<div class="chat-bubble ${mine ? "mine" : "theirs"}">
+        ${m.message}
+        <div class="cb-time">${time}${mine ? "" : " · " + (m.fromName || "")}</div>
+      </div>`;
+    }).join("");
+    container.scrollTop = container.scrollHeight;
+  };
+
+  window.sendCoachMessage = async () => {
+    const input = document.getElementById("chatCoachInput");
+    if (!input || !input.value.trim() || !_chatPartnerId) return;
+    const message = input.value.trim();
+    input.value = "";
+    await fetch("/api/chat/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders },
+      body: JSON.stringify({ toId: _chatPartnerId, message })
+    }).catch(() => {});
+    loadChatMessages();
+  };
+
+  // Student chat init
+  const initStudentChat = () => {
+    // Get coach ID from session plan or user data
+    const userId = parseInt(localStorage.getItem("userId") || "0", 10);
+    fetch("/api/session-plans/student", { headers: authHeaders })
+      .then(r => r.json()).then(plans => {
+        if (plans && plans.length && plans[0].coachId) {
+          _chatPartnerId = plans[0].coachId;
+          _chatPartnerName = plans[0].coachName || "Coach";
+          const header = document.getElementById("chatStudentHeader");
+          if (header) header.textContent = `Chat with ${_chatPartnerName}`;
+          loadChatMessages();
+          startChatPolling();
+        } else {
+          // Fallback: load coach from user data
+          fetch("/api/users/me", { headers: authHeaders })
+            .then(r => r.json()).then(u => {
+              if (u.coachId) {
+                _chatPartnerId = u.coachId;
+                fetch(`/api/users/me`, { headers: authHeaders }).then(() => {});
+                // Try to get coach name via session plans or just use "Coach"
+                const header = document.getElementById("chatStudentHeader");
+                if (header) header.textContent = "Chat with your Coach";
+                loadChatMessages();
+                startChatPolling();
+              } else {
+                const msgs = document.getElementById("chatStudentMessages");
+                if (msgs) msgs.innerHTML = '<div class="chat-placeholder"><div style="font-size:28px;opacity:0.3;">👤</div><div>No coach assigned yet.</div></div>';
+              }
+            }).catch(() => {});
+        }
+      }).catch(() => {});
+  };
+
+  window.sendStudentMessage = async () => {
+    const input = document.getElementById("chatStudentInput");
+    if (!input || !input.value.trim() || !_chatPartnerId) return;
+    const message = input.value.trim();
+    input.value = "";
+    await fetch("/api/chat/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders },
+      body: JSON.stringify({ toId: _chatPartnerId, message })
+    }).catch(() => {});
+    loadChatMessages();
+  };
+
+  const startChatPolling = () => {
+    if (_chatPollTimer) clearInterval(_chatPollTimer);
+    _chatPollTimer = setInterval(loadChatMessages, 5000);
+  };
+
+  const stopChatPolling = () => {
+    if (_chatPollTimer) { clearInterval(_chatPollTimer); _chatPollTimer = null; }
+  };
+
+  // Stop polling when leaving the messages view
+  document.querySelectorAll("a[data-target]").forEach(link => {
+    if (link.dataset.target !== "messages") {
+      link.addEventListener("click", stopChatPolling, { capture: true });
+    }
+  });
+
+  // Unread badge polling (every 30s)
+  const pollUnreadCount = () => {
+    fetch("/api/chat/unread-count", { headers: authHeaders })
+      .then(r => r.json()).then(data => {
+        const count = data.count || 0;
+        ["chatUnreadBadge", "chatUnreadBadgeCoach"].forEach(id => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (count > 0) { el.textContent = count; el.style.display = ""; }
+          else { el.style.display = "none"; }
+        });
+      }).catch(() => {});
+  };
+
+  // ─── STUDENT PAYMENT BANNER (auto-load on student home) ───────────────────
+  if (storedRole === "STUDENT") {
+    fetchPendingPaymentBanner();
+    setInterval(pollUnreadCount, 30000);
+    pollUnreadCount();
+  }
+  if (storedRole === "COACH") {
+    setInterval(pollUnreadCount, 30000);
+    pollUnreadCount();
+  }
+
 </script>
 <footer class="site-footer">
   <div>Smart Chess Education & Trainer System — Train smarter, review faster.</div>
