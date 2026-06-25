@@ -1,53 +1,73 @@
 # FYP-v1.0.1
-Untuk Present
 # Smart Chess Education & Trainer System
 
 ## Project Overview
-A web-based AI-assisted chess education system using Stockfish engine to help players analyze games, learn best moves, and improve performance.
+Smart Chess Education & Trainer System is a web-based chess learning platform that helps students practice puzzles, analyze positions, and receive training support from coaches. The system uses Spring Boot, MySQL, Stockfish, and computer vision tools to support chess education workflows.
 
-## Technologies That I Used
+## Problem Statement
+Chess students often rely on separate tools for puzzle practice, game analysis, and coach feedback. This project combines those workflows into one system, including puzzle management, analysis, student tracking, and image/PDF puzzle conversion.
+
+## Objectives
+- Provide an interactive chess puzzle training module.
+- Allow coaches to create, upload, and manage puzzles.
+- Analyze chess positions using Stockfish.
+- Support image/PDF puzzle processing using YOLO/OpenCV.
+- Organize students, coaches, assignments, sessions, and progress data in one platform.
+
+## Technologies Used
 - Java Spring Boot
+- Spring MVC
+- Spring Security with JWT
+- Spring Data JPA
 - MySQL
 - Stockfish Chess Engine
 - HTML / CSS / JavaScript
+- Python
+- YOLO11 / Ultralytics
+- OpenCV
+- CVAT for dataset annotation
 
 ## Key Features
-- Chessboard analysis (Stockfish suggested moves)
-- PGN upload & analysis
-- Player & coach management
-- Puzzle training module
+- User authentication and role-based access
+- Student, coach, and admin management
+- Interactive chessboard analysis
+- Stockfish best move and evaluation support
+- Puzzle catalog and puzzle solving
+- Coach puzzle builder
+- Image/PDF puzzle upload workflow
+- YOLO/OpenCV-based chess piece detection pipeline
+- CVAT dataset labeling workflow documentation
 
 ## System Architecture
-- MVC Architecture
-- RESTful API (PostMan)
+This project follows MVC architecture:
+
+- **Model**: JPA entities in `model/`
+- **View**: Static frontend files in `src/main/resources/static/`
+- **Controller**: REST API endpoints in `controller/`
+- **Service**: Business logic in `service/`
+- **Repository**: Database access in `repository/`
+- **DTO**: API request/response objects in `dto/`
 
 ## Project Structure
 
-The backend follows a Spring MVC layout:
+```text
+src/main/java/com/fyp/fypsystem/
+  config/          Application startup/configuration
+  controller/      REST API controllers
+  dto/             API request and response records
+  model/           JPA entities
+  repository/      Spring Data JPA repositories
+  security/        JWT and Spring Security configuration
+  service/         Business logic
+  service/vision/  YOLO/OpenCV integration boundary
 
-- `controller/` - REST endpoints only. Controllers validate access, map requests, and delegate work.
-- `service/` - Business logic such as puzzle import, upload processing, Stockfish, and analysis workflows.
-- `service/vision/` - Integration boundary for external computer vision tooling such as YOLO/OpenCV.
-- `repository/` - Spring Data JPA database access.
-- `model/` - JPA entities mapped to database tables.
-- `dto/` - Request/response objects used by the API. Feature-specific DTOs live in subpackages such as `dto/puzzle` and `dto/vision`.
-- `security/` - JWT and Spring Security configuration.
-- `config/` - Application startup/configuration classes.
+src/main/resources/
+  application.properties
+  static/          Frontend HTML, CSS, JS, images, and chess assets
 
-Frontend assets are kept under `src/main/resources/static/`.
+tools/vision/
+  chess_vision_to_fen.py
+  requirements.txt
 
-Computer vision tooling is intentionally kept outside the Java source tree:
-
-- `tools/vision/` - Python scripts and Python dependency file for YOLO/OpenCV processing.
-- `docs/` - Workflow documentation, including the CVAT + YOLO11 labeling/training process.
-
-Large generated files such as trained model weights, YOLO runs, datasets, and local logs are ignored by Git.
-
-## How to Run
-1. Clone repository
-2. Configure database
-3. Run Spring Boot application
-
-## 👤 Author
-- Muhammad Syazrin Amzar bin Mohd Zaimi (S65748)
-- SMSK (KP)
+docs/
+  cvat-yolo11-chess-workflow.md
