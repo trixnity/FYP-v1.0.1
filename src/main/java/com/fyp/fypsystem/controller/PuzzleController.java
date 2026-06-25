@@ -1,13 +1,21 @@
 package com.fyp.fypsystem.controller;
 
+import com.fyp.fypsystem.dto.puzzle.ProcessPuzzleUploadResponse;
+import com.fyp.fypsystem.dto.puzzle.PuzzleImportRequest;
+import com.fyp.fypsystem.dto.puzzle.PuzzlePublishRequest;
+import com.fyp.fypsystem.dto.puzzle.PuzzleUploadOptions;
+import com.fyp.fypsystem.dto.puzzle.PuzzleUploadResult;
+import com.fyp.fypsystem.dto.puzzle.ThemeCountResponse;
 import com.fyp.fypsystem.model.Puzzle;
 import com.fyp.fypsystem.model.PuzzleMove;
 import com.fyp.fypsystem.repository.PuzzleRepository;
 import com.fyp.fypsystem.service.LichessPuzzleImportService;
+import com.fyp.fypsystem.service.PuzzleUploadProcessingService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -21,8 +29,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -37,12 +47,16 @@ public class PuzzleController {
 
     private final PuzzleRepository puzzleRepository;
     private final LichessPuzzleImportService importService;
+    private final PuzzleUploadProcessingService uploadProcessingService;
     private static final String ROLE_HEADER = "X-User-Role";
     private static final List<String> SORT_FIELDS = List.of("id", "title", "theme", "difficulty");
 
-    public PuzzleController(PuzzleRepository puzzleRepository, LichessPuzzleImportService importService) {
+    public PuzzleController(PuzzleRepository puzzleRepository,
+                            LichessPuzzleImportService importService,
+                            PuzzleUploadProcessingService uploadProcessingService) {
         this.puzzleRepository = puzzleRepository;
         this.importService = importService;
+        this.uploadProcessingService = uploadProcessingService;
     }
 
     @PostMapping
@@ -167,7 +181,7 @@ public class PuzzleController {
 
     @PutMapping("/{id}/publish")
     public Puzzle publish(@PathVariable Long id,
-                          @RequestBody PublishRequest payload,
+                          @RequestBody PuzzlePublishRequest payload,
                           @RequestHeader(value = ROLE_HEADER, required = false) String role) {
         requireCoachOrAdmin(role);
         if (payload == null || payload.published() == null) {
@@ -190,11 +204,8 @@ public class PuzzleController {
         return ResponseEntity.noContent().build();
     }
 
-    public record PublishRequest(Boolean published) {
-    }
-
     @PostMapping("/import")
-    public ResponseEntity<?> importCsv(@RequestBody ImportRequest request,
+    public ResponseEntity<?> importCsv(@RequestBody PuzzleImportRequest request,
                                        @RequestHeader(value = ROLE_HEADER, required = false) String role) {
         requireCoachOrAdmin(role);
         if (request == null) {
@@ -210,12 +221,36 @@ public class PuzzleController {
         return ResponseEntity.ok(result);
     }
 
-    public record ImportRequest(String path, Integer limit, Integer offset, Boolean published, Boolean skipExisting) {
+    @PostMapping(value = "/process-upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProcessPuzzleUploadResponse> processUpload(@RequestParam(required = false) MultipartFile file,
+                                                                     @RequestParam(required = false) String extractedText,
+                                                                     @RequestParam(required = false) String title,
+                                                                     @RequestParam(required = false) String theme,
+                                                                     @RequestParam(required = false) Integer difficulty,
+                                                                     @RequestParam(required = false) String side,
+                                                                     @RequestParam(required = false) String solutionMove,
+                                                                     @RequestParam(required = false) Boolean published,
+                                                                     @RequestHeader(value = ROLE_HEADER, required = false) String role) {
+        requireCoachOrAdmin(role);
+        try {
+            PuzzleUploadResult processed = uploadProcessingService.process(
+                    file,
+                    extractedText,
+                    new PuzzleUploadOptions(title, theme, difficulty, side, solutionMove, published)
+            );
+            Puzzle puzzle = processed.puzzle();
+            syncPuzzleMoves(puzzle);
+            Puzzle saved = puzzleRepository.save(puzzle);
+            return ResponseEntity.ok(new ProcessPuzzleUploadResponse(saved, processed.extractedText(), processed.solutionDetected()));
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+        } catch (IOException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+        }
     }
-
     @GetMapping("/themes")
-    public List<ThemeCount> getThemes(@RequestParam(required = false) Boolean published,
-                                      @RequestHeader(value = ROLE_HEADER, required = false) String role) {
+    public List<ThemeCountResponse> getThemes(@RequestParam(required = false) Boolean published,
+                                              @RequestHeader(value = ROLE_HEADER, required = false) String role) {
         String normalizedRole = normalizeRole(role);
         boolean allowAll = isCoachOrAdmin(normalizedRole);
         boolean publishedOnly = !allowAll || Boolean.TRUE.equals(published);
@@ -241,12 +276,9 @@ public class PuzzleController {
         }
 
         return counts.entrySet().stream()
-                .map(entry -> new ThemeCount(entry.getKey(), entry.getValue()))
-                .sorted(Comparator.comparingInt(ThemeCount::count).reversed().thenComparing(ThemeCount::theme))
+                .map(entry -> new ThemeCountResponse(entry.getKey(), entry.getValue()))
+                .sorted(Comparator.comparingInt(ThemeCountResponse::count).reversed().thenComparing(ThemeCountResponse::theme))
                 .collect(Collectors.toList());
-    }
-
-    public record ThemeCount(String theme, int count) {
     }
 
     private boolean hasMoves(Puzzle puzzle) {

@@ -31,3 +31,14 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local runtime files ###
+*.log
+server.err.log
+.claude/
+
+### Machine learning artifacts ###
+models/**/*.pt
+models/**/*.onnx
+datasets/
+runs/

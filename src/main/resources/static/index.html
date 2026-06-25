@@ -171,6 +171,8 @@
     .coach-controls textarea { min-height: 110px; }
     .coach-controls .hint { color: var(--muted); font-size: 12px; }
     .coach-control-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+    .upload-box { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--stroke); display: grid; gap: 10px; }
+    .upload-box input[type="file"] { width: 100%; }
 
     @media (max-width: 900px) { .app { grid-template-columns: 1fr; } aside { flex-direction: row; flex-wrap: wrap; } .footer-links { border-top: none; padding-top: 0; margin-top: 0; } .nav-title { display: none; } }
     @media (max-width: 700px) {
@@ -490,6 +492,14 @@
                     <button class="btn ghost" type="button" id="coachPuzzleUseFen">Use board FEN</button>
                     <button class="btn primary" type="button" id="coachPuzzleCreate">Create puzzle</button>
                   </div>
+                  <div class="upload-box">
+                    <label>Image or PDF puzzle<input id="coachPuzzleUploadFile" type="file" accept="image/*,application/pdf"></label>
+                    <label>Recognized text / FEN<textarea id="coachPuzzleUploadText" placeholder="Paste OCR text, FEN, or PDF puzzle text when the file is an image"></textarea></label>
+                    <div class="hint">PDF text is extracted automatically. For image diagrams, paste OCR text or a FEN so it can become an interactive puzzle.</div>
+                    <div class="quick-actions">
+                      <button class="btn primary" type="button" id="coachPuzzleProcessUpload">Process upload</button>
+                    </div>
+                  </div>
                   <div class="status" id="coachPuzzleStatus">Ready to build a puzzle.</div>
                 </div>
               </div>
@@ -699,6 +709,9 @@
   const coachPuzzleApplyFenBtn = document.getElementById("coachPuzzleApplyFen");
   const coachPuzzleUseFenBtn = document.getElementById("coachPuzzleUseFen");
   const coachPuzzleCreateBtn = document.getElementById("coachPuzzleCreate");
+  const coachPuzzleUploadFileInput = document.getElementById("coachPuzzleUploadFile");
+  const coachPuzzleUploadTextInput = document.getElementById("coachPuzzleUploadText");
+  const coachPuzzleProcessUploadBtn = document.getElementById("coachPuzzleProcessUpload");
   const coachPuzzleStatus = document.getElementById("coachPuzzleStatus");
   let isAuthenticated = false;
   let activeCategory = "tactic";
@@ -943,6 +956,58 @@
       setCoachStatus(`Puzzle #${created.id} published.`, "success");
     } catch (err) {
       setCoachStatus(`Publish failed: ${err.message}`, "warn");
+    }
+  };
+
+  const processPuzzleUpload = async () => {
+    const file = coachPuzzleUploadFileInput?.files?.[0] || null;
+    const extractedText = (coachPuzzleUploadTextInput?.value || "").trim();
+    if (!file && !extractedText) {
+      setCoachStatus("Choose a PDF/image or paste puzzle text first.", "warn");
+      return;
+    }
+
+    const formData = new FormData();
+    if (file) formData.append("file", file);
+    if (extractedText) formData.append("extractedText", extractedText);
+    formData.append("title", (coachPuzzleTitleInput?.value || "").trim() || "Uploaded puzzle");
+    formData.append("theme", (coachPuzzleTopicInput?.value || "").trim() || "uploaded");
+    formData.append("side", coachPuzzleSideSelect?.value || "w");
+    const level = (coachPuzzleLevelInput?.value || "").trim();
+    const solutionMove = (coachPuzzleSolutionInput?.value || "").trim();
+    if (level) formData.append("difficulty", level);
+    if (solutionMove) formData.append("solutionMove", solutionMove);
+    formData.append("published", "true");
+
+    try {
+      setCoachStatus("Processing upload...");
+      const res = await fetch("/api/puzzles/process-upload", {
+        method: "POST",
+        headers: roleHeaders,
+        body: formData
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.error || "Upload processing failed");
+      }
+      const result = await res.json();
+      const created = result.puzzle;
+      const mapped = mapApiPuzzle(created);
+      puzzlesPlayable.unshift(mapped);
+      ensureThemeInCatalog(mapped.theme);
+      activeCategory = "coach";
+      activeThemeId = mapped.theme;
+      renderTabs();
+      renderPuzzleGrid();
+      renderPuzzleDetail();
+      loadPuzzleForTheme();
+      if (coachPuzzleFenInput) coachPuzzleFenInput.value = created.fen || "";
+      if (coachPuzzleSolutionInput && created.solutionMove) coachPuzzleSolutionInput.value = created.solutionMove;
+      if (coachBoard && created.fen) coachBoard.position(created.fen, false);
+      if (puzzleApiIdInput) puzzleApiIdInput.value = created.id || "";
+      setCoachStatus(`Upload became puzzle #${created.id}.`, "success");
+    } catch (err) {
+      setCoachStatus(`Upload failed: ${err.message}`, "warn");
     }
   };
 
@@ -1259,6 +1324,12 @@
     coachPuzzleCreateBtn.addEventListener("click", () => {
       ensureCoachBoard();
       createCoachPuzzle();
+    });
+  }
+  if (coachPuzzleProcessUploadBtn) {
+    coachPuzzleProcessUploadBtn.addEventListener("click", () => {
+      ensureCoachBoard();
+      processPuzzleUpload();
     });
   }
   if (coachPuzzleSideSelect) {
