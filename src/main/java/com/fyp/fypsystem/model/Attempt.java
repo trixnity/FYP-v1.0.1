@@ -20,6 +20,9 @@ public class Attempt {
     private boolean solved;
     private int stars; // 1-3 based on tries
     private int attempts;
+    private Integer timeSeconds;
+    private Integer performanceScore;
+    private Boolean firstAttemptSolved;
     private String theme;
     private LocalDateTime solvedAt;
 
@@ -49,6 +52,12 @@ public class Attempt {
     public void setStars(int stars) { this.stars = stars; }
     public int getAttempts() { return attempts; }
     public void setAttempts(int attempts) { this.attempts = attempts; }
+    public Integer getTimeSeconds() { return timeSeconds; }
+    public void setTimeSeconds(Integer timeSeconds) { this.timeSeconds = timeSeconds; }
+    public Integer getPerformanceScore() { return performanceScore; }
+    public void setPerformanceScore(Integer performanceScore) { this.performanceScore = performanceScore; }
+    public Boolean getFirstAttemptSolved() { return firstAttemptSolved; }
+    public void setFirstAttemptSolved(Boolean firstAttemptSolved) { this.firstAttemptSolved = firstAttemptSolved; }
     public String getTheme() { return theme; }
     public void setTheme(String theme) { this.theme = theme; }
     public LocalDateTime getSolvedAt() { return solvedAt; }

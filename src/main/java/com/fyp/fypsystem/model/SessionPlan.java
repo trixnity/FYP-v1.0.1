@@ -18,6 +18,11 @@ public class SessionPlan {
     private String status;
     @Column(columnDefinition = "TEXT")
     private String notes;
+    private String zoomLink;
+    private String classDate;
+    private String classTime;
+    @Column(columnDefinition = "TEXT")
+    private String coachNote;
     private String createdAt;
 
     @PrePersist
@@ -46,5 +51,13 @@ public class SessionPlan {
     public void setStatus(String status) { this.status = status; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public String getZoomLink() { return zoomLink; }
+    public void setZoomLink(String zoomLink) { this.zoomLink = zoomLink; }
+    public String getClassDate() { return classDate; }
+    public void setClassDate(String classDate) { this.classDate = classDate; }
+    public String getClassTime() { return classTime; }
+    public void setClassTime(String classTime) { this.classTime = classTime; }
+    public String getCoachNote() { return coachNote; }
+    public void setCoachNote(String coachNote) { this.coachNote = coachNote; }
     public String getCreatedAt() { return createdAt; }
 }

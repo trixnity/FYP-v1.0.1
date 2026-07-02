@@ -31,7 +31,11 @@ public class UserController {
 
     // Admin: create a user with any role (including ADMIN)
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
+    public ResponseEntity<?> register(@RequestHeader(value = "Authorization", required = false) String authHeader,
+                                      @RequestBody User user) {
+        User requester = resolve(authHeader);
+        if (requester == null) return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        if (requester.getRole() != Role.ADMIN) return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             return ResponseEntity.status(409).body(Map.of("error", "Email already exists"));
         }
@@ -44,8 +48,69 @@ public class UserController {
 
     // Admin: list all users (password is @JsonIgnore so it is never sent)
     @GetMapping
-    public List<User> getAll() {
-        return userRepository.findAll();
+    public ResponseEntity<?> getAll(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User requester = resolve(authHeader);
+        if (requester == null) return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        if (requester.getRole() != Role.ADMIN) return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
+        return ResponseEntity.ok(userRepository.findAll());
+    }
+
+    // Admin: edit any user except the currently logged-in admin
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Long id,
+                                        @RequestHeader(value = "Authorization", required = false) String authHeader,
+                                        @RequestBody Map<String, Object> body) {
+        User requester = resolve(authHeader);
+        if (requester == null) return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        if (requester.getRole() != Role.ADMIN) return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
+        if (requester.getId().equals(id)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Admins cannot edit their own account from User Management"));
+        }
+
+        return userRepository.findById(id).<ResponseEntity<?>>map(user -> {
+            String email = clean(body.get("email"));
+            if (email != null && !email.equalsIgnoreCase(user.getEmail()) && userRepository.findByEmail(email).isPresent()) {
+                return ResponseEntity.status(409).body(Map.of("error", "Email already exists"));
+            }
+            if (body.containsKey("name")) user.setName(clean(body.get("name")));
+            if (email != null) user.setEmail(email);
+            if (body.containsKey("role")) {
+                Role role = parseRole(body.get("role"));
+                if (role != null) user.setRole(role);
+            }
+            if (body.containsKey("rating")) user.setRating(parseInteger(body.get("rating")));
+            if (body.containsKey("goals")) user.setGoals(clean(body.get("goals")));
+            if (body.containsKey("phone")) user.setPhone(clean(body.get("phone")));
+            if (body.containsKey("chessUsername")) user.setChessUsername(clean(body.get("chessUsername")));
+            if (body.containsKey("chessTitle")) user.setChessTitle(clean(body.get("chessTitle")));
+            if (body.containsKey("password")) {
+                String password = clean(body.get("password"));
+                if (password != null) {
+                    if (password.length() < 6) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "Password must be at least 6 characters"));
+                    }
+                    user.setPassword(passwordEncoder.encode(password));
+                }
+            }
+            return ResponseEntity.ok(userRepository.save(user));
+        }).orElse(ResponseEntity.status(404).body(Map.of("error", "User not found")));
+    }
+
+    // Admin: delete any user except the currently logged-in admin
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id,
+                                        @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User requester = resolve(authHeader);
+        if (requester == null) return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        if (requester.getRole() != Role.ADMIN) return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
+        if (requester.getId().equals(id)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Admins cannot delete their own account"));
+        }
+        if (!userRepository.existsById(id)) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+        userRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "User deleted"));
     }
 
     // Any authenticated user: get own profile
@@ -142,14 +207,22 @@ public class UserController {
         }).orElse(ResponseEntity.status(404).body(Map.of("error", "User not found")));
     }
 
-    // Admin or Coach: assign a coach to a student
+    // Admin: assign a coach to a student
     @PutMapping("/{studentId}/assign-coach/{coachId}")
     public ResponseEntity<?> assignCoach(@PathVariable Long studentId,
-                                         @PathVariable Long coachId) {
+                                         @PathVariable Long coachId,
+                                         @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User requester = resolve(authHeader);
+        if (requester == null) return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        if (requester.getRole() != Role.ADMIN) return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
+
         Optional<User> studentOpt = userRepository.findById(studentId);
         Optional<User> coachOpt   = userRepository.findById(coachId);
 
         if (studentOpt.isEmpty()) return ResponseEntity.notFound().build();
+        if (studentOpt.get().getRole() != Role.STUDENT) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Target user is not a student"));
+        }
         if (coachOpt.isEmpty() || coachOpt.get().getRole() != Role.COACH) {
             return ResponseEntity.badRequest().body(Map.of("error", "Target user is not a coach"));
         }
@@ -161,7 +234,12 @@ public class UserController {
 
     // Admin: remove coach assignment from a student
     @DeleteMapping("/{studentId}/assign-coach")
-    public ResponseEntity<?> removeCoach(@PathVariable Long studentId) {
+    public ResponseEntity<?> removeCoach(@PathVariable Long studentId,
+                                         @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User requester = resolve(authHeader);
+        if (requester == null) return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        if (requester.getRole() != Role.ADMIN) return ResponseEntity.status(403).body(Map.of("error", "Admin access required"));
+
         Optional<User> studentOpt = userRepository.findById(studentId);
         if (studentOpt.isEmpty()) return ResponseEntity.notFound().build();
 
@@ -175,6 +253,36 @@ public class UserController {
         try {
             return jwtUtil.extractEmail(authHeader.substring(7));
         } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private User resolve(String authHeader) {
+        String email = extractEmail(authHeader);
+        if (email == null) return null;
+        return userRepository.findByEmail(email).orElse(null);
+    }
+
+    private String clean(Object value) {
+        if (value == null) return null;
+        String text = value.toString().trim();
+        return text.isEmpty() ? null : text;
+    }
+
+    private Integer parseInteger(Object value) {
+        if (value == null || value.toString().isBlank()) return null;
+        try {
+            return Integer.valueOf(value.toString());
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private Role parseRole(Object value) {
+        if (value == null) return null;
+        try {
+            return Role.valueOf(value.toString().trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
             return null;
         }
     }

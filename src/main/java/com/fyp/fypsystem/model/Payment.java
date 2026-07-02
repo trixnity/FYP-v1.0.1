@@ -18,6 +18,8 @@ public class Payment {
     private String status;
     private String paidAt;
     private String createdAt;
+    private String stripeCheckoutSessionId;
+    private String stripePaymentIntentId;
 
     @PrePersist
     protected void prePersist() {
@@ -45,4 +47,8 @@ public class Payment {
     public String getPaidAt() { return paidAt; }
     public void setPaidAt(String paidAt) { this.paidAt = paidAt; }
     public String getCreatedAt() { return createdAt; }
+    public String getStripeCheckoutSessionId() { return stripeCheckoutSessionId; }
+    public void setStripeCheckoutSessionId(String stripeCheckoutSessionId) { this.stripeCheckoutSessionId = stripeCheckoutSessionId; }
+    public String getStripePaymentIntentId() { return stripePaymentIntentId; }
+    public void setStripePaymentIntentId(String stripePaymentIntentId) { this.stripePaymentIntentId = stripePaymentIntentId; }
 }

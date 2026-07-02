@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduChess - Assigned Class Applications</title>
+  <link rel="stylesheet" href="css/shell.css">
+  <style>
+    :root{--bg:#081018;--panel:rgba(13,22,34,.88);--panel2:rgba(20,31,45,.9);--text:#f8fafc;--muted:#aeb8c7;--stroke:rgba(198,211,229,.16)}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:"Segoe UI",system-ui,sans-serif;color:var(--text);background:linear-gradient(90deg,rgba(8,13,21,.95),rgba(15,24,36,.78),rgba(8,13,21,.95)),url("img/custom-chess/background.jpg") center bottom/cover fixed no-repeat,var(--bg)}
+    .content{padding:24px;width:min(1120px,100%)}.topbar,.panel{background:linear-gradient(145deg,var(--panel2),var(--panel));border:1px solid var(--stroke);border-radius:12px;box-shadow:0 24px 54px rgba(0,0,0,.36)}
+    .topbar{padding:16px;margin-bottom:16px}h1{margin:0}.muted{color:var(--muted)}.apps{display:grid;gap:12px}.app{padding:14px;border:1px solid var(--stroke);border-radius:10px;background:rgba(255,255,255,.045);display:grid;gap:10px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}.kv{padding:9px;border:1px solid var(--stroke);border-radius:8px;background:rgba(255,255,255,.04)}.kv span{display:block;color:var(--muted);font-size:12px;font-weight:800;margin-bottom:3px}.badge{width:fit-content;padding:5px 9px;border-radius:999px;background:rgba(130,189,74,.14);color:#d9ffae;font-weight:900;font-size:12px}
+  </style>
+</head>
+<body data-active-nav="assigned-applications">
+<div class="shell">
+  <aside class="sidebar"><a class="sidebar-logo" href="dashboard.html"><img src="logo.png" alt="">EduChess</a><nav class="sidebar-nav"></nav><div class="sidebar-footer"></div></aside>
+  <main class="page-content"><div class="content">
+    <div class="topbar"><h1>Assigned Class Applications</h1><div class="muted">Students assigned by admin. Coaches can view only; approval remains admin-controlled.</div></div>
+    <section class="panel" style="padding:16px;"><div class="muted" id="status">Loading...</div><div class="apps" id="apps"></div></section>
+  </div></main>
+</div>
+<script src="js/role-nav.js"></script>
+<script>
+  const token=localStorage.getItem("authToken"); if(!token) location.href="index.html";
+  const authHeaders={Authorization:"Bearer "+token};
+  const esc=v=>String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+  async function load(){
+    const res=await fetch("/api/coach/class-applications",{headers:authHeaders});
+    const data=await res.json().catch(()=>[]);
+    if(!res.ok){status.textContent=data.error||"Could not load assigned applications.";return;}
+    status.textContent=`${data.length} assigned application(s)`;
+    apps.innerHTML=data.length?data.map(app=>`
+      <article class="app"><strong>${esc(app.studentName||"Student")}</strong><span class="badge">${esc(app.status)}</span>
+      <div class="grid">
+        <div class="kv"><span>Email</span>${esc(app.email||"-")}</div>
+        <div class="kv"><span>Phone</span>${esc(app.phone||"-")}</div>
+        <div class="kv"><span>Student level</span>${esc(app.chessLevel||"-")}</div>
+        <div class="kv"><span>Goal</span>${esc(app.goal||"-")}</div>
+        <div class="kv"><span>Class type</span>${esc(app.preferredClassType||"-")}</div>
+        <div class="kv"><span>Preferred schedule</span>${esc(app.preferredSchedule||"-")}</div>
+        <div class="kv"><span>Notes</span>${esc(app.notes||"-")}</div>
+      </div></article>`).join(""):'<div class="muted">No assigned class applications yet.</div>';
+  }
+  load();
+</script>
+</body>
+</html>

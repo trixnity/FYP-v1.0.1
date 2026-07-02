@@ -6,6 +6,7 @@
   <title>Chess Puzzle Player</title>
   <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
   <link rel="stylesheet" href="css/theme-light.css">
+  <link rel="stylesheet" href="css/shell.css">
   <style>
     :root {
       --play-bg: #0b111b;
@@ -59,7 +60,7 @@
     .page-shell {
       position: relative;
       z-index: 1;
-      width: min(1180px, calc(100% - 32px));
+      width: min(1400px, calc(100% - 32px));
       margin: 0 auto;
       padding: 18px 0 34px;
     }
@@ -127,10 +128,7 @@
     }
 
     .play-hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
-      gap: 18px;
-      align-items: end;
+      display: block;
       margin-bottom: 18px;
     }
 
@@ -157,23 +155,24 @@
       line-height: 1.5;
     }
 
-    .hero-stats {
+    .stats-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
 
-    .stat-pill {
+    .stat-card {
       min-width: 0;
-      padding: 12px;
+      min-height: 68px;
+      padding: 14px 16px;
       border: 1px solid rgba(184, 199, 219, 0.14);
-      border-radius: 8px;
+      border-radius: 10px;
       background: linear-gradient(145deg, rgba(24, 34, 49, 0.82), rgba(10, 15, 24, 0.76));
-      box-shadow: var(--play-shadow);
       backdrop-filter: blur(12px);
     }
+    .attempts-card { grid-column: 1 / -1; }
 
-    .stat-pill span {
+    .stat-card span {
       display: block;
       color: var(--play-muted);
       font-size: 12px;
@@ -182,7 +181,7 @@
       letter-spacing: 0.06em;
     }
 
-    .stat-pill strong {
+    .stat-card strong {
       display: block;
       margin-top: 4px;
       color: var(--play-ink);
@@ -191,10 +190,17 @@
       overflow-wrap: anywhere;
     }
 
-    .player-layout {
+    .main-puzzle-layout {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
-      gap: 18px;
+      grid-template-columns: minmax(620px, 1fr) 380px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .right-sidebar {
+      width: 380px;
+      display: grid;
+      gap: 16px;
       align-items: start;
     }
 
@@ -288,7 +294,7 @@
 
     .board-stage {
       width: 100%;
-      max-width: 570px;
+      max-width: 620px;
       margin: 0 auto;
       padding: 14px;
       border-radius: 8px;
@@ -302,6 +308,7 @@
 
     #board {
       width: 100%;
+      max-width: 592px;
       margin: 0 auto;
     }
 
@@ -387,6 +394,12 @@
     }
 
     .details-panel {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .stats-panel {
       padding: 16px;
       display: grid;
       gap: 14px;
@@ -533,18 +546,17 @@
       border: 0;
     }
 
-    @media (max-width: 920px) {
-      .play-hero,
-      .player-layout {
+    @media (max-width: 1100px) {
+      .main-puzzle-layout {
         grid-template-columns: 1fr;
       }
 
-      .hero-stats {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+      .right-sidebar {
+        width: 100%;
       }
 
-      .details-panel {
-        order: -1;
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
 
@@ -576,13 +588,13 @@
         font-size: 28px;
       }
 
-      .hero-stats,
       .info-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .board-panel,
-      .details-panel {
+      .details-panel,
+      .stats-panel {
         padding: 12px;
       }
 
@@ -611,21 +623,55 @@
     }
 
     @media (max-width: 420px) {
-      .hero-stats,
+      .stats-grid,
       .info-grid {
         grid-template-columns: 1fr;
       }
+
+      .attempts-card { grid-column: auto; }
 
       .button-row {
         display: grid;
         grid-template-columns: 1fr;
       }
     }
+
+    /* ── Puzzle Play Polish ─────────────────────────────── */
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: rgba(130, 189, 74, 0.55) !important;
+      box-shadow: 0 0 0 3px rgba(130, 189, 74, 0.10) !important;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(130, 189, 74, 0.22); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(130, 189, 74, 0.40); }
+    *:focus-visible { outline: 2px solid rgba(130, 189, 74, 0.55); outline-offset: 2px; }
+    button:active { transform: scale(0.97) translateY(1px) !important; transition: transform 80ms ease !important; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .play-panel { animation: slideUp 320ms ease both; }
   </style>
 </head>
-<body class="theme-light">
+<body class="theme-light" data-active-nav="puzzle-library">
+<div class="shell">
+<aside class="sidebar">
+  <a class="sidebar-logo" href="dashboard.html">
+    <img src="logo.png" alt="EduChess">
+    EduChess
+  </a>
+  <nav class="sidebar-nav"></nav>
+  <div class="sidebar-footer"></div>
+</aside>
+<div class="page-content">
   <div class="page-shell">
-    <header class="play-header">
+    <div class="page-topbar">
+      <div>
+        <h1 id="pageTitle">Puzzle Player</h1>
+        <div class="muted">Solve database puzzles, validate moves, and track attempts.</div>
+      </div>
+      <a class="secondary" href="puzzle.html" style="text-decoration:none;">Puzzle Library</a>
+    </div>
+    <header class="play-header" style="display:none;">
       <a class="brand-link" href="dashboard.html" aria-label="Go to dashboard">
         <img src="logo.png" alt="">
         <span>EduChess</span>
@@ -634,7 +680,7 @@
         <a href="dashboard.html">Dashboard</a>
         <a href="puzzle.html">Puzzles</a>
         <a href="analysis.html">Analysis</a>
-        <a href="puzzle-workbench.html">Workbench</a>
+        <a href="puzzle-editor.html">Puzzle Editor</a>
       </nav>
     </header>
 
@@ -642,34 +688,12 @@
       <section class="play-hero" aria-labelledby="pageTitle">
         <div>
           <p class="kicker">Puzzle Training</p>
-          <h1 id="pageTitle">Chess Puzzle Player</h1>
+          <h1>Chess Puzzle Player</h1>
           <p class="hero-copy">Load a position, play the line, and track each move as the board responds.</p>
-        </div>
-        <div class="hero-stats" aria-label="Puzzle summary" style="grid-template-columns: repeat(auto-fit, minmax(0,1fr));">
-          <div class="stat-pill">
-            <span>Theme</span>
-            <strong id="metaTheme">-</strong>
-          </div>
-          <div class="stat-pill">
-            <span>Difficulty</span>
-            <strong id="metaDifficulty">-</strong>
-          </div>
-          <div class="stat-pill">
-            <span>Turn</span>
-            <strong id="metaTurn">-</strong>
-          </div>
-          <div class="stat-pill">
-            <span>Progress</span>
-            <strong id="metaProgress">0/0</strong>
-          </div>
-          <div class="stat-pill" id="ratingPill">
-            <span>My Rating</span>
-            <strong id="metaRating">—</strong>
-          </div>
         </div>
       </section>
 
-      <div class="player-layout">
+      <div class="main-puzzle-layout">
         <section class="panel board-panel" aria-label="Puzzle board">
           <div class="board-top">
             <div class="board-title">
@@ -696,11 +720,49 @@
 
           <div class="button-row">
             <button class="secondary" id="btnReset" type="button">Reset</button>
+            <button class="primary" id="btnNextPuzzle" type="button">Next Puzzle</button>
             <button class="secondary" id="btnFlip" type="button">Flip Board</button>
           </div>
         </section>
 
-        <aside class="panel details-panel" aria-label="Puzzle details">
+        <aside class="right-sidebar" aria-label="Puzzle sidebar">
+          <section class="panel stats-panel" aria-label="Puzzle stats">
+            <div class="panel-heading">
+              <p class="eyebrow">Puzzle Stats</p>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <span>Theme</span>
+                <strong id="metaTheme">-</strong>
+              </div>
+              <div class="stat-card">
+                <span>Difficulty</span>
+                <strong id="metaDifficulty">-</strong>
+              </div>
+              <div class="stat-card">
+                <span>Turn</span>
+                <strong id="metaTurn">-</strong>
+              </div>
+              <div class="stat-card">
+                <span>Progress</span>
+                <strong id="metaProgress">0/0</strong>
+              </div>
+              <div class="stat-card" id="ratingPill">
+                <span>My Rating</span>
+                <strong id="metaRating">—</strong>
+              </div>
+              <div class="stat-card">
+                <span>Time</span>
+                <strong id="metaTime">0s</strong>
+              </div>
+              <div class="stat-card attempts-card">
+                <span>Attempts</span>
+                <strong id="metaAttempts">1</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel details-panel" aria-label="Puzzle details">
           <div class="panel-heading">
             <p class="eyebrow">Current Puzzle</p>
             <h2 class="title" id="pTitle">Puzzle</h2>
@@ -715,6 +777,14 @@
             <div class="info-item">
               <span>Difficulty</span>
               <strong id="detailDifficulty">-</strong>
+            </div>
+            <div class="info-item">
+              <span>Time Spent</span>
+              <strong id="detailTime">0s</strong>
+            </div>
+            <div class="info-item">
+              <span>Attempt Used</span>
+              <strong id="detailAttempts">1</strong>
             </div>
           </div>
 
@@ -734,6 +804,7 @@
               <span class="empty-state">Moves will appear here</span>
             </div>
           </div>
+          </section>
         </aside>
       </div>
     </main>
@@ -742,6 +813,7 @@
   <script src="lib/chess.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
   <script src="lib/chessboard-1.0.0.min.js"></script>
+  <script src="js/role-nav.js"></script>
   <script>
     const authToken   = localStorage.getItem("authToken");
     const authHeaders = authToken ? { "Authorization": "Bearer " + authToken } : {};
@@ -752,6 +824,9 @@
     let step = 0;
     let moveText = [];
     let wrongMoves = 0;
+    let puzzleStartedAt = null;
+    let puzzleFinishedAt = null;
+    let timerHandle = null;
 
     const elTitle = document.getElementById("pTitle");
     const elInfo  = document.getElementById("pInfo");
@@ -764,12 +839,19 @@
     const elMetaTurn = document.getElementById("metaTurn");
     const elMetaProgress = document.getElementById("metaProgress");
     const elMetaRating = document.getElementById("metaRating");
+    const elMetaTime = document.getElementById("metaTime");
+    const elMetaAttempts = document.getElementById("metaAttempts");
     const elDetailTheme = document.getElementById("detailTheme");
     const elDetailDifficulty = document.getElementById("detailDifficulty");
+    const elDetailTime = document.getElementById("detailTime");
+    const elDetailAttempts = document.getElementById("detailAttempts");
     const elProgressText = document.getElementById("progressText");
     const elProgressFill = document.getElementById("progressFill");
     const storedRole = (localStorage.getItem("userRole") || "STUDENT").toUpperCase();
     const roleHeaders = { "X-User-Role": storedRole, ...authHeaders };
+    const nextPuzzleBtn = document.getElementById("btnNextPuzzle");
+    let categoryPuzzles = [];
+    let categoryIndex = -1;
 
     // Load and display current rating
     let currentRating = parseInt(localStorage.getItem("userRating") || "0", 10) || null;
@@ -802,9 +884,67 @@
     const setText = (el, value) => {
       if (el) el.textContent = value;
     };
+    const elapsedSeconds = () => {
+      if (!puzzleStartedAt) return 0;
+      const end = puzzleFinishedAt || Date.now();
+      return Math.max(0, Math.floor((end - puzzleStartedAt) / 1000));
+    };
+    const formatDuration = (seconds) => {
+      if (seconds < 60) return `${seconds}s`;
+      const minutes = Math.floor(seconds / 60);
+      const rest = seconds % 60;
+      return `${minutes}m ${rest}s`;
+    };
+    const currentAttemptCount = () => Math.max(1, wrongMoves + 1);
+    const updateAttemptMetrics = () => {
+      const timeText = formatDuration(elapsedSeconds());
+      const attemptsText = String(currentAttemptCount());
+      setText(elMetaTime, timeText);
+      setText(elDetailTime, timeText);
+      setText(elMetaAttempts, attemptsText);
+      setText(elDetailAttempts, attemptsText);
+    };
+    const startPuzzleTimer = () => {
+      if (timerHandle) window.clearInterval(timerHandle);
+      puzzleStartedAt = Date.now();
+      puzzleFinishedAt = null;
+      updateAttemptMetrics();
+      timerHandle = window.setInterval(updateAttemptMetrics, 1000);
+    };
+    const stopPuzzleTimer = () => {
+      if (!puzzleFinishedAt) puzzleFinishedAt = Date.now();
+      if (timerHandle) {
+        window.clearInterval(timerHandle);
+        timerHandle = null;
+      }
+      updateAttemptMetrics();
+    };
     const formatMeta = (value) => {
       const text = value === null || value === undefined || value === "" ? "-" : String(value);
       return text;
+    };
+    const simplifyThemeName = (rawTheme) => {
+      const raw = String(rawTheme || "").trim();
+      if (!raw) return "-";
+      const spaced = raw.replace(/[_-]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+      const rules = [
+        [/mate\s*in\s*1|matein1|mate1|one\s*move|mate/, "Mate in 1"],
+        [/mate\s*in\s*2|matein2|mate2/, "Mate in 2"],
+        [/fork|double\s*attack/, "Fork"],
+        [/pin/, "Pin"],
+        [/skewer/, "Skewer"],
+        [/discovered\s*attack/, "Discovered Attack"],
+        [/discovered\s*check/, "Discovered Check"],
+        [/double\s*check/, "Double Check"],
+        [/trapped\s*piece/, "Trapped Piece"],
+        [/remove\s*defender/, "Remove Defender"],
+        [/deflection/, "Deflection"],
+        [/clearance/, "Clearance"],
+        [/opening|kingside|queenside/, "Opening"]
+      ];
+      const matched = rules.find(([pattern]) => pattern.test(spaced));
+      if (matched) return matched[1];
+      return spaced.replace(/\b\w/g, (m) => m.toUpperCase()).split(/\s+/).slice(0, 3).join(" ");
     };
     const statusTone = (msg) => {
       if (/wrong|could not|failed|no moves/i.test(msg)) return "warn";
@@ -843,7 +983,7 @@
       if (elProgressFill) elProgressFill.style.width = `${percent}%`;
     };
     const updateMeta = () => {
-      const theme = formatMeta(puzzle?.theme);
+      const theme = simplifyThemeName(puzzle?.theme);
       const difficulty = formatMeta(puzzle?.difficulty);
       setText(elMetaTheme, theme);
       setText(elMetaDifficulty, difficulty);
@@ -853,6 +993,14 @@
       updateProgress();
     };
     const isUciMove = (token) => /^[a-h][1-8][a-h][1-8][qrbn]?$/i.test(token);
+    const fenTurn = (fen) => {
+      const side = String(fen || "").trim().split(/\s+/)[1];
+      return side === "b" ? "b" : "w";
+    };
+    const isImportedMoveSequence = (currentPuzzle, moves) => {
+      const title = String(currentPuzzle?.title || "").trim();
+      return moves.length > 1 && /^(lichess|imported\s+puzzle)\s+/i.test(title);
+    };
     const splitSolutionMoves = (value) => {
       const tokens = (value || "").trim().split(/[,\s]+/).filter(Boolean);
       if (!tokens.length) return [];
@@ -861,11 +1009,20 @@
       return [value.trim()];
     };
 
+    const displayPuzzleTitle = (currentPuzzle) => {
+      const rawTitle = String(currentPuzzle?.title || "").trim();
+      if (!rawTitle || /^lichess\s+/i.test(rawTitle)) {
+        return `${simplifyThemeName(currentPuzzle?.theme)} Puzzle`;
+      }
+      return rawTitle.replace(/^imported\s+puzzle\s+/i, "Puzzle ");
+    };
+
     function resetPuzzle() {
       if (!puzzle) return;
       step = 0;
       moveText = [];
       wrongMoves = 0;
+      startPuzzleTimer();
       game.load(puzzle.fen);
       if (puzzle._autoFirst && puzzle._movesUci.length) {
         const first = puzzle._movesUci[0];
@@ -877,6 +1034,7 @@
           puzzle._autoFirst = false;
         }
       }
+      puzzle.side = game.turn();
       board.position(game.fen());
       board.orientation(game.turn() === "b" ? "black" : "white");
       updateMeta();
@@ -903,11 +1061,11 @@
         }
         if (!moves.length) throw new Error("No moves for this puzzle");
         puzzle._movesUci = moves.map((mv) => (typeof mv === "string" ? mv.toLowerCase() : mv));
-        const title = (puzzle.title || "").trim().toLowerCase();
-        puzzle._autoFirst = moves.length > 1 && title.startsWith("lichess ");
+        puzzle.side = fenTurn(puzzle.fen);
+        puzzle._autoFirst = isImportedMoveSequence(puzzle, puzzle._movesUci);
 
-        setText(elTitle, puzzle.title || `Puzzle #${id}`);
-        puzzle._infoBase = `Theme: ${puzzle.theme || "-"} | Difficulty: ${puzzle.difficulty || "-"}`;
+        setText(elTitle, displayPuzzleTitle(puzzle));
+        puzzle._infoBase = `Theme: ${simplifyThemeName(puzzle.theme)} | Difficulty: ${puzzle.difficulty || "-"}`;
         updateMeta();
         resetPuzzle();
       } catch (e) {
@@ -919,6 +1077,41 @@
         setText(elInfo, "Check the puzzle ID or backend connection.");
         renderMoves();
         updateMeta();
+      }
+    }
+
+    const normalizeCategoryParam = (value) => {
+      const raw = String(value || "").trim().toLowerCase();
+      const map = {
+        "mate-in-one": "mateIn1",
+        "mate-in-1": "mateIn1",
+        "mate1": "mateIn1",
+        "mate-in-two": "mateIn2",
+        "mate-in-2": "mateIn2"
+      };
+      return map[raw] || value || "";
+    };
+
+    async function loadCategory(category) {
+      const theme = normalizeCategoryParam(category);
+      if (!theme) return false;
+      try {
+        setStatus("Loading category...");
+        const params = new URLSearchParams({ published: "true", theme, limit: "20" });
+        const res = await fetch(`/api/puzzles?${params.toString()}`, { headers: roleHeaders });
+        if (!res.ok) throw new Error("Category load failed");
+        categoryPuzzles = await res.json();
+        categoryIndex = 0;
+        if (!Array.isArray(categoryPuzzles) || !categoryPuzzles.length) {
+          setStatus("No puzzles published yet. Ask your coach to upload puzzles.");
+          return true;
+        }
+        idInput.value = categoryPuzzles[0].id;
+        await loadPuzzleById(categoryPuzzles[0].id);
+        return true;
+      } catch (err) {
+        setStatus("Could not load category: " + err.message);
+        return true;
       }
     }
 
@@ -941,6 +1134,7 @@
       if (attempted !== expected) {
         game.undo();
         wrongMoves++;
+        updateAttemptMetrics();
         setStatus("Wrong move. Try again.");
         if (authToken) {
           fetch("/api/attempts/wrong-move", { method: "POST", headers: authHeaders })
@@ -969,7 +1163,8 @@
 
       if (step >= puzzle._movesUci.length) {
         const msg = game.in_checkmate() ? "Checkmate! Solved." : "Solved!";
-        setStatus(msg);
+        stopPuzzleTimer();
+        setStatus(`${msg} You can go to the next puzzle.`);
         submitAttempt(true);
       } else {
         setStatus("Correct. Continue...");
@@ -992,6 +1187,21 @@
     });
 
     document.getElementById("btnReset").addEventListener("click", resetPuzzle);
+    const loadNextPuzzle = () => {
+      if (categoryPuzzles.length) {
+        categoryIndex = (categoryIndex + 1) % categoryPuzzles.length;
+        const next = categoryPuzzles[categoryIndex];
+        idInput.value = String(next.id);
+        loadPuzzleById(next.id);
+        return;
+      }
+      const currentId = Number(idInput.value || puzzle?.id || 0);
+      if (!Number.isFinite(currentId) || currentId < 1) return;
+      const nextId = currentId + 1;
+      idInput.value = String(nextId);
+      loadPuzzleById(nextId);
+    };
+    if (nextPuzzleBtn) nextPuzzleBtn.addEventListener("click", loadNextPuzzle);
     document.getElementById("btnLoad").addEventListener("click", () => {
       const id = idInput.value || "1";
       loadPuzzleById(id);
@@ -1013,8 +1223,12 @@
       }, 120);
     });
 
-    const initialId = new URLSearchParams(window.location.search).get("id");
-    if (initialId) {
+    const initialParams = new URLSearchParams(window.location.search);
+    const initialId = initialParams.get("id");
+    const initialCategory = initialParams.get("category") || initialParams.get("theme");
+    if (initialCategory) {
+      loadCategory(initialCategory);
+    } else if (initialId) {
       idInput.value = initialId;
       loadPuzzleById(initialId);
     } else {
@@ -1033,10 +1247,10 @@
     ].join(";");
     document.body.appendChild(ratingToast);
 
-    function showRatingToast(delta, ratingBefore, ratingAfter, stars) {
+    function showRatingToast(delta, ratingBefore, ratingAfter, stars, performanceScore, timeSeconds, attempts, masteryLabel) {
       const sign = delta >= 0 ? "+" : "";
       const starStr = "★".repeat(stars) + "☆".repeat(3 - stars);
-      ratingToast.textContent = `${starStr}  Rating: ${sign}${delta}  (${ratingBefore} → ${ratingAfter})`;
+      ratingToast.textContent = `${starStr} ${masteryLabel || "Score"} ${performanceScore ?? 0}% | ${attempts} attempt(s), ${formatDuration(timeSeconds || 0)} | Rating: ${sign}${delta} (${ratingBefore} -> ${ratingAfter})`;
       ratingToast.style.color = delta >= 0 ? "#5cf5a5" : "#f87171";
       ratingToast.style.borderColor = delta >= 0 ? "rgba(92,245,165,0.35)" : "rgba(248,113,113,0.35)";
       ratingToast.style.opacity = "1";
@@ -1054,13 +1268,15 @@
           body: JSON.stringify({
             puzzleId: puzzle.id,
             solved,
+            attempts: currentAttemptCount(),
             wrongMoves,
+            timeSeconds: elapsedSeconds(),
             theme: puzzle.theme || null
           })
         });
         if (!res.ok) return;
         const data = await res.json();
-        showRatingToast(data.ratingDelta, data.ratingBefore, data.ratingAfter, data.stars);
+        showRatingToast(data.ratingDelta, data.ratingBefore, data.ratingAfter, data.stars, data.performanceScore, data.timeSeconds, data.attempts, data.masteryLabel);
         // Keep localStorage rating in sync so the dashboard shows the new value
         if (data.ratingAfter !== undefined) {
           localStorage.setItem("userRating", String(data.ratingAfter));
@@ -1068,5 +1284,7 @@
       } catch (_) { /* non-fatal */ }
     }
   </script>
+</div>
+</div>
 </body>
 </html>

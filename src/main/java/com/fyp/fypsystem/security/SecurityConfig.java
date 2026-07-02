@@ -31,11 +31,17 @@ public class SecurityConfig {
                 // Auth endpoints — always public
                 .requestMatchers("/api/auth/**").permitAll()
                 // Static frontend resources
-                .requestMatchers("/", "/*.html", "/css/**", "/img/**", "/lib/**",
+                .requestMatchers("/", "/*.html", "/css/**", "/img/**", "/assets/**", "/js/**", "/lib/**",
                                  "/puzzles.json", "/favicon.ico", "/logo.png").permitAll()
                 // Public puzzle reading (browsing the catalog without login)
                 .requestMatchers(HttpMethod.GET, "/api/puzzles", "/api/puzzles/**",
                                  "/api/puzzles/themes").permitAll()
+                // Opening book lookup — public so analysis page works without login
+                .requestMatchers(HttpMethod.GET, "/api/openings/lookup").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/coaches").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/analysis").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/payments/checkout/success",
+                                 "/api/payments/checkout/cancel").permitAll()
                 // Everything else needs a valid JWT
                 .anyRequest().authenticated()
             )

@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class LichessPuzzleImportService {
+public class PuzzleCsvImportService {
     private static final int DEFAULT_LIMIT = 500;
     private static final int BATCH_SIZE = 200;
 
@@ -24,7 +24,7 @@ public class LichessPuzzleImportService {
     @Value("${puzzles.import.path:}")
     private String defaultPath;
 
-    public LichessPuzzleImportService(PuzzleRepository puzzleRepository) {
+    public PuzzleCsvImportService(PuzzleRepository puzzleRepository) {
         this.puzzleRepository = puzzleRepository;
     }
 
@@ -79,21 +79,23 @@ public class LichessPuzzleImportService {
                     continue;
                 }
 
-                String title = "Lichess " + puzzleId;
-                if (skipDupes && puzzleRepository.existsByTitle(title)) {
+                String legacyTitle = "Lichess " + puzzleId;
+                String title = "Imported Puzzle " + puzzleId;
+                if (skipDupes && (puzzleRepository.existsByTitle(title) || puzzleRepository.existsByTitle(legacyTitle))) {
                     skipped++;
                     continue;
                 }
 
-                Integer rating = parseIntSafe(ratingRaw);
-                String side = extractSide(fen);
                 String[] moves = movesRaw.split("\\s+");
                 if (moves.length == 0 || moves[0].isBlank()) {
                     skipped++;
                     continue;
                 }
 
-                Puzzle puzzle = new Puzzle(title, themes, rating, fen, side, moves[0]);
+                Integer rating = parseIntSafe(ratingRaw);
+                String side = moves.length > 1 ? oppositeSide(extractSide(fen)) : extractSide(fen);
+                String studentFirstMove = moves.length > 1 ? moves[1] : moves[0];
+                Puzzle puzzle = new Puzzle(title, themes, rating, fen, side, studentFirstMove);
                 puzzle.setPublished(publish);
 
                 List<PuzzleMove> moveList = new ArrayList<>();
@@ -153,6 +155,10 @@ public class LichessPuzzleImportService {
             return parts[1];
         }
         return "w";
+    }
+
+    private String oppositeSide(String side) {
+        return "b".equals(side) ? "w" : "b";
     }
 
     private List<String> parseCsvLine(String line) {

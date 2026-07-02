@@ -30,3 +30,11 @@ models/chess-yolo11/best.pt
 ```
 
 7. Use the coach upload form. The backend calls `tools/vision/chess_vision_to_fen.py`, converts detections into FEN, and saves the result as a normal puzzle.
+
+Before processing uploads, use the coach form's `Check vision setup` action or call:
+
+```text
+GET /api/vision/status
+```
+
+This confirms that Python is available, the vision script exists, and the trained YOLO model is present.

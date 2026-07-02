@@ -29,16 +29,20 @@ public class StockfishService {
     @Value("${stockfish.path:}")
     private String stockfishPath;
 
+    public boolean isEnabled() {
+        return stockfishPath != null && !stockfishPath.isBlank() && Files.exists(Path.of(stockfishPath));
+    }
+
     public AnalysisResult analyze(String fen, Integer depth, Integer movetimeMs, Integer multiPv) {
         if (fen == null || fen.isBlank()) {
             throw new IllegalArgumentException("FEN is required");
         }
         if (stockfishPath == null || stockfishPath.isBlank()) {
-            throw new IllegalStateException("Stockfish path not configured");
+            throw new IllegalStateException("Stockfish engine is not configured. Set STOCKFISH_PATH or stockfish.path.");
         }
         Path enginePath = Path.of(stockfishPath);
         if (!Files.exists(enginePath)) {
-            throw new IllegalStateException("Stockfish path not found: " + stockfishPath);
+            throw new IllegalStateException("Stockfish engine was not found at configured path: " + stockfishPath);
         }
 
         ProcessBuilder builder = new ProcessBuilder(enginePath.toString());

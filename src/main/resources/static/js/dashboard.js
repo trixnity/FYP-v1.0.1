@@ -502,7 +502,7 @@
     const updateAnalysisStatus = (msg) => { if (analysisStatus) analysisStatus.textContent = msg; };
   
     const initAnalysisBoard = () => {
-      if (!analysisBoardEl || analysisBoardEl.dataset.embed === "lichess" || !window.Chessboard || !window.Chess) return;
+      if (!analysisBoardEl || !window.Chessboard || !window.Chess) return;
       analysisGame = new Chess();
       analysisBoard = Chessboard("analysisBoard", {
         position: "start",

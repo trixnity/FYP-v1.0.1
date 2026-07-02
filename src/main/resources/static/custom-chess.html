@@ -2,117 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chess Game (Custom)</title>
-  <link rel="stylesheet" href="css/custom-chess.css">
-  <link rel="stylesheet" href="css/theme-light.css">
+  <meta http-equiv="refresh" content="0; url=analysis.html">
+  <title>EduChess - Study Board</title>
 </head>
-<body class="theme-light">
-  <main class="container">
-    <h1>Papan study</h1>
-
-    <div class="board-wrap">
-      <ul id="board" class="board" aria-label="Chess board" data-stockfish="lib/stockfish.js">
-        <li class="box" id="b801" data-piece="br"></li>
-      <li class="box" id="b802" data-piece="bn"></li>
-      <li class="box" id="b803" data-piece="bb"></li>
-      <li class="box" id="b804" data-piece="bq"></li>
-      <li class="box" id="b805" data-piece="bk"></li>
-      <li class="box" id="b806" data-piece="bb"></li>
-      <li class="box" id="b807" data-piece="bn"></li>
-      <li class="box" id="b808" data-piece="br"></li>
-
-      <li class="box" id="b701" data-piece="bp"></li>
-      <li class="box" id="b702" data-piece="bp"></li>
-      <li class="box" id="b703" data-piece="bp"></li>
-      <li class="box" id="b704" data-piece="bp"></li>
-      <li class="box" id="b705" data-piece="bp"></li>
-      <li class="box" id="b706" data-piece="bp"></li>
-      <li class="box" id="b707" data-piece="bp"></li>
-      <li class="box" id="b708" data-piece="bp"></li>
-
-      <li class="box" id="b601"></li>
-      <li class="box" id="b602"></li>
-      <li class="box" id="b603"></li>
-      <li class="box" id="b604"></li>
-      <li class="box" id="b605"></li>
-      <li class="box" id="b606"></li>
-      <li class="box" id="b607"></li>
-      <li class="box" id="b608"></li>
-
-      <li class="box" id="b501"></li>
-      <li class="box" id="b502"></li>
-      <li class="box" id="b503"></li>
-      <li class="box" id="b504"></li>
-      <li class="box" id="b505"></li>
-      <li class="box" id="b506"></li>
-      <li class="box" id="b507"></li>
-      <li class="box" id="b508"></li>
-
-      <li class="box" id="b401"></li>
-      <li class="box" id="b402"></li>
-      <li class="box" id="b403"></li>
-      <li class="box" id="b404"></li>
-      <li class="box" id="b405"></li>
-      <li class="box" id="b406"></li>
-      <li class="box" id="b407"></li>
-      <li class="box" id="b408"></li>
-
-      <li class="box" id="b301"></li>
-      <li class="box" id="b302"></li>
-      <li class="box" id="b303"></li>
-      <li class="box" id="b304"></li>
-      <li class="box" id="b305"></li>
-      <li class="box" id="b306"></li>
-      <li class="box" id="b307"></li>
-      <li class="box" id="b308"></li>
-
-      <li class="box" id="b201" data-piece="wp"></li>
-      <li class="box" id="b202" data-piece="wp"></li>
-      <li class="box" id="b203" data-piece="wp"></li>
-      <li class="box" id="b204" data-piece="wp"></li>
-      <li class="box" id="b205" data-piece="wp"></li>
-      <li class="box" id="b206" data-piece="wp"></li>
-      <li class="box" id="b207" data-piece="wp"></li>
-      <li class="box" id="b208" data-piece="wp"></li>
-
-      <li class="box" id="b101" data-piece="wr"></li>
-      <li class="box" id="b102" data-piece="wn"></li>
-      <li class="box" id="b103" data-piece="wb"></li>
-      <li class="box" id="b104" data-piece="wq"></li>
-      <li class="box" id="b105" data-piece="wk"></li>
-      <li class="box" id="b106" data-piece="wb"></li>
-      <li class="box" id="b107" data-piece="wn"></li>
-        <li class="box" id="b108" data-piece="wr"></li>
-      </ul>
-      <canvas id="arrow-layer" class="arrow-layer" aria-hidden="true"></canvas>
-    </div>
-
-    <div class="controls">
-      <div id="tog">White's Turn</div>
-      <button id="reset-btn" type="button">Reset</button>
-    </div>
-
-    <div class="analysis">
-      <div class="analysis-actions">
-        <button id="analyze-btn" type="button">Analyze</button>
-        <button id="stop-btn" type="button">Stop</button>
-        <label class="analysis-depth">
-          Depth
-          <input id="analysis-depth" type="number" min="6" max="20" value="12">
-        </label>
-      </div>
-      <div class="analysis-output">
-        <div><strong>Best</strong> <span id="best-move">-</span></div>
-        <div><strong>Eval</strong> <span id="eval-score">-</span></div>
-        <div class="pv"><strong>PV</strong> <span id="pv-line">-</span></div>
-        <div id="engine-status" class="muted">Engine: idle</div>
-      </div>
-    </div>
-  </main>
-
-  <script src="lib/chess.js"></script>
-  <script src="js/custom-chess.js"></script>
+<body>
+  <script>window.location.replace("analysis.html");</script>
+  <p>Study Board has been merged into Game Analysis. <a href="analysis.html">Open Game Analysis</a>.</p>
 </body>
 </html>

@@ -9,4 +9,5 @@ public interface SessionPlanRepository extends JpaRepository<SessionPlan, Long> 
     List<SessionPlan> findByCoachIdOrderByCreatedAtDesc(Long coachId);
     List<SessionPlan> findByStudentIdOrderByCreatedAtDesc(Long studentId);
     Optional<SessionPlan> findByCoachIdAndStudentIdAndMonth(Long coachId, Long studentId, String month);
+    boolean existsByCoachIdAndStudentId(Long coachId, Long studentId);
 }

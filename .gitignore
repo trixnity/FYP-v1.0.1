@@ -42,3 +42,4 @@ models/**/*.pt
 models/**/*.onnx
 datasets/
 runs/
+uploads/

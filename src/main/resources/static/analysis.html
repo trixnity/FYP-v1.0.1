@@ -3,754 +3,2673 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chess Analysis</title>
+  <title>EduChess — Analysis Board</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+  <link rel="stylesheet" href="css/shell.css">
   <style>
     :root {
-      --bg: #0a1020;
-      --panel: #0f172a;
+      --bg: #060b18;
+      --panel: rgba(15, 28, 53, 0.82);
+      --panel-2: rgba(10, 18, 36, 0.9);
       --text: #f6f8ff;
       --muted: #9ba6c5;
       --accent: #4dabff;
       --accent-2: #5cf5a5;
-      --stroke: #1f2a44;
-      --shadow: 0 18px 45px rgba(3, 8, 20, 0.4);
+      --green: #82bd4a;
+      --stroke: rgba(184, 199, 219, 0.14);
+      --shadow: 0 18px 45px rgba(3, 8, 20, 0.45);
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      margin: 0;
       min-height: 100vh;
-      font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
-      background: radial-gradient(circle at 20% 20%, rgba(92,245,165,0.08), transparent 34%),
-                  radial-gradient(circle at 80% 0%, rgba(77,171,255,0.10), transparent 30%),
-                  linear-gradient(135deg, #060b18, #0a1024);
+      font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+      background:
+        linear-gradient(90deg, rgba(8,13,21,0.95), rgba(15,24,36,0.78), rgba(8,13,21,0.95)),
+        url("img/custom-chess/background.jpg") center bottom / cover fixed no-repeat,
+        var(--bg);
       color: var(--text);
-      padding: 16px;
     }
-    header {
+    .page-content {
+      overflow-x: hidden;
+    }
+    .page-content {
+      --study-left-w: clamp(240px, 18vw, 300px);
+      --study-right-w: clamp(270px, 20vw, 340px);
+      --study-board-w: clamp(500px, calc(100vw - var(--sidebar-w, 260px) - var(--study-left-w) - var(--study-right-w) - 128px), 640px);
+      --study-center-w: calc(var(--study-board-w) + 40px);
+    }
+
+    /* ── Page header inside content ── */
+    .page-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 12px;
-      padding: 10px 16px;
-      background: rgba(6, 11, 24, 0.85);
-      border: 1px solid var(--stroke);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
+      justify-content: space-between;
+      padding: 16px 24px 12px;
+      border-bottom: 1px solid var(--stroke);
     }
-    header a { color: var(--accent); text-decoration: none; font-weight: 600; }
-    h1 { margin: 0; font-size: 22px; }
-    .wrap {
+    .page-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .page-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(77, 171, 255, 0.12);
+      border: 1px solid rgba(77, 171, 255, 0.28);
+      color: #4dabff;
+    }
+
+    /* ── Main layout ── */
+    .analysis-layout {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 16px;
+      grid-template-columns: var(--study-left-w) var(--study-center-w) var(--study-right-w);
+      gap: 20px;
       align-items: start;
+      padding: 20px 24px 24px;
+      width: 100%;
+      overflow-x: hidden;
     }
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--stroke);
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: var(--shadow);
+    .study-left,
+    .center-study,
+    .right-panel {
+      min-width: 0;
+    }
+    .study-left {
+      width: var(--study-left-w);
+    }
+    .center-study {
       display: grid;
+      grid-template-columns: 28px var(--study-board-w);
       gap: 12px;
+      align-items: start;
+      width: var(--study-center-w);
+      max-width: var(--study-center-w);
+    }
+
+    /* ── Eval bar ── */
+    .eval-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding-top: 32px; /* align with board top (below player row) */
+      width: 28px;
+    }
+    .eval-bar {
+      width: 22px;
+      height: 560px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--stroke);
+      display: flex;
+      flex-direction: column;
+    }
+    #evalBarBlack {
+      background: #1e1e2e;
+      transition: height 0.5s ease;
+    }
+    #evalBarWhite {
+      background: #e8e8e8;
+      transition: height 0.5s ease;
+    }
+    .eval-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 700;
+      text-align: center;
+      min-width: 22px;
+    }
+
+    /* ── Board section ── */
+    .board-section {
+      width: var(--study-board-w);
+      min-width: 0;
+      max-width: var(--study-board-w);
+      overflow: visible;
+    }
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 2px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .color-dot {
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
     }
     .board-wrap {
       position: relative;
-      width: 100%;
-      max-width: 520px;
-      margin: 0 auto;
+      width: var(--study-board-w);
+      min-width: 0;
+      max-width: var(--study-board-w);
+      overflow: visible;
+    }
+    #analysisBoard,
+    #analysisBoard .chessboard-63f37,
+    #analysisBoard .board-b72b1 {
+      width: var(--study-board-w) !important;
+      max-width: var(--study-board-w) !important;
     }
     #analysisBoard {
-      width: 100%;
+      display: block;
+      overflow: visible;
     }
     #bestMoveArrow {
       position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
       pointer-events: none;
       z-index: 5;
     }
-    .row { display: flex; flex-wrap: wrap; gap: 8px; }
-    .setup-panel {
-      display: grid;
-      gap: 10px;
-      padding: 12px;
+    .board-controls {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .status-bar {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 4px 2px;
+      min-height: 20px;
+    }
+
+    /* ── Right panel ── */
+    .right-panel {
+      width: var(--study-right-w);
+      min-width: 0;
+      max-width: var(--study-right-w);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .pbox {
+      background: linear-gradient(145deg, var(--panel-2), var(--panel));
       border: 1px solid var(--stroke);
-      border-radius: 12px;
-      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      padding: 12px 14px;
+      backdrop-filter: blur(8px);
     }
-    .setup-panel.is-active {
-      border-color: rgba(130, 189, 74, 0.45);
-      background: rgba(130, 189, 74, 0.08);
+    .pbox-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 600;
     }
-    .setup-panel label {
-      min-width: 120px;
+
+    /* Classification summary */
+    .cls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px 10px;
     }
-    .setup-panel select,
-    .setup-panel input {
-      min-height: 40px;
+    .cls-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
     }
-    .board-wrap .spare-pieces-7492f {
-      margin: 10px auto;
-      border: 1px solid rgba(184, 199, 219, 0.16);
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.06);
-      min-height: 46px;
+    .cls-badge {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 800;
+      flex-shrink: 0;
+      color: #fff;
     }
-    .board-wrap .spare-pieces-7492f img {
-      cursor: grab;
+    .cls-count { font-weight: 700; min-width: 14px; }
+    .cls-name { color: var(--muted); }
+
+    /* Move list */
+    .move-list-scroll {
+      max-height: 420px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--stroke) transparent;
     }
-    .board-wrap .spare-pieces-7492f img:active {
-      cursor: grabbing;
+    .move-row {
+      display: grid;
+      grid-template-columns: 26px 1fr 1fr;
+      gap: 1px;
+      align-items: center;
     }
+    .move-num {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: right;
+      padding-right: 4px;
+      line-height: 26px;
+    }
+    .move-cell {
+      padding: 3px 6px;
+      border-radius: 5px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-wrap: wrap;
+      line-height: 20px;
+      transition: background 0.12s;
+      user-select: none;
+    }
+    .move-cell:hover { background: rgba(255,255,255,0.07); }
+    .move-cell.active {
+      background: rgba(77,171,255,0.18);
+      color: var(--accent);
+    }
+    .move-badge { font-size: 10px; font-weight: 800; }
+    .move-comments {
+      width: 100%;
+      display: grid;
+      gap: 5px;
+      margin-top: 4px;
+    }
+    .move-comment {
+      border-left: 2px solid rgba(92,245,165,0.7);
+      background: rgba(92,245,165,0.08);
+      border-radius: 0 7px 7px 0;
+      padding: 6px 8px;
+      font-size: 12px;
+      color: rgba(246,248,255,0.92);
+    }
+    .comment-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--accent-2);
+      font-size: 11px;
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+    .comment-actions {
+      display: inline-flex;
+      gap: 4px;
+    }
+    .comment-actions button {
+      padding: 2px 6px;
+      min-height: 24px;
+      font-size: 11px;
+    }
+    .comment-editor {
+      display: grid;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    /* Nav */
+    .nav-row {
+      display: flex;
+      gap: 5px;
+    }
+    .nav-row button { flex: 1; padding: 7px 4px; font-size: 15px; }
+
+    /* Arrow legend */
+    .arrow-legend { display: grid; gap: 6px; margin-top: 2px; }
+    .arrow-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .arrow-pip {
+      flex-shrink: 0;
+      width: 28px;
+      height: 9px;
+      border-radius: 4px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .arrow-pip::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      border-left: 8px solid currentColor;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+    .arrow-rank {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      min-width: 22px;
+      text-align: right;
+    }
+
+    /* Metric rows */
+    .metric-row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 4px;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--stroke);
+      font-size: 12px;
+    }
+    .metric-row:last-child { border: none; padding-bottom: 0; }
+    .metric-label { color: var(--muted); }
+    .metric-value { font-weight: 600; word-break: break-all; }
+
+    /* Buttons */
     button {
       border: 1px solid var(--stroke);
       background: rgba(255,255,255,0.06);
       color: var(--text);
-      padding: 10px 12px;
-      border-radius: 10px;
+      padding: 8px 12px;
+      border-radius: 9px;
       cursor: pointer;
       font-weight: 600;
+      font-size: 13px;
+      transition: background 0.12s;
     }
+    button:hover { background: rgba(255,255,255,0.11); }
+    button:disabled { opacity: 0.35; cursor: default; }
     button.primary { background: linear-gradient(135deg, var(--accent), #73c8ff); color: #031021; border: none; }
-    input, textarea {
-      padding: 10px;
-      border-radius: 10px;
+    button.primary:hover { opacity: 0.88; }
+
+    /* Inline row */
+    .flex-row { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+
+    /* Setup panel (below everything) */
+    .setup-panel {
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      padding: 12px;
+      display: grid;
+      gap: 9px;
+    }
+    .setup-panel.is-active { border-color: rgba(130,189,74,0.5); background: rgba(130,189,74,0.06); }
+    label { display: grid; gap: 4px; color: var(--muted); font-size: 12px; }
+    input[type="text"], input[type="number"], select, textarea {
+      padding: 7px 9px;
+      border-radius: 8px;
       border: 1px solid var(--stroke);
       background: rgba(255,255,255,0.04);
       color: var(--text);
-      min-width: 0;
       font-family: inherit;
-      font-size: 14px;
+      font-size: 13px;
+      min-width: 0;
     }
-    textarea { min-height: 100px; width: 100%; }
-    label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
-    .status { color: var(--muted); min-height: 18px; }
-    .metric {
-      padding: 10px;
-      border-radius: 12px;
-      border: 1px solid var(--stroke);
-      background: rgba(255,255,255,0.02);
-      display: grid;
+    textarea { min-height: 58px; width: 100%; resize: vertical; }
+
+    /* Spare pieces */
+    .board-wrap .spare-pieces-7492f {
+      margin: 7px auto;
+      border: 1px solid rgba(184,199,219,0.15);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      min-height: 44px;
+    }
+
+    /* Toggle */
+    .toggle-label {
+      display: flex;
+      align-items: center;
       gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
     }
-    .metric .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
-    .metric .value { font-size: 16px; font-weight: 600; word-break: break-word; }
-    #pvLine { white-space: pre-wrap; }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(3, 8, 20, 0.72);
+      backdrop-filter: blur(10px);
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-card {
+      width: min(720px, 100%);
+      max-height: 92vh;
+      overflow: auto;
+      border: 1px solid rgba(184,199,219,0.18);
+      border-radius: 12px;
+      background: linear-gradient(145deg, rgba(18, 28, 45, 0.98), rgba(8, 13, 24, 0.98));
+      box-shadow: 0 26px 80px rgba(0,0,0,0.52);
+      padding: 18px;
+    }
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .modal-title { font-size: 18px; font-weight: 800; }
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    /* Setup panel */
+    .setup-section { padding: 0 24px 24px; }
+
+    .saved-game-actions {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+    .saved-game-actions button { flex: 1 1 110px; }
+    .saved-game-list {
+      display: grid;
+      gap: 7px;
+      max-height: 230px;
+      overflow: auto;
+    }
+    .saved-game-item {
+      width: 100%;
+      text-align: left;
+      border-radius: 8px;
+      padding: 9px 10px;
+    }
+    .saved-game-item.is-active {
+      border-color: rgba(92,245,165,0.55);
+      background: rgba(92,245,165,0.08);
+    }
+    .saved-game-name {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .saved-game-meta {
+      display: block;
+      margin-top: 3px;
+      font-size: 11px;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 1100px) {
+      .analysis-layout { grid-template-columns: 1fr; padding: 14px 16px; overflow-x: visible; }
+      .study-left,
+      .right-panel {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+      }
+      .center-study { grid-template-columns: 28px minmax(0, 1fr); width: min(100%, 680px); }
+      .board-section { width: min(100%, 640px); max-width: 640px; }
+      .board-wrap { width: 100%; max-width: 640px; }
+      .eval-bar { height: 100%; min-height: 200px; }
+      .eval-bar-wrap { padding-top: 32px; flex-direction: column; }
+      .setup-section { padding: 0 16px 16px; }
+    }
+
+    /* ── Analysis Page Polish ─────────────────────────────────── */
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: rgba(77, 171, 255, 0.55) !important;
+      box-shadow: 0 0 0 3px rgba(77, 171, 255, 0.10) !important;
+    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(77, 171, 255, 0.20); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(77, 171, 255, 0.38); }
+    *:focus-visible { outline: 2px solid rgba(77, 171, 255, 0.55); outline-offset: 2px; }
+    button:active, .btn:active { transform: scale(0.97) !important; transition: transform 80ms ease !important; }
+
+    /* Panel entrance */
+    @keyframes panelIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
+    .right-panel { animation: panelIn 280ms ease both; }
+    .board-wrap  { animation: panelIn 220ms ease both; }
+
+    /* Move list item hover */
+    .move-item:hover {
+      background: rgba(77, 171, 255, 0.09) !important;
+      border-radius: 6px;
+    }
   </style>
-  <link rel="stylesheet" href="css/theme-light.css">
 </head>
-<body class="theme-light">
-  <header>
-    <h1>Chess Analysis (Stockfish)</h1>
-    <nav class="row">
-      <a href="dashboard.html">Back to dashboard</a>
-    </nav>
-  </header>
+<body data-active-nav="analysis">
+<div class="shell">
 
-  <div class="wrap">
-    <section class="panel">
-      <div class="board-wrap">
-        <div id="analysisBoard"></div>
-        <canvas id="bestMoveArrow"></canvas>
-      </div>
-      <div class="row">
-        <button class="primary" id="btnAnalyze">Analyze</button>
-        <button id="btnPlayBest">Play best move</button>
-        <button id="btnReset">Reset</button>
-        <button id="btnFlip">Flip</button>
-      </div>
-      <div class="setup-panel" id="setupPanel">
-        <div class="row">
-          <button id="btnSetupToggle" type="button">Setup position</button>
-          <button id="btnClearBoard" type="button">Clear board</button>
-          <button id="btnStartPosition" type="button">Start position</button>
-          <button id="btnUseBoardFen" type="button">Use board FEN</button>
-        </div>
-        <div class="row">
-          <label>Side to move
-            <select id="sideToMove">
-              <option value="w">White</option>
-              <option value="b">Black</option>
-            </select>
-          </label>
-          <label>Castling
-            <input id="castlingInput" type="text" value="-" placeholder="- or KQkq">
-          </label>
-          <label>En passant
-            <input id="epInput" type="text" value="-" placeholder="- or e3">
-          </label>
-          <label>Halfmove
-            <input id="halfmoveInput" type="number" min="0" value="0">
-          </label>
-          <label>Fullmove
-            <input id="fullmoveInput" type="number" min="1" value="1">
-          </label>
-        </div>
-      </div>
-      <label>FEN
-        <textarea id="fenInput" placeholder="Paste a FEN to analyze"></textarea>
-      </label>
-      <div class="row">
-        <button id="btnApplyFen">Apply FEN</button>
-        <label class="row" style="align-items:center; gap:6px;">
-          <input type="checkbox" id="autoAnalyze">
-          Auto analyze after every move
-        </label>
-      </div>
-      <div class="row">
-        <label>Depth
-          <input id="depthInput" type="number" min="1" placeholder="e.g. 14">
-        </label>
-        <label>Move time (ms)
-          <input id="timeInput" type="number" min="100" placeholder="800">
-        </label>
-      </div>
-      <div class="status" id="status">Ready.</div>
-    </section>
+<!-- ── Sidebar ─────────────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <a class="sidebar-logo" href="dashboard.html">
+    <img src="logo.png" alt="EduChess">
+    EduChess
+  </a>
+  <nav class="sidebar-nav">
+  </nav>
+  <div class="sidebar-footer">
+    <button class="sidebar-logout" onclick="localStorage.removeItem('authToken'); window.location.href='index.html'">Logout</button>
+  </div>
+</aside>
 
-    <section class="panel">
-      <div class="metric">
-        <div class="label">Best move</div>
-        <div class="value" id="bestMove">-</div>
+<!-- ── Page content ─────────────────────────────────────────────────────────── -->
+<div class="page-content">
+
+<div class="page-header">
+  <span class="page-title">Analysis Board</span>
+  <span class="page-badge">Study &amp; Review</span>
+</div>
+
+<div class="analysis-layout">
+
+  <!-- Left study list -->
+  <div class="study-left">
+    <div class="pbox">
+      <div class="pbox-title">My Games / Chapters</div>
+      <div class="saved-game-actions" style="margin-bottom:8px;">
+        <button class="primary" id="btnSaveToDatabase">Save to My Games</button>
+        <button id="btnNewSavedGame">New Record</button>
+        <a href="my-games.html" style="text-decoration:none;flex:1 1 110px;"><button type="button" style="width:100%;">Open My Games</button></a>
       </div>
-      <div class="metric">
-        <div class="label">Evaluation</div>
-        <div class="value" id="evalScore">-</div>
-      </div>
-      <div class="metric">
-        <div class="label">PV line</div>
-        <div class="value" id="pvLine">-</div>
-      </div>
-    </section>
+      <div class="status-bar" id="savedGameStatus">No database game selected.</div>
+      <div class="saved-game-list" id="savedGamesList"></div>
+    </div>
   </div>
 
-  <script src="lib/chess.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-  <script src="lib/chessboard-1.0.0.min.js"></script>
-  <script>
-    const authToken = localStorage.getItem("authToken");
-    if (!authToken) { window.location.href = "index.html"; }
-    const authHeaders = { "Authorization": "Bearer " + (authToken || "") };
+  <div class="center-study">
+  <!-- Eval bar -->
+  <div class="eval-bar-wrap">
+    <div class="eval-bar" id="evalBar">
+      <div id="evalBarBlack" style="height:50%"></div>
+      <div id="evalBarWhite" style="height:50%"></div>
+    </div>
+    <div class="eval-label" id="evalLabel">0.0</div>
+  </div>
 
-    const boardEl = document.getElementById("analysisBoard");
-    const fenInput = document.getElementById("fenInput");
-    const statusEl = document.getElementById("status");
-    const bestMoveEl = document.getElementById("bestMove");
-    const evalEl = document.getElementById("evalScore");
-    const pvEl = document.getElementById("pvLine");
-    const depthInput = document.getElementById("depthInput");
-    const timeInput = document.getElementById("timeInput");
-    const autoAnalyze = document.getElementById("autoAnalyze");
-    const setupPanel = document.getElementById("setupPanel");
-    const setupToggle = document.getElementById("btnSetupToggle");
-    const clearBoardBtn = document.getElementById("btnClearBoard");
-    const startPositionBtn = document.getElementById("btnStartPosition");
-    const useBoardFenBtn = document.getElementById("btnUseBoardFen");
-    const sideToMove = document.getElementById("sideToMove");
-    const castlingInput = document.getElementById("castlingInput");
-    const epInput = document.getElementById("epInput");
-    const halfmoveInput = document.getElementById("halfmoveInput");
-    const fullmoveInput = document.getElementById("fullmoveInput");
-    const arrowCanvas = document.getElementById("bestMoveArrow");
-    const arrowCtx = arrowCanvas ? arrowCanvas.getContext("2d") : null;
-    let bestMove = null;
-    let bestLines = [];
-    const arrowStyles = [
-      { fill: "rgba(34, 197, 94, 0.55)", stroke: "rgba(15, 23, 42, 0.3)", highlight: "rgba(34, 197, 94, 0.22)" },
-      { fill: "rgba(59, 130, 246, 0.45)", stroke: "rgba(15, 23, 42, 0.28)", highlight: "rgba(59, 130, 246, 0.2)" },
-      { fill: "rgba(245, 158, 11, 0.45)", stroke: "rgba(15, 23, 42, 0.28)", highlight: "rgba(245, 158, 11, 0.2)" }
-    ];
+  <!-- Board -->
+  <div class="board-section">
+    <div class="player-row" id="topPlayerRow">
+      <div class="color-dot" id="topDot" style="background:#1e1e2e;border:1px solid #555"></div>
+      <span id="topPlayerName">Black</span>
+    </div>
+    <div class="board-wrap">
+      <div id="analysisBoard"></div>
+      <canvas id="bestMoveArrow"></canvas>
+    </div>
+    <div class="player-row" id="bottomPlayerRow">
+      <div class="color-dot" id="bottomDot" style="background:#e8e8e8;border:1px solid #aaa"></div>
+      <span id="bottomPlayerName">White</span>
+    </div>
+    <div class="board-controls">
+      <button class="primary" id="btnAnalyze">Analyze</button>
+      <button id="btnPlayBest">Play Best</button>
+      <button id="btnFlip">⇅ Flip</button>
+      <button id="btnReset">New Game</button>
+      <button id="btnSetupToggle">Setup Position</button>
+    </div>
+    <div class="status-bar" id="status">Ready. Make moves on the board.</div>
+  </div>
+  </div>
 
-    const game = new Chess();
-    const startFen = game.fen();
-    const pieceTheme = (piece) => `img/pieces/${piece.toLowerCase()}.svg`;
-    let board;
-    let setupMode = false;
-    let currentOrientation = "white";
+  <!-- Right panel -->
+  <div class="right-panel">
 
-    const files = "abcdefgh".split("");
+    <!-- Classification summary -->
+    <div class="pbox">
+      <div class="pbox-title">Move Quality</div>
+      <div class="cls-grid">
+        <div class="cls-item">
+          <div class="cls-badge" style="background:#00bcd4">!!</div>
+          <span class="cls-count" id="cntBrilliant">0</span>
+          <span class="cls-name">Brilliant</span>
+        </div>
+        <div class="cls-item">
+          <div class="cls-badge" style="background:#2196f3">!</div>
+          <span class="cls-count" id="cntGreat">0</span>
+          <span class="cls-name">Great</span>
+        </div>
+        <div class="cls-item">
+          <div class="cls-badge" style="background:#4caf50">★</div>
+          <span class="cls-count" id="cntBest">0</span>
+          <span class="cls-name">Best</span>
+        </div>
+        <div class="cls-item">
+          <div class="cls-badge" style="background:#607d8b">·</div>
+          <span class="cls-count" id="cntGood">0</span>
+          <span class="cls-name">Good</span>
+        </div>
+        <div class="cls-item">
+          <div class="cls-badge" style="background:#ff9800">?!</div>
+          <span class="cls-count" id="cntInaccuracy">0</span>
+          <span class="cls-name">Inaccuracy</span>
+        </div>
+        <div class="cls-item">
+          <div class="cls-badge" style="background:#ff5722">?</div>
+          <span class="cls-count" id="cntMistake">0</span>
+          <span class="cls-name">Mistake</span>
+        </div>
+        <div class="cls-item">
+          <div class="cls-badge" style="background:#f44336">??</div>
+          <span class="cls-count" id="cntBlunder">0</span>
+          <span class="cls-name">Blunder</span>
+        </div>
+        <div class="cls-item">
+          <div class="cls-badge" style="background:#9c27b0">✗</div>
+          <span class="cls-count" id="cntMiss">0</span>
+          <span class="cls-name">Miss</span>
+        </div>
+        <div class="cls-item">
+          <div class="cls-badge" style="background:#795548">📖</div>
+          <span class="cls-count" id="cntBook">0</span>
+          <span class="cls-name">Book</span>
+        </div>
+      </div>
+    </div>
 
-    const boardAreaEl = () => boardEl.querySelector(".board-b72b1") || boardEl;
+    <!-- Move list -->
+    <div class="pbox">
+      <div id="openingNameEl" style="font-size:12px;color:var(--accent-2);font-weight:600;min-height:16px;margin-bottom:6px"></div>
+      <div class="pbox-title" style="margin-bottom:4px">Moves</div>
+      <div class="move-list-scroll">
+        <div id="moveList"></div>
+      </div>
+      <div class="comment-editor">
+        <div class="status-bar" id="selectedMoveLabel">Select a move to comment.</div>
+        <div class="flex-row">
+          <button type="button" id="btnAddComment" style="flex:1">Add Comment</button>
+        </div>
+      </div>
+    </div>
 
-    const normalizeCastling = (value) => {
-      const raw = (value || "-").trim();
-      if (raw === "-") return "-";
-      const ordered = ["K", "Q", "k", "q"].filter((token) => raw.includes(token)).join("");
-      return ordered || "-";
-    };
+    <!-- Navigation -->
+    <div class="nav-row">
+      <button id="btnFirst" title="First move (Home)">⏮</button>
+      <button id="btnPrev"  title="Previous (←)">◀</button>
+      <button id="btnNext"  title="Next (→)">▶</button>
+      <button id="btnLast"  title="Last move (End)">⏭</button>
+    </div>
 
-    const normalizeEp = (value) => {
-      const raw = (value || "-").trim().toLowerCase();
-      return /^[a-h][36]$/.test(raw) ? raw : "-";
-    };
+    <!-- Actions -->
+    <div class="flex-row">
+      <button id="btnSaveGame" style="flex:1">⬇ Save PGN</button>
+      <label class="toggle-label" style="flex:1;justify-content:center;">
+        <input type="checkbox" id="autoAnalyze" checked>
+        Auto-analyze
+      </label>
+    </div>
 
-    const normalizeNumber = (value, fallback, min) => {
-      const parsed = parseInt(value, 10);
-      return Number.isFinite(parsed) && parsed >= min ? parsed : fallback;
-    };
+    <!-- Arrow guide -->
+    <div class="pbox">
+      <div class="pbox-title">Arrow Guide</div>
+      <div class="arrow-legend">
+        <div class="arrow-legend-item">
+          <div class="arrow-pip" style="background:rgba(34,197,94,0.55);color:rgba(34,197,94,0.55)"></div>
+          <span style="color:#4ade80;font-weight:700">1st</span>
+          <span style="color:var(--muted)">Best Move</span>
+        </div>
+        <div class="arrow-legend-item">
+          <div class="arrow-pip" style="background:rgba(59,130,246,0.55);color:rgba(59,130,246,0.55)"></div>
+          <span style="color:#60a5fa;font-weight:700">2nd</span>
+          <span style="color:var(--muted)">Best Move</span>
+        </div>
+        <div class="arrow-legend-item">
+          <div class="arrow-pip" style="background:rgba(245,158,11,0.55);color:rgba(245,158,11,0.55)"></div>
+          <span style="color:#fbbf24;font-weight:700">3rd</span>
+          <span style="color:var(--muted)">Best Move</span>
+        </div>
+      </div>
+    </div>
 
-    const boardObjToPlacement = (position) => {
-      let placement = "";
-      for (let rank = 8; rank >= 1; rank--) {
-        let empty = 0;
-        for (const file of files) {
-          const square = `${file}${rank}`;
-          const piece = position[square];
-          if (!piece) {
-            empty++;
-            continue;
-          }
-          if (empty) {
-            placement += empty;
-            empty = 0;
-          }
-          placement += piece[0] === "w" ? piece[1].toUpperCase() : piece[1].toLowerCase();
-        }
-        if (empty) placement += empty;
-        if (rank > 1) placement += "/";
-      }
-      return placement;
-    };
+    <!-- Analysis metrics -->
+    <div class="pbox">
+      <div class="metric-row">
+        <span class="metric-label">Best move</span>
+        <span class="metric-value" id="bestMoveEl">-</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">Evaluation</span>
+        <span class="metric-value" id="evalScoreEl">-</span>
+      </div>
+    </div>
 
-    const buildFenFromPosition = (position) => {
-      const side = sideToMove.value || "w";
-      const castling = normalizeCastling(castlingInput.value);
-      const ep = normalizeEp(epInput.value);
-      const halfmove = normalizeNumber(halfmoveInput.value, 0, 0);
-      const fullmove = normalizeNumber(fullmoveInput.value, 1, 1);
-      return `${boardObjToPlacement(position)} ${side} ${castling} ${ep} ${halfmove} ${fullmove}`;
-    };
+    <!-- Depth / time -->
+    <div class="flex-row">
+      <label style="flex:1">Depth
+        <input id="depthInput" type="number" min="1" placeholder="auto">
+      </label>
+      <label style="flex:1">Time (ms)
+        <input id="timeInput" type="number" min="100" placeholder="800">
+      </label>
+    </div>
 
-    const updateSetupControlsFromFen = (fen) => {
-      const parts = (fen || "").trim().split(/\s+/);
-      if (parts.length < 6) return;
-      sideToMove.value = parts[1] === "b" ? "b" : "w";
-      castlingInput.value = parts[2] || "-";
-      epInput.value = parts[3] || "-";
-      halfmoveInput.value = normalizeNumber(parts[4], 0, 0);
-      fullmoveInput.value = normalizeNumber(parts[5], 1, 1);
-    };
+  </div><!-- /right-panel -->
+</div><!-- /analysis-layout -->
 
-    const validateAnalysisFen = (fen) => {
-      const testGame = new Chess();
-      const validation = testGame.validate_fen(fen);
-      if (!validation.valid) return validation.error;
-      const position = Chessboard.fenToObj(fen) || {};
-      const whiteKings = Object.values(position).filter((piece) => piece === "wK").length;
-      const blackKings = Object.values(position).filter((piece) => piece === "bK").length;
-      if (whiteKings !== 1 || blackKings !== 1) {
-        return "Position needs exactly one white king and one black king.";
-      }
-      if (!testGame.load(fen)) return "Invalid position.";
-      return "";
-    };
+<!-- Setup panel -->
+<div class="setup-section">
+  <div class="setup-panel" id="setupPanel">
+    <div class="flex-row">
+      <button id="btnClearBoard">Clear</button>
+      <button id="btnStartPosition">Start Pos</button>
+      <button id="btnUseBoardFen">Sync FEN</button>
+    </div>
+    <div class="flex-row">
+      <label>Side to move
+        <select id="sideToMove">
+          <option value="w">White</option>
+          <option value="b">Black</option>
+        </select>
+      </label>
+      <label>Castling
+        <input id="castlingInput" type="text" value="-" style="width:70px" placeholder="KQkq">
+      </label>
+      <label>En passant
+        <input id="epInput" type="text" value="-" style="width:60px" placeholder="e3">
+      </label>
+      <label>½move
+        <input id="halfmoveInput" type="number" min="0" value="0" style="width:60px">
+      </label>
+      <label>Move #
+        <input id="fullmoveInput" type="number" min="1" value="1" style="width:60px">
+      </label>
+    </div>
+    <label>FEN
+      <textarea id="fenInput" placeholder="Paste a FEN to analyze"></textarea>
+    </label>
+    <div class="flex-row">
+      <button id="btnApplyFen">Apply FEN</button>
+    </div>
+  </div>
+</div><!-- /setup-section -->
 
-    const syncFenFromBoard = (options = {}) => {
-      if (!board) return false;
-      const fen = buildFenFromPosition(board.position());
-      fenInput.value = fen;
-      const error = validateAnalysisFen(fen);
-      if (error) {
-        if (!options.quiet) setStatus(error, "warn");
-        return false;
-      }
-      if (options.loadGame) game.load(fen);
-      if (!options.quiet) setStatus("Position FEN ready.", "success");
-      return true;
-    };
+<div class="modal-overlay hidden" id="saveGameModal" role="dialog" aria-modal="true" aria-labelledby="saveGameModalTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="saveGameModalTitle">Save to My Games</div>
+        <div class="saved-game-meta">All details are optional. The board position and moves are saved either way.</div>
+      </div>
+      <button type="button" id="btnCloseSaveGameModal">Close</button>
+    </div>
+    <div class="modal-grid">
+      <label>Game name
+        <input id="gameTitleInput" type="text" placeholder="Untitled Game">
+      </label>
+      <label>Result
+        <select id="winnerInput">
+          <option value="UNKNOWN">Unknown</option>
+          <option value="WHITE_WIN">White wins</option>
+          <option value="BLACK_WIN">Black wins</option>
+          <option value="DRAW">Draw</option>
+        </select>
+      </label>
+      <label>White player
+        <input id="whitePlayerInput" type="text" placeholder="White">
+      </label>
+      <label>Black player
+        <input id="blackPlayerInput" type="text" placeholder="Black">
+      </label>
+      <label>Event name
+        <input id="eventNameInput" type="text" placeholder="Malaysia Open">
+      </label>
+      <label>Round
+        <input id="roundInput" type="text" placeholder="Round 3">
+      </label>
+      <label>Venue / Site
+        <input id="siteInput" type="text" placeholder="Kuala Lumpur">
+      </label>
+      <label>Game date
+        <input id="gameDateInput" type="date">
+      </label>
+    </div>
+    <label style="margin-top:10px;">Notes
+      <textarea id="notesInput" placeholder="Training notes, ideas, mistakes to review"></textarea>
+    </label>
+    <label class="toggle-label" style="margin-top:10px;">
+      <input type="checkbox" id="saveAnalysisEnabled" checked>
+      Keep analysis available for this saved game
+    </label>
+    <div class="modal-actions">
+      <button type="button" id="btnSaveAsNewCopy">Save as New Copy</button>
+      <button class="primary" type="button" id="btnConfirmSaveGame">Save</button>
+    </div>
+  </div>
+</div>
 
-    const onPlayDragStart = (_, piece) => {
-      if ((game.turn() === "w" && piece.startsWith("b")) || (game.turn() === "b" && piece.startsWith("w"))) {
-        return false;
-      }
-    };
+</div><!-- /page-content -->
+</div><!-- /shell -->
 
-    const onPlayDrop = (source, target) => {
-      const move = game.move({ from: source, to: target, promotion: "q" });
-      if (!move) return "snapback";
-      updateFenInput();
-      if (autoAnalyze.checked) {
-        analyze();
-      } else {
-        clearAnalysis();
-      }
-    };
+<script src="lib/chess.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="lib/chessboard-1.0.0.min.js"></script>
+<script src="js/role-nav.js"></script>
+<script>
+// ── Auth ──────────────────────────────────────────────────────────────────────
+const authToken = localStorage.getItem('authToken');
+if (!authToken) window.location.href = 'index.html';
+const authHeaders = { 'Authorization': 'Bearer ' + authToken };
 
-    const onSetupDrop = () => {
-      window.setTimeout(() => {
-        syncFenFromBoard({ quiet: true });
-        clearAnalysis();
-        setStatus("Setup mode active.", "success");
-      }, 0);
-    };
+// ── Classification config ─────────────────────────────────────────────────────
+const CLS = {
+  brilliant:  { label: '!!', color: '#00bcd4' },
+  great:      { label: '!',  color: '#2196f3' },
+  best:       { label: '★',  color: '#4caf50' },
+  good:       { label: '',   color: '#9ba6c5' },
+  book:       { label: '',   color: '#9ba6c5' },
+  inaccuracy: { label: '?!', color: '#ff9800' },
+  mistake:    { label: '?',  color: '#ff5722' },
+  miss:       { label: '✗',  color: '#9c27b0' },
+  blunder:    { label: '??', color: '#f44336' },
+  book:       { label: '📖', color: '#a0907a' },
+};
 
-    const initBoard = (position = game.fen(), editing = setupMode) => {
-      if (board) board.destroy();
-      const config = {
-        draggable: true,
-        position,
-        pieceTheme,
-        orientation: currentOrientation,
-        onDrop: editing ? onSetupDrop : onPlayDrop,
-        onSnapEnd: () => {
-          if (editing) {
-            syncFenFromBoard({ quiet: true });
-          } else {
-            board.position(game.fen());
-          }
-          refreshArrow();
-        }
-      };
-      if (editing) {
-        config.sparePieces = true;
-        config.dropOffBoard = "trash";
-      } else {
-        config.onDragStart = onPlayDragStart;
-      }
-      board = Chessboard("analysisBoard", config);
-      currentOrientation = board.orientation();
-      window.setTimeout(refreshArrow, 80);
-    };
+// ── Opening book lookup (backed by /api/openings/lookup) ──────────────────────
+const _openingCache = new Map();
 
-    const setStatus = (msg, tone = "info") => {
-      const colors = { info: "var(--muted)", success: "var(--accent-2)", warn: "#f5b841" };
-      statusEl.textContent = msg;
-      statusEl.style.color = colors[tone] || colors.info;
-    };
+async function lookupOpening(moveSeq) {
+  if (!moveSeq) return null;
+  if (_openingCache.has(moveSeq)) return _openingCache.get(moveSeq);
+  try {
+    const res = await fetch('/api/openings/lookup?moves=' + encodeURIComponent(moveSeq));
+    const name = res.ok ? (await res.json()).name || null : null;
+    _openingCache.set(moveSeq, name);
+    return name;
+  } catch {
+    _openingCache.set(moveSeq, null);
+    return null;
+  }
+}
 
-    const updateFenInput = () => {
-      const fen = game.fen();
-      fenInput.value = fen;
-      updateSetupControlsFromFen(fen);
-    };
+const _BOOK_STUB = {
+  "_placeholder":"remove after first deploy",
+  // ── Open game (1…e5) ──────────────────────────────────
+  "e2e4 e7e5":"Open Game",
+  "e2e4 e7e5 g1f3":"King's Knight Opening",
+  "e2e4 e7e5 g1f3 b8c6":"Three Knights Game",
+  // Ruy Lopez
+  "e2e4 e7e5 g1f3 b8c6 f1b5":"Ruy Lopez",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 a7a6":"Ruy Lopez: Morphy Defense",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4":"Ruy Lopez: Morphy Defense",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6":"Ruy Lopez: Morphy Defense",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6 e1g1":"Ruy Lopez: Closed",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6 e1g1 f8e7":"Ruy Lopez: Closed",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6 e1g1 f8e7 f1e1":"Ruy Lopez: Closed",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6 e1g1 f8e7 f1e1 b7b5":"Ruy Lopez: Closed Main Line",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6 e1g1 f8e7 f1e1 b7b5 a4b3 d7d6":"Ruy Lopez: Chigorin",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 b7b5":"Ruy Lopez: Arkhangelsk",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 f8c5":"Ruy Lopez: Classical",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 g8f6":"Ruy Lopez: Berlin Defense",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 g8f6 e1g1":"Ruy Lopez: Berlin Defense",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 g8f6 e1g1 f6e4":"Ruy Lopez: Berlin Wall",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 d7d6":"Ruy Lopez: Steinitz Defense",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 b8d4":"Ruy Lopez: Bird's Defense",
+  // Italian
+  "e2e4 e7e5 g1f3 b8c6 f1c4":"Italian Game",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 f8c5":"Italian: Giuoco Piano",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 f8c5 c2c3":"Italian: Giuoco Pianissimo",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 f8c5 c2c3 g8f6":"Italian: Giuoco Pianissimo",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 f8c5 c2c3 g8f6 d2d4":"Italian: Giuoco Piano",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 f8c5 b2b4":"Italian: Evans Gambit",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 f8c5 b2b4 c5b4":"Italian: Evans Gambit Accepted",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 f8c5 b2b4 c5b4 c2c3":"Italian: Evans Gambit",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 g8f6":"Italian: Two Knights Defense",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d3":"Italian: Two Knights, Anti-Fried Liver",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 b1c3":"Italian: Three Knights",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 f3g5":"Italian: Two Knights, Fried Liver Attack",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d4":"Italian: Two Knights, Scotch Attack",
+  // Scotch
+  "e2e4 e7e5 g1f3 b8c6 d2d4":"Scotch Game",
+  "e2e4 e7e5 g1f3 b8c6 d2d4 e5d4":"Scotch Game",
+  "e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4":"Scotch Game",
+  "e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4 f8c5":"Scotch: Classical",
+  "e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4 g8f6":"Scotch: Schmidt Variation",
+  "e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4 d8h4":"Scotch: Steinitz Variation",
+  "e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4 b8d4":"Scotch: Mieses-Kotroc",
+  // Four Knights
+  "e2e4 e7e5 g1f3 b8c6 b1c3":"Three Knights Game",
+  "e2e4 e7e5 g1f3 b8c6 b1c3 g8f6":"Four Knights Game",
+  "e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1b5":"Four Knights: Spanish",
+  "e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 d2d4":"Scotch Four Knights",
+  "e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1c4":"Four Knights: Italian",
+  // Petrov
+  "e2e4 e7e5 g1f3 g8f6":"Petrov's Defense",
+  "e2e4 e7e5 g1f3 g8f6 f3e5":"Petrov's Defense",
+  "e2e4 e7e5 g1f3 g8f6 f3e5 d7d6":"Petrov's Defense: Classical",
+  "e2e4 e7e5 g1f3 g8f6 f3e5 d7d6 e5f3":"Petrov's Defense: Classical",
+  "e2e4 e7e5 g1f3 g8f6 f3e5 d7d6 e5f3 f6e4":"Petrov's Defense: Classical",
+  "e2e4 e7e5 g1f3 g8f6 d2d4":"Petrov's Defense: Steinitz Attack",
+  "e2e4 e7e5 g1f3 g8f6 b1c3":"Petrov's Defense: Three Knights",
+  // King's Gambit
+  "e2e4 e7e5 f2f4":"King's Gambit",
+  "e2e4 e7e5 f2f4 e5f4":"King's Gambit Accepted",
+  "e2e4 e7e5 f2f4 e5f4 g1f3":"King's Gambit Accepted: Kieseritzky",
+  "e2e4 e7e5 f2f4 e5f4 g1f3 g7g5":"King's Gambit: Kieseritzky",
+  "e2e4 e7e5 f2f4 e5f4 f1c4":"King's Gambit: Bishop's Gambit",
+  "e2e4 e7e5 f2f4 e5f4 h2h4":"King's Gambit Accepted: McDonnell",
+  "e2e4 e7e5 f2f4 f8c5":"King's Gambit Declined: Classical",
+  "e2e4 e7e5 f2f4 d7d5":"King's Gambit Declined: Falkbeer",
+  "e2e4 e7e5 f2f4 d7d5 e4d5":"King's Gambit Declined: Falkbeer Counter Gambit",
+  // Vienna
+  "e2e4 e7e5 b1c3":"Vienna Game",
+  "e2e4 e7e5 b1c3 g8f6":"Vienna Game: Falkbeer",
+  "e2e4 e7e5 b1c3 f8c5":"Vienna Game: Meitner-Mieses Gambit",
+  "e2e4 e7e5 b1c3 b8c6":"Vienna Game",
+  "e2e4 e7e5 b1c3 b8c6 f2f4":"Vienna Gambit",
+  "e2e4 e7e5 b1c3 b8c6 g2g3":"Vienna Game: Anderssen Defense",
+  // Latvian / Elephant / Misc
+  "e2e4 e7e5 g1f3 f7f5":"Latvian Gambit",
+  "e2e4 e7e5 g1f3 d7d5":"Elephant Gambit",
+  // ── Sicilian ──────────────────────────────────────────
+  "e2e4 c7c5":"Sicilian Defense",
+  "e2e4 c7c5 g1f3":"Sicilian Defense",
+  "e2e4 c7c5 g1f3 d7d6":"Sicilian Defense",
+  "e2e4 c7c5 g1f3 b8c6":"Sicilian Defense",
+  "e2e4 c7c5 g1f3 e7e6":"Sicilian Defense",
+  "e2e4 c7c5 g1f3 d7d6 d2d4":"Sicilian: Open",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4":"Sicilian: Open",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4":"Sicilian: Open",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6":"Sicilian: Open",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3":"Sicilian: Open",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6":"Sicilian: Najdorf",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6 f1e2":"Sicilian: Najdorf, Classical",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6 c1g5":"Sicilian: Najdorf, English Attack",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6 f2f3":"Sicilian: Najdorf, English Attack",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 e7e6":"Sicilian: Scheveningen",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 g7g6":"Sicilian: Dragon",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 g7g6 f1e2":"Sicilian: Dragon, Classical",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 g7g6 c1e3":"Sicilian: Dragon, Yugoslav Attack",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 b8c6":"Sicilian: Classical",
+  "e2e4 c7c5 g1f3 b8c6 d2d4":"Sicilian: Open",
+  "e2e4 c7c5 g1f3 b8c6 d2d4 c5d4 f3d4":"Sicilian: Open",
+  "e2e4 c7c5 g1f3 b8c6 d2d4 c5d4 f3d4 g7g6":"Sicilian: Accelerated Dragon",
+  "e2e4 c7c5 g1f3 b8c6 d2d4 c5d4 f3d4 e7e6 b1c3 d8c7":"Sicilian: Taimanov",
+  "e2e4 c7c5 g1f3 b8c6 d2d4 c5d4 f3d4 e7e6 b1c3 a7a6":"Sicilian: Paulsen",
+  "e2e4 c7c5 g1f3 e7e6 d2d4 c5d4 f3d4 a7a6":"Sicilian: Kan",
+  "e2e4 c7c5 g1f3 e7e6 d2d4 c5d4 f3d4 b8c6":"Sicilian: Paulsen",
+  "e2e4 c7c5 c2c3":"Sicilian: Alapin",
+  "e2e4 c7c5 c2c3 d7d5":"Sicilian: Alapin, ...d5",
+  "e2e4 c7c5 c2c3 g8f6":"Sicilian: Alapin, ...Nf6",
+  "e2e4 c7c5 c2c3 g8f6 e4e5":"Sicilian: Alapin, ...Nf6",
+  "e2e4 c7c5 b1c3":"Sicilian: Closed",
+  "e2e4 c7c5 b1c3 b8c6":"Sicilian: Closed",
+  "e2e4 c7c5 b1c3 b8c6 g2g3":"Sicilian: Closed",
+  "e2e4 c7c5 d2d4 c5d4 c2c3":"Sicilian: Morra Gambit",
+  "e2e4 c7c5 d2d4 c5d4 c2c3 d4c3":"Sicilian: Morra Gambit Accepted",
+  // ── French ────────────────────────────────────────────
+  "e2e4 e7e6":"French Defense",
+  "e2e4 e7e6 d2d4":"French Defense",
+  "e2e4 e7e6 d2d4 d7d5":"French Defense",
+  "e2e4 e7e6 d2d4 d7d5 b1c3":"French: Classical",
+  "e2e4 e7e6 d2d4 d7d5 b1c3 g8f6":"French: Classical",
+  "e2e4 e7e6 d2d4 d7d5 b1c3 f8b4":"French: Winawer",
+  "e2e4 e7e6 d2d4 d7d5 b1c3 f8b4 e4e5":"French: Winawer, Advance",
+  "e2e4 e7e6 d2d4 d7d5 b1c3 f8b4 e4e5 c7c5":"French: Winawer, Advance",
+  "e2e4 e7e6 d2d4 d7d5 b1c3 f8b4 a2a3":"French: Winawer, Poisoned Pawn",
+  "e2e4 e7e6 d2d4 d7d5 b1d2":"French: Tarrasch",
+  "e2e4 e7e6 d2d4 d7d5 b1d2 g8f6":"French: Tarrasch, Open",
+  "e2e4 e7e6 d2d4 d7d5 b1d2 c7c5":"French: Tarrasch, Open",
+  "e2e4 e7e6 d2d4 d7d5 b1d2 b8c6":"French: Tarrasch, Guimard",
+  "e2e4 e7e6 d2d4 d7d5 e4e5":"French: Advance",
+  "e2e4 e7e6 d2d4 d7d5 e4e5 c7c5":"French: Advance",
+  "e2e4 e7e6 d2d4 d7d5 e4e5 c7c5 c2c3":"French: Advance, Main Line",
+  "e2e4 e7e6 d2d4 d7d5 e4d5":"French: Exchange",
+  "e2e4 e7e6 d2d4 d7d5 e4d5 e6d5":"French: Exchange",
+  "e2e4 e7e6 d2d4 d7d5 g1f3":"French: Two Knights",
+  // ── Caro-Kann ─────────────────────────────────────────
+  "e2e4 c7c6":"Caro-Kann Defense",
+  "e2e4 c7c6 d2d4":"Caro-Kann Defense",
+  "e2e4 c7c6 d2d4 d7d5":"Caro-Kann Defense",
+  "e2e4 c7c6 d2d4 d7d5 b1c3":"Caro-Kann: Classical",
+  "e2e4 c7c6 d2d4 d7d5 b1c3 d5e4":"Caro-Kann: Classical",
+  "e2e4 c7c6 d2d4 d7d5 b1c3 d5e4 c3e4":"Caro-Kann: Classical",
+  "e2e4 c7c6 d2d4 d7d5 b1c3 d5e4 c3e4 g8f6":"Caro-Kann: Classical",
+  "e2e4 c7c6 d2d4 d7d5 b1c3 d5e4 c3e4 c8f5":"Caro-Kann: Classical, Capablanca",
+  "e2e4 c7c6 d2d4 d7d5 b1c3 d5e4 c3e4 c8f5 e4g3":"Caro-Kann: Classical, Capablanca",
+  "e2e4 c7c6 d2d4 d7d5 b1d2":"Caro-Kann: Modern",
+  "e2e4 c7c6 d2d4 d7d5 b1d2 d5e4":"Caro-Kann: Modern",
+  "e2e4 c7c6 d2d4 d7d5 b1d2 d5e4 d2e4":"Caro-Kann: Modern",
+  "e2e4 c7c6 d2d4 d7d5 e4e5":"Caro-Kann: Advance",
+  "e2e4 c7c6 d2d4 d7d5 e4e5 c8f5":"Caro-Kann: Advance",
+  "e2e4 c7c6 d2d4 d7d5 e4e5 c8f5 g1f3":"Caro-Kann: Advance",
+  "e2e4 c7c6 d2d4 d7d5 e4d5":"Caro-Kann: Exchange",
+  "e2e4 c7c6 d2d4 d7d5 e4d5 c6d5":"Caro-Kann: Exchange",
+  // ── Scandinavian ──────────────────────────────────────
+  "e2e4 d7d5":"Scandinavian Defense",
+  "e2e4 d7d5 e4d5":"Scandinavian Defense",
+  "e2e4 d7d5 e4d5 d8d5":"Scandinavian: Main Line",
+  "e2e4 d7d5 e4d5 d8d5 b1c3":"Scandinavian: Mieses-Kotroc",
+  "e2e4 d7d5 e4d5 d8d5 b1c3 d5a5":"Scandinavian: Main Line",
+  "e2e4 d7d5 e4d5 d8d5 b1c3 d5d6":"Scandinavian: Gubinsky-Melts",
+  "e2e4 d7d5 e4d5 g8f6":"Scandinavian: Modern",
+  "e2e4 d7d5 e4d5 g8f6 d2d4":"Scandinavian: Modern",
+  // ── Pirc / Modern / Alekhine ──────────────────────────
+  "e2e4 d7d6":"Pirc Defense",
+  "e2e4 d7d6 d2d4":"Pirc Defense",
+  "e2e4 d7d6 d2d4 g8f6":"Pirc Defense",
+  "e2e4 d7d6 d2d4 g8f6 b1c3":"Pirc Defense",
+  "e2e4 d7d6 d2d4 g8f6 b1c3 g7g6":"Pirc Defense: Main Line",
+  "e2e4 d7d6 d2d4 g8f6 b1c3 g7g6 f2f4":"Pirc Defense: Austrian Attack",
+  "e2e4 d7d6 d2d4 g8f6 b1c3 g7g6 g1f3":"Pirc Defense: Classical",
+  "e2e4 g7g6":"Modern Defense",
+  "e2e4 g7g6 d2d4 f8g7":"Modern Defense",
+  "e2e4 g7g6 d2d4 f8g7 b1c3":"Modern Defense",
+  "e2e4 g8f6":"Alekhine's Defense",
+  "e2e4 g8f6 e4e5":"Alekhine's Defense",
+  "e2e4 g8f6 e4e5 f6d5":"Alekhine's Defense",
+  "e2e4 g8f6 e4e5 f6d5 d2d4":"Alekhine's Defense: Modern",
+  "e2e4 g8f6 e4e5 f6d5 d2d4 d7d6":"Alekhine's Defense: Modern",
+  "e2e4 g8f6 e4e5 f6d5 c2c4":"Alekhine's Defense: Four Pawns Attack",
+  "e2e4 g8f6 e4e5 f6d5 c2c4 d5b6 d2d4":"Alekhine's Defense: Four Pawns",
+  // Misc 1.e4
+  "e2e4 b7b6":"Owen's Defense",
+  "e2e4 f7f5":"Fred Defense",
+  "e2e4 a7a6":"St. George Defense",
+  "e2e4 b7b5":"Polish Defense",
+  // ════════════════════════════════════════════════════════
+  //  1. d4
+  // ════════════════════════════════════════════════════════
+  "d2d4":"Queen's Pawn",
+  "d2d4 d7d5":"Queen's Pawn Game",
+  // ── Queen's Gambit ────────────────────────────────────
+  "d2d4 d7d5 c2c4":"Queen's Gambit",
+  "d2d4 d7d5 c2c4 e7e6":"Queen's Gambit Declined",
+  "d2d4 d7d5 c2c4 e7e6 b1c3":"Queen's Gambit Declined",
+  "d2d4 d7d5 c2c4 e7e6 b1c3 g8f6":"Queen's Gambit Declined",
+  "d2d4 d7d5 c2c4 e7e6 b1c3 g8f6 c1g5":"Queen's Gambit Declined: Classical",
+  "d2d4 d7d5 c2c4 e7e6 b1c3 g8f6 g1f3":"Queen's Gambit Declined: Orthodox",
+  "d2d4 d7d5 c2c4 e7e6 b1c3 g8f6 g1f3 f8e7":"Queen's Gambit Declined: Orthodox",
+  "d2d4 d7d5 c2c4 e7e6 b1c3 g8f6 g1f3 f8e7 c1f4":"Queen's Gambit Declined: Modern",
+  "d2d4 d7d5 c2c4 e7e6 b1c3 g8f6 g1f3 f8e7 c1g5":"Queen's Gambit Declined: Tartakower",
+  "d2d4 d7d5 c2c4 e7e6 b1c3 g8f6 g1f3 c7c6":"Queen's Gambit Declined: Semi-Slav",
+  "d2d4 d7d5 c2c4 e7e6 g1f3 g8f6 b1c3":"Queen's Gambit Declined",
+  // Slav Defense
+  "d2d4 d7d5 c2c4 c7c6":"Slav Defense",
+  "d2d4 d7d5 c2c4 c7c6 g1f3":"Slav Defense",
+  "d2d4 d7d5 c2c4 c7c6 g1f3 g8f6":"Slav Defense",
+  "d2d4 d7d5 c2c4 c7c6 g1f3 g8f6 b1c3":"Slav Defense",
+  "d2d4 d7d5 c2c4 c7c6 g1f3 g8f6 b1c3 d5c4":"Slav Defense: Accepted",
+  "d2d4 d7d5 c2c4 c7c6 g1f3 g8f6 b1c3 e7e6":"Semi-Slav Defense",
+  "d2d4 d7d5 c2c4 c7c6 g1f3 g8f6 b1c3 e7e6 c1g5":"Semi-Slav: Anti-Moscow",
+  "d2d4 d7d5 c2c4 c7c6 g1f3 g8f6 b1c3 e7e6 e2e3":"Semi-Slav: Meran",
+  "d2d4 d7d5 c2c4 c7c6 b1c3":"Slav Defense",
+  "d2d4 d7d5 c2c4 c7c6 b1c3 g8f6 g1f3":"Slav Defense",
+  // QGA
+  "d2d4 d7d5 c2c4 d5c4":"Queen's Gambit Accepted",
+  "d2d4 d7d5 c2c4 d5c4 g1f3":"Queen's Gambit Accepted",
+  "d2d4 d7d5 c2c4 d5c4 g1f3 g8f6":"Queen's Gambit Accepted",
+  "d2d4 d7d5 c2c4 d5c4 e2e4":"Queen's Gambit Accepted: Central Variation",
+  "d2d4 d7d5 c2c4 d5c4 e2e3":"Queen's Gambit Accepted: Classical",
+  // Tarrasch
+  "d2d4 d7d5 c2c4 c7c5":"Tarrasch Defense",
+  "d2d4 d7d5 c2c4 c7c5 c4d5":"Tarrasch Defense: Exchange",
+  // London System
+  "d2d4 d7d5 c1f4":"London System",
+  "d2d4 d7d5 c1f4 g8f6":"London System",
+  "d2d4 d7d5 c1f4 g8f6 g1f3":"London System",
+  "d2d4 d7d5 c1f4 g8f6 g1f3 e7e6":"London System",
+  "d2d4 d7d5 c1f4 g8f6 g1f3 c7c5":"London System",
+  "d2d4 d7d5 g1f3 g8f6 c1f4":"London System",
+  "d2d4 d7d5 g1f3 g8f6 c1f4 e7e6":"London System",
+  "d2d4 d7d5 g1f3 g8f6 c1f4 c7c5":"London System",
+  "d2d4 d7d5 g1f3 g8f6 c1f4 c7c5 e2e3":"London System",
+  "d2d4 g8f6 g1f3 d7d5 c1f4":"London System",
+  "d2d4 g8f6 g1f3 d7d5 c1f4 e7e6":"London System",
+  "d2d4 g8f6 g1f3 d7d5 c1f4 c7c5":"London System",
+  // Colle
+  "d2d4 d7d5 g1f3 g8f6 e2e3":"Colle System",
+  "d2d4 d7d5 g1f3 g8f6 e2e3 e7e6":"Colle System",
+  "d2d4 d7d5 g1f3 g8f6 e2e3 c7c5":"Colle System",
+  // Catalan
+  "d2d4 g8f6 c2c4 e7e6 g1f3 d7d5 g2g3":"Catalan Opening",
+  "d2d4 g8f6 c2c4 e7e6 g1f3 d7d5 g2g3 f8e7 f1g2":"Catalan: Closed",
+  "d2d4 g8f6 c2c4 e7e6 g1f3 d7d5 g2g3 d5c4":"Catalan: Open",
+  "d2d4 g8f6 c2c4 e7e6 g1f3 d7d5 g2g3 d5c4 f1g2":"Catalan: Open",
+  // Veresov / Trompowsky
+  "d2d4 d7d5 b1c3":"Veresov Attack",
+  "d2d4 d7d5 b1c3 g8f6 c1g5":"Veresov Attack",
+  "d2d4 g8f6 c1g5":"Trompowsky Attack",
+  "d2d4 g8f6 c1g5 e7e5":"Trompowsky Attack",
+  "d2d4 g8f6 c1g5 f6e4":"Trompowsky Attack: Raptor",
+  "d2d4 g8f6 g1f3 e7e6 c1g5":"Torre Attack",
+  "d2d4 g8f6 g1f3 e7e6 c1g5 h7h6":"Torre Attack",
+  // ── King's Indian Defense ─────────────────────────────
+  "d2d4 g8f6":"Indian Defense",
+  "d2d4 g8f6 c2c4":"Indian Defense",
+  "d2d4 g8f6 c2c4 g7g6":"King's Indian Defense",
+  "d2d4 g8f6 c2c4 g7g6 b1c3":"King's Indian Defense",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7":"King's Indian Defense",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4":"King's Indian Defense",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6":"King's Indian Defense",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6 g1f3":"King's Indian: Main Line",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6 g1f3 e8g8":"King's Indian: Main Line",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6 g1f3 e8g8 f1e2":"King's Indian: Classical",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6 g1f3 e8g8 f1e2 e7e5":"King's Indian: Classical",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6 g1f3 e8g8 f1e2 e7e5 e1g1":"King's Indian: Classical Main",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6 f2f3":"King's Indian: Sämisch",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6 g1e2":"King's Indian: Averbakh",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6 c1e3":"King's Indian: Petrosian",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 g2g3":"King's Indian: Fianchetto",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 g2g3 e8g8 f1g2":"King's Indian: Fianchetto",
+  // ── Grünfeld Defense ──────────────────────────────────
+  "d2d4 g8f6 c2c4 g7g6 b1c3 d7d5":"Grünfeld Defense",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 d7d5 c4d5":"Grünfeld Defense: Exchange",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 d7d5 g1f3":"Grünfeld Defense",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 d7d5 c4d5 f6d5 e2e4":"Grünfeld Defense: Exchange, Classical",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 d7d5 c4d5 f6d5 e2e4 d5c3":"Grünfeld Defense: Exchange, Main Line",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 d7d5 c4d5 f6d5 e2e4 d5c3 b2c3 f8g7":"Grünfeld Defense: Exchange",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 d7d5 g1f3 f8g7 d1b3":"Grünfeld Defense: Taimanov",
+  // ── Nimzo-Indian ──────────────────────────────────────
+  "d2d4 g8f6 c2c4 e7e6":"Indian Defense",
+  "d2d4 g8f6 c2c4 e7e6 b1c3":"Nimzo-Indian / Queen's Indian",
+  "d2d4 g8f6 c2c4 e7e6 b1c3 f8b4":"Nimzo-Indian Defense",
+  "d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 e2e3":"Nimzo-Indian: Rubinstein",
+  "d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 e2e3 e8g8":"Nimzo-Indian: Rubinstein",
+  "d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 d1c2":"Nimzo-Indian: Classical",
+  "d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 d1c2 d7d5":"Nimzo-Indian: Classical",
+  "d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 a2a3":"Nimzo-Indian: Sämisch",
+  "d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 g1f3":"Nimzo-Indian: Three Knights",
+  "d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 f2f3":"Nimzo-Indian: Leningrad",
+  "d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 b2b4":"Nimzo-Indian: Sämisch Gambit",
+  // ── Queen's Indian ────────────────────────────────────
+  "d2d4 g8f6 c2c4 e7e6 g1f3":"Queen's Indian / Bogo-Indian",
+  "d2d4 g8f6 c2c4 e7e6 g1f3 b7b6":"Queen's Indian Defense",
+  "d2d4 g8f6 c2c4 e7e6 g1f3 b7b6 g2g3":"Queen's Indian: Fianchetto",
+  "d2d4 g8f6 c2c4 e7e6 g1f3 b7b6 g2g3 c8b7":"Queen's Indian: Fianchetto",
+  "d2d4 g8f6 c2c4 e7e6 g1f3 b7b6 b1c3":"Queen's Indian: Classical",
+  "d2d4 g8f6 c2c4 e7e6 g1f3 f8b4":"Bogo-Indian Defense",
+  "d2d4 g8f6 c2c4 e7e6 g1f3 d7d5":"Queen's Indian / QGD",
+  // ── Dutch Defense ─────────────────────────────────────
+  "d2d4 f7f5":"Dutch Defense",
+  "d2d4 f7f5 c2c4":"Dutch Defense",
+  "d2d4 f7f5 c2c4 g8f6":"Dutch Defense",
+  "d2d4 f7f5 c2c4 g8f6 g2g3":"Dutch: Leningrad",
+  "d2d4 f7f5 c2c4 g8f6 g2g3 g7g6":"Dutch: Leningrad",
+  "d2d4 f7f5 c2c4 e7e6":"Dutch: Classical",
+  "d2d4 f7f5 g1f3":"Dutch Defense",
+  "d2d4 f7f5 g2g3":"Dutch Defense",
+  // ── Benoni ────────────────────────────────────────────
+  "d2d4 g8f6 c2c4 c7c5":"Benoni Defense",
+  "d2d4 g8f6 c2c4 c7c5 d4d5":"Benoni Defense",
+  "d2d4 g8f6 c2c4 c7c5 d4d5 e7e6":"Benoni Defense: Modern",
+  "d2d4 g8f6 c2c4 c7c5 d4d5 e7e6 b1c3":"Benoni Defense: Modern",
+  "d2d4 g8f6 c2c4 c7c5 d4d5 e7e6 b1c3 e6d5 c4d5 d7d6":"Modern Benoni",
+  "d2d4 g8f6 c2c4 c7c5 d4d5 e7e6 b1c3 e6d5 c4d5 d7d6 e2e4":"Modern Benoni: Main Line",
+  // ── Old Indian ────────────────────────────────────────
+  "d2d4 g8f6 c2c4 d7d6":"Old Indian Defense",
+  "d2d4 g8f6 c2c4 d7d6 b1c3 e7e5":"Old Indian Defense",
+  // ════════════════════════════════════════════════════════
+  //  1. c4  (English Opening)
+  // ════════════════════════════════════════════════════════
+  "c2c4":"English Opening",
+  "c2c4 e7e5":"English: Reversed Sicilian",
+  "c2c4 e7e5 b1c3":"English: Reversed Sicilian",
+  "c2c4 e7e5 b1c3 g8f6":"English Opening",
+  "c2c4 e7e5 b1c3 b8c6":"English: Four Knights",
+  "c2c4 e7e5 b1c3 b8c6 g1f3":"English: Four Knights",
+  "c2c4 e7e5 g2g3":"English: King's English",
+  "c2c4 e7e5 g2g3 g8f6 f1g2":"English: King's English",
+  "c2c4 e7e5 g2g3 b8c6 f1g2":"English: King's English",
+  "c2c4 c7c5":"English: Symmetrical",
+  "c2c4 c7c5 g1f3":"English: Symmetrical",
+  "c2c4 c7c5 g1f3 g8f6":"English: Symmetrical",
+  "c2c4 c7c5 b1c3":"English: Symmetrical",
+  "c2c4 g8f6":"English Opening",
+  "c2c4 g8f6 b1c3":"English Opening",
+  "c2c4 g8f6 b1c3 e7e5":"English: King's English",
+  "c2c4 g8f6 b1c3 d7d5":"English: Agincourt Defense",
+  "c2c4 g8f6 b1c3 c7c5":"English: Symmetrical",
+  "c2c4 e7e6":"English: Agincourt Defense",
+  "c2c4 e7e6 b1c3":"English Opening",
+  "c2c4 e7e6 b1c3 d7d5":"English: Agincourt",
+  "c2c4 d7d5":"English: Anglo-Scandinavian",
+  "c2c4 d7d5 c4d5":"English: Anglo-Scandinavian",
+  // ════════════════════════════════════════════════════════
+  //  1. Nf3  (Réti Opening)
+  // ════════════════════════════════════════════════════════
+  "g1f3":"Réti Opening",
+  "g1f3 d7d5":"Réti Opening",
+  "g1f3 d7d5 c2c4":"Réti Opening",
+  "g1f3 d7d5 g2g3":"King's Indian Attack",
+  "g1f3 d7d5 g2g3 g8f6":"King's Indian Attack",
+  "g1f3 g8f6":"Réti Opening",
+  "g1f3 g8f6 c2c4":"Réti Opening",
+  "g1f3 g8f6 g2g3":"King's Indian Attack",
+  "g1f3 d7d5 c2c4 c7c6 b1c3":"Réti: Slav Formation",
+  "g1f3 d7d5 c2c4 e7e6":"Réti: English/Catalan",
+  "g1f3 c7c5":"Réti Opening",
+  "g1f3 e7e6":"Réti Opening",
+  // ════════════════════════════════════════════════════════
+  //  Other first moves
+  // ════════════════════════════════════════════════════════
+  "g2g3":"King's Fianchetto Opening",
+  "b2b3":"Nimzowitsch-Larsen Attack",
+  "b2b3 e7e5":"Nimzowitsch-Larsen Attack",
+  "b2b3 d7d5":"Nimzowitsch-Larsen Attack",
+  "b2b4":"Polish Opening",
+  "b2b4 e7e5":"Polish Opening: King's Gambit Hybrid",
+  "f2f4":"Bird's Opening",
+  "f2f4 e7e5":"Bird's Opening: From's Gambit",
+  "f2f4 d7d5 g1f3 g8f6":"Bird's Opening",
+  "d2d4 e7e5":"Englund Gambit",
+  "d2d4 e7e5 d4e5":"Englund Gambit Accepted",
+};
 
-    const resizeArrowCanvas = () => {
-      if (!arrowCanvas || !boardEl || !arrowCtx) return;
-      const boardArea = boardAreaEl();
-      const rect = boardArea.getBoundingClientRect();
-      const wrapRect = boardEl.parentElement.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      arrowCanvas.width = rect.width * dpr;
-      arrowCanvas.height = rect.height * dpr;
-      arrowCanvas.style.left = `${rect.left - wrapRect.left}px`;
-      arrowCanvas.style.top = `${rect.top - wrapRect.top}px`;
-      arrowCanvas.style.width = `${rect.width}px`;
-      arrowCanvas.style.height = `${rect.height}px`;
-      arrowCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
+// ── State ─────────────────────────────────────────────────────────────────────
+const game      = new Chess();
+const startFen  = game.fen();
+let board;
+let setupMode         = false;
+let currentOrientation = 'white';
+let moveHistory       = [];   // {san,uci,fenBefore,fenAfter,classification,bestMove,evalBefore,evalAfter,color}
+let historyIndex      = 0;    // Ply index: 0 = start, 1 = after first move.
+let lastAnalysis      = null; // {whiteAdvantageCp, bestMove, evaluation, pv, lines}
+let isAnalyzing       = false;
+let bestMove          = null;
+let bestLines         = [];
+let currentSavedGameId = null;
+let savedGamesCache    = [];
+let moveAnnotations    = {};
+const currentRole = (localStorage.getItem('userRole') || 'STUDENT').toUpperCase();
 
-    const clearArrow = () => {
-      if (!arrowCanvas || !arrowCtx) return;
-      arrowCtx.clearRect(0, 0, arrowCanvas.width, arrowCanvas.height);
-    };
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const statusEl      = document.getElementById('status');
+const bestMoveEl    = document.getElementById('bestMoveEl');
+const evalScoreEl   = document.getElementById('evalScoreEl');
+const fenInput      = document.getElementById('fenInput');
+const autoAnalyze   = document.getElementById('autoAnalyze');
+const depthInput    = document.getElementById('depthInput');
+const timeInput     = document.getElementById('timeInput');
+const setupPanel    = document.getElementById('setupPanel');
+const setupToggle   = document.getElementById('btnSetupToggle');
+const sideToMove    = document.getElementById('sideToMove');
+const castlingInput = document.getElementById('castlingInput');
+const epInput       = document.getElementById('epInput');
+const halfmoveInput = document.getElementById('halfmoveInput');
+const fullmoveInput = document.getElementById('fullmoveInput');
+const arrowCanvas   = document.getElementById('bestMoveArrow');
+const arrowCtx      = arrowCanvas.getContext('2d');
+const files         = 'abcdefgh'.split('');
+const gameTitleInput = document.getElementById('gameTitleInput');
+const whitePlayerInput = document.getElementById('whitePlayerInput');
+const blackPlayerInput = document.getElementById('blackPlayerInput');
+const winnerInput = document.getElementById('winnerInput');
+const saveAnalysisEnabled = document.getElementById('saveAnalysisEnabled');
+const savedGameStatus = document.getElementById('savedGameStatus');
+const savedGamesList = document.getElementById('savedGamesList');
+const eventNameInput = document.getElementById('eventNameInput');
+const roundInput = document.getElementById('roundInput');
+const siteInput = document.getElementById('siteInput');
+const gameDateInput = document.getElementById('gameDateInput');
+const notesInput = document.getElementById('notesInput');
+const saveGameModal = document.getElementById('saveGameModal');
+const selectedMoveLabel = document.getElementById('selectedMoveLabel');
+const btnSaveGame = document.getElementById('btnSaveGame');
+const btnOpenSaveGameModal = document.createElement('button');
+btnOpenSaveGameModal.type = 'button';
+btnOpenSaveGameModal.id = 'btnOpenSaveGameModal';
+btnOpenSaveGameModal.className = 'primary';
+btnOpenSaveGameModal.style.flex = '1';
+btnOpenSaveGameModal.textContent = 'Save to My Games';
+btnSaveGame.parentElement.insertBefore(btnOpenSaveGameModal, btnSaveGame);
 
-    const drawArrow = (from, to, style) => {
-      if (!arrowCanvas || !arrowCtx || !boardEl) return;
-      if (!from || !to) return;
-      const fromEl = boardEl.querySelector(`[data-square="${from}"]`);
-      const toEl = boardEl.querySelector(`[data-square="${to}"]`);
-      if (!fromEl || !toEl) return;
+// ── Eval bar ──────────────────────────────────────────────────────────────────
+function cpToPercent(cp) {
+  if (cp >= 9000)  return 100;
+  if (cp <= -9000) return 0;
+  return 50 + 50 * (2 / (1 + Math.exp(-cp / 200)) - 1);
+}
 
-      const boardRect = boardAreaEl().getBoundingClientRect();
-      const fromRect = fromEl.getBoundingClientRect();
-      const toRect = toEl.getBoundingClientRect();
+function updateEvalBar(whiteAdvCp) {
+  const pct = cpToPercent(whiteAdvCp);
+  document.getElementById('evalBarWhite').style.height = pct + '%';
+  document.getElementById('evalBarBlack').style.height = (100 - pct) + '%';
+  const abs = Math.abs(whiteAdvCp);
+  let lbl;
+  if (abs >= 9000) lbl = whiteAdvCp > 0 ? '+M' : '-M';
+  else {
+    const sign = whiteAdvCp > 0 ? '+' : (whiteAdvCp < 0 ? '' : '');
+    lbl = sign + (whiteAdvCp / 100).toFixed(1);
+  }
+  document.getElementById('evalLabel').textContent = lbl;
+}
 
-      const fromX = fromRect.left + fromRect.width / 2 - boardRect.left;
-      const fromY = fromRect.top + fromRect.height / 2 - boardRect.top;
-      const toX = toRect.left + toRect.width / 2 - boardRect.left;
-      const toY = toRect.top + toRect.height / 2 - boardRect.top;
+function syncEvalBarHeight() {
+  const boardArea = boardAreaEl();
+  if (!boardArea) return;
+  const h = boardArea.getBoundingClientRect().height;
+  if (h > 0) document.getElementById('evalBar').style.height = h + 'px';
+}
 
-      const dx = toX - fromX;
-      const dy = toY - fromY;
-      const len = Math.hypot(dx, dy);
-      if (len < 1) return;
+// ── Eval parsing (normalize to white's perspective) ───────────────────────────
+function parseEvalToWhiteCp(evalStr, fen) {
+  if (!evalStr) return 0;
+  const parts = evalStr.trim().split(/\s+/);
+  const side = (fen || '').split(' ')[1] || 'w';
+  if (parts[0] === 'cp') {
+    const cp = parseInt(parts[1], 10);
+    return side === 'w' ? cp : -cp;
+  }
+  if (parts[0] === 'mate') {
+    const m = parseInt(parts[1], 10);
+    const big = m > 0 ? 10000 : -10000;
+    return side === 'w' ? big : -big;
+  }
+  return 0;
+}
 
-      const squareSize = boardRect.width / 8;
-      const tailWidth = Math.max(6, squareSize * 0.2);
-      const headWidth = Math.max(12, squareSize * 0.55);
-      const headLen = Math.max(16, squareSize * 0.65);
-      const padStart = squareSize * 0.18;
-      const padEnd = squareSize * 0.28;
+function parseLineEvalRaw(evalStr) {
+  if (!evalStr) return 0;
+  const parts = evalStr.trim().split(/\s+/);
+  if (parts[0] === 'cp')   return parseInt(parts[1], 10);
+  if (parts[0] === 'mate') return parseInt(parts[1], 10) > 0 ? 10000 : -10000;
+  return 0;
+}
 
-      const ux = dx / len;
-      const uy = dy / len;
-      const px = -uy;
-      const py = ux;
+function formatEvalDisplay(evalStr, fen) {
+  if (!evalStr) return '-';
+  const parts = evalStr.trim().split(/\s+/);
+  const side  = (fen || '').split(' ')[1] || 'w';
+  if (parts[0] === 'cp') {
+    const cp      = parseInt(parts[1], 10);
+    const whiteCp = side === 'w' ? cp : -cp;
+    return (whiteCp >= 0 ? '+' : '') + (whiteCp / 100).toFixed(2);
+  }
+  if (parts[0] === 'mate') {
+    const m      = parseInt(parts[1], 10);
+    const wMate  = side === 'w' ? m : -m;
+    return 'M' + wMate;
+  }
+  return evalStr;
+}
 
-      const startX = fromX + ux * padStart;
-      const startY = fromY + uy * padStart;
-      const endX = toX - ux * padEnd;
-      const endY = toY - uy * padEnd;
-      const baseX = endX - ux * Math.min(headLen, len * 0.6);
-      const baseY = endY - uy * Math.min(headLen, len * 0.6);
+// ── UCI → SAN converter ───────────────────────────────────────────────────────
+// Converts engine output like "g1f3" → "Nf3", "e2e4" → "e4", "e1g1" → "O-O"
+function uciToSan(uci, fen) {
+  if (!uci || uci.length < 4) return uci;
+  try {
+    const g = new Chess(fen);
+    const move = g.move({ from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || undefined });
+    return move ? move.san : uci;
+  } catch { return uci; }
+}
 
-      const startLeft = { x: startX + px * (tailWidth / 2), y: startY + py * (tailWidth / 2) };
-      const startRight = { x: startX - px * (tailWidth / 2), y: startY - py * (tailWidth / 2) };
-      const baseLeftTail = { x: baseX + px * (tailWidth / 2), y: baseY + py * (tailWidth / 2) };
-      const baseRightTail = { x: baseX - px * (tailWidth / 2), y: baseY - py * (tailWidth / 2) };
-      const baseLeft = { x: baseX + px * (headWidth / 2), y: baseY + py * (headWidth / 2) };
-      const baseRight = { x: baseX - px * (headWidth / 2), y: baseY - py * (headWidth / 2) };
+// ── Board annotation badge ────────────────────────────────────────────────────
+// Shows a coloured symbol (!! ? ★ etc.) at the top-right corner of the
+// destination square after each move, like Chess.com.
+function showMoveAnnotation(square, classification) {
+  clearMoveAnnotation();
+  const cls = CLS[classification];
+  if (!cls || !cls.label) return;
 
-      const fill = style?.fill || "rgba(34, 197, 94, 0.55)";
-      const stroke = style?.stroke || "rgba(15, 23, 42, 0.3)";
-      const highlight = style?.highlight || "rgba(34, 197, 94, 0.22)";
+  const boardEl  = document.getElementById('analysisBoard');
+  const squareEl = boardEl.querySelector(`[data-square="${square}"]`);
+  if (!squareEl) return;
 
-      arrowCtx.save();
-      arrowCtx.fillStyle = fill;
-      arrowCtx.strokeStyle = stroke;
-      arrowCtx.lineJoin = "round";
-      arrowCtx.lineWidth = Math.max(1.5, squareSize * 0.04);
+  const wrapEl   = document.querySelector('.board-wrap');
+  const wrapRect = wrapEl.getBoundingClientRect();
+  const sqRect   = squareEl.getBoundingClientRect();
+  const SIZE = 26;
 
-      arrowCtx.beginPath();
-      arrowCtx.moveTo(startLeft.x, startLeft.y);
-      arrowCtx.lineTo(baseLeftTail.x, baseLeftTail.y);
-      arrowCtx.lineTo(baseLeft.x, baseLeft.y);
-      arrowCtx.lineTo(endX, endY);
-      arrowCtx.lineTo(baseRight.x, baseRight.y);
-      arrowCtx.lineTo(baseRightTail.x, baseRightTail.y);
-      arrowCtx.lineTo(startRight.x, startRight.y);
-      arrowCtx.closePath();
-      arrowCtx.fill();
-      arrowCtx.stroke();
+  const badge = document.createElement('div');
+  badge.id = 'moveAnnotation';
+  badge.textContent = cls.label;
+  Object.assign(badge.style, {
+    position:      'absolute',
+    width:         SIZE + 'px',
+    height:        SIZE + 'px',
+    borderRadius:  '50%',
+    background:    cls.color,
+    color:         '#fff',
+    fontSize:      '10px',
+    fontWeight:    '900',
+    fontFamily:    'system-ui, sans-serif',
+    letterSpacing: '-0.5px',
+    display:       'flex',
+    alignItems:    'center',
+    justifyContent:'center',
+    zIndex:        '20',
+    pointerEvents: 'none',
+    border:        '2px solid rgba(255,255,255,0.85)',
+    boxShadow:     '0 2px 8px rgba(0,0,0,0.65), 0 0 0 1px rgba(0,0,0,0.25)',
+    transform:     'scale(0)',
+    transition:    'transform 150ms cubic-bezier(0.34,1.56,0.64,1)',
+    // Top-right corner of the square (center of badge lands on the corner)
+    left:          (sqRect.right - wrapRect.left - SIZE / 2) + 'px',
+    top:           (sqRect.top   - wrapRect.top  - SIZE / 2) + 'px',
+  });
+  wrapEl.appendChild(badge);
+  // Trigger spring-in animation on next frame
+  requestAnimationFrame(() => { badge.style.transform = 'scale(1)'; });
+}
 
-      arrowCtx.fillStyle = highlight;
-      arrowCtx.beginPath();
-      arrowCtx.arc(startX, startY, squareSize * 0.18, 0, Math.PI * 2);
-      arrowCtx.fill();
-      arrowCtx.beginPath();
-      arrowCtx.arc(endX, endY, squareSize * 0.16, 0, Math.PI * 2);
-      arrowCtx.fill();
-      arrowCtx.restore();
-    };
+function clearMoveAnnotation() {
+  const el = document.getElementById('moveAnnotation');
+  if (el) el.remove();
+}
 
-    const refreshArrow = () => {
-      resizeArrowCanvas();
-      clearArrow();
-      if (bestLines.length) {
-        bestLines.slice(0, 3).forEach((line, idx) => {
-          const move = line.move;
-          if (move && move.length >= 4) {
-            drawArrow(move.slice(0, 2), move.slice(2, 4), arrowStyles[idx] || arrowStyles[0]);
-          }
-        });
-        return;
-      }
-      if (bestMove && bestMove.length >= 4) {
-        drawArrow(bestMove.slice(0, 2), bestMove.slice(2, 4), arrowStyles[0]);
-      }
-    };
+// ── Piece values for sacrifice detection ─────────────────────────────────────
+const PIECE_VALS = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
 
-    const clearAnalysis = () => {
-      bestMove = null;
-      bestLines = [];
-      bestMoveEl.textContent = "-";
-      evalEl.textContent = "-";
-      pvEl.textContent = "-";
+// Returns true when the move involved giving up material that can now be taken.
+// Brilliant moves typically leave a piece "hanging" backed by a tactical idea.
+function isSacrifice(moveObj, fenAfter) {
+  // Promotions are never classified as sacrifices (pawn value is misleading here)
+  if (moveObj.promotion) return false;
+
+  const movedVal    = PIECE_VALS[moveObj.piece] || 0;
+  const capturedVal = moveObj.captured ? (PIECE_VALS[moveObj.captured] || 0) : 0;
+
+  // If we captured a piece of equal or greater value, it is not a sacrifice
+  if (capturedVal >= movedVal) return false;
+
+  // Check whether the piece we just moved can now be taken by the opponent
+  try {
+    const g = new Chess(fenAfter);
+    // Any opponent reply that lands on our piece's destination square is a capture
+    return g.moves({ verbose: true }).some(m => m.to === moveObj.to);
+  } catch { return false; }
+}
+
+// ── Move classification ───────────────────────────────────────────────────────
+// moveObj  – chess.js move object  { piece, from, to, captured?, promotion?, color, san }
+// fenAfter – FEN string after the move was played
+// preMoveAnalysis – lastAnalysis snapshot taken BEFORE the move
+// cpLoss   – centipawn loss from the player's perspective (positive = worse for them)
+function classifyMove(moveObj, fenAfter, preMoveAnalysis, cpLoss) {
+  // No reference analysis: fall back to raw centipawn thresholds
+  if (!preMoveAnalysis) {
+    if (cpLoss > 300) return 'blunder';
+    if (cpLoss > 100) return 'mistake';
+    if (cpLoss > 20)  return 'inaccuracy';
+    return 'good';
+  }
+
+  const { bestMove: engineBest, lines = [], evaluation: evalStr } = preMoveAnalysis;
+  const playedUci  = moveObj.from + moveObj.to + (moveObj.promotion || '');
+  const playedBest = (playedUci === engineBest);
+
+  // ── Miss: had a short forced mate but didn't play it ─────────────────────
+  // e.g. engine saw mate-in-3 but player chose a different move
+  if (!playedBest && evalStr) {
+    const ep = evalStr.trim().split(/\s+/);
+    if (ep[0] === 'mate') {
+      const m = parseInt(ep[1], 10);
+      if (m > 0 && m <= 5) return 'miss';
+    }
+  }
+
+  // ── Gap between the best and second-best engine line ─────────────────────
+  // Both evals are from the side-to-move's perspective, so a larger gap means
+  // the best move is uniquely strong compared to alternatives.
+  let lineGap = 0;
+  if (lines.length >= 2) {
+    lineGap = parseLineEvalRaw(lines[0].evaluation) - parseLineEvalRaw(lines[1].evaluation);
+  }
+
+  // ── Player played the engine's top choice ────────────────────────────────
+  if (playedBest) {
+    // Brilliant: best move AND leaves a piece "hanging" (material sacrifice)
+    // AND is one of the only ways to maintain/improve the position (large gap)
+    if (lineGap >= 100 && isSacrifice(moveObj, fenAfter)) return 'brilliant';
+
+    // Great: best choice is significantly better than all alternatives —
+    // a non-obvious decision that most players would miss
+    if (lineGap >= 50) return 'great';
+
+    // Best: top engine move, straightforward
+    return 'best';
+  }
+
+  // ── Player did NOT play the best move: classify by centipawn loss ─────────
+  // Inaccuracy  – subtle, position stays playable              (20–100 cp)
+  // Mistake     – noticeably shifts eval in opponent's favour  (100–300 cp)
+  // Blunder     – catastrophic loss of material or forced mate (300+ cp)
+  if (cpLoss <= 20)  return 'good';
+  if (cpLoss <= 100) return 'inaccuracy';
+  if (cpLoss <= 300) return 'mistake';
+  return 'blunder';
+}
+
+// ── Move history ──────────────────────────────────────────────────────────────
+async function addMove(moveObj, fenBefore, fenAfter, preMoveAnalysis, postWhiteAdv) {
+  moveHistory = moveHistory.slice(0, historyIndex);
+
+  const preWhiteAdv = preMoveAnalysis ? preMoveAnalysis.whiteAdvantageCp : 0;
+  const colorMoved  = moveObj.color;
+  const cpLoss = colorMoved === 'w'
+    ? (preWhiteAdv - postWhiteAdv)
+    : (postWhiteAdv - preWhiteAdv);
+
+  const uci = moveObj.from + moveObj.to + (moveObj.promotion || '');
+
+  // Book move detection: async lookup via /api/openings/lookup
+  const seqSoFar = [...moveHistory.map(m => m.uci), uci].join(' ');
+  const openingName = await lookupOpening(seqSoFar);
+  const cls = openingName ? 'book' : classifyMove(moveObj, fenAfter, preMoveAnalysis, cpLoss);
+
+  // Show/update the opening name label in the panel
+  if (openingName) document.getElementById('openingNameEl').textContent = openingName;
+
+    moveHistory.push({
+      ply: moveHistory.length + 1,
+      moveNumber: Math.floor(moveHistory.length / 2) + 1,
+      san: moveObj.san,
+    uci,
+    fenBefore,
+    fenAfter,
+    classification: cls,
+    bestMove: preMoveAnalysis ? preMoveAnalysis.bestMove : null,
+    evalBefore: preMoveAnalysis ? preMoveAnalysis.evaluation : null,
+    evalAfter: lastAnalysis ? lastAnalysis.evaluation : null,
+    openingName,
+    whiteAdvBefore: preWhiteAdv,
+    whiteAdvAfter: postWhiteAdv,
+    color: colorMoved
+  });
+  historyIndex = moveHistory.length;
+
+  renderMoveList();
+  updateCounts();
+  updateNavButtons();
+  // Show classification badge on the destination square
+  showMoveAnnotation(uci.slice(2, 4), cls);
+}
+
+function renderMoveList() {
+  const el = document.getElementById('moveList');
+  el.innerHTML = '';
+  let i = 0;
+  while (i < moveHistory.length) {
+    const row = document.createElement('div');
+    row.className = 'move-row';
+
+    const numSpan = document.createElement('span');
+    numSpan.className = 'move-num';
+    numSpan.textContent = (Math.floor(i / 2) + 1) + '.';
+    row.appendChild(numSpan);
+
+    row.appendChild(buildMoveCell(moveHistory[i], i + 1));
+    i++;
+
+    if (i < moveHistory.length) {
+      row.appendChild(buildMoveCell(moveHistory[i], i + 1));
+    } else {
+      row.appendChild(document.createElement('span'));
+    }
+    i++;
+
+    el.appendChild(row);
+  }
+  scrollToActive();
+}
+
+function buildMoveCell(entry, ply) {
+  const cell = document.createElement('span');
+  cell.className = 'move-cell' + (ply === historyIndex ? ' active' : '');
+  cell.dataset.ply = ply;
+
+  const cls = CLS[entry.classification] || CLS.good;
+  const sanEl = document.createElement('span');
+  sanEl.textContent = entry.san;
+  cell.appendChild(sanEl);
+
+  if (cls.label) {
+    const badge = document.createElement('span');
+    badge.className = 'move-badge';
+    badge.textContent = cls.label;
+    badge.style.color = cls.color;
+    cell.appendChild(badge);
+  }
+  const comments = renderMoveCommentsForPly(ply);
+  if (comments) cell.appendChild(comments);
+  cell.addEventListener('click', () => navigateTo(ply));
+  return cell;
+}
+
+function renderMoveCommentsForPly(ply) {
+  const comments = moveAnnotations[String(ply)] || [];
+  if (!comments.length) return null;
+  const wrap = document.createElement('div');
+  wrap.className = 'move-comments';
+  comments.forEach((comment, idx) => wrap.appendChild(renderCommentNode(ply, comment, idx)));
+  return wrap;
+}
+
+function renderCommentNode(ply, comment, idx) {
+  const node = document.createElement('div');
+  node.className = 'move-comment';
+
+  const head = document.createElement('div');
+  head.className = 'comment-head';
+  const role = (comment.authorRole || 'STUDENT').toUpperCase();
+  const roleText = document.createElement('span');
+  roleText.textContent = role === 'COACH' ? 'Coach' : 'Student';
+  head.appendChild(roleText);
+
+  if (role === currentRole) {
+    const actions = document.createElement('span');
+    actions.className = 'comment-actions';
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.textContent = 'Edit';
+    edit.addEventListener('click', e => { e.stopPropagation(); editComment(ply, idx); });
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.textContent = 'Delete';
+    del.addEventListener('click', e => { e.stopPropagation(); deleteComment(ply, idx); });
+    actions.appendChild(edit);
+    actions.appendChild(del);
+    head.appendChild(actions);
+  }
+
+  const text = document.createElement('div');
+  text.textContent = comment.text || '';
+  node.appendChild(head);
+  node.appendChild(text);
+  return node;
+}
+
+function scrollToActive() {
+  const active = document.querySelector('.move-cell.active');
+  if (active) active.scrollIntoView({ block: 'nearest' });
+}
+
+function highlightActive() {
+  document.querySelectorAll('.move-cell').forEach(el => {
+    el.classList.toggle('active', parseInt(el.dataset.ply, 10) === historyIndex);
+  });
+  scrollToActive();
+}
+
+function updateCounts() {
+  const c = {};
+  moveHistory.forEach(m => { c[m.classification] = (c[m.classification] || 0) + 1; });
+  ['Brilliant','Great','Best','Good','Inaccuracy','Mistake','Blunder','Miss','Book'].forEach(name => {
+    document.getElementById('cnt' + name).textContent = c[name.toLowerCase()] || 0;
+  });
+
+  // Update opening name label: show the last named opening seen in history (if any)
+  const lastBook = [...moveHistory].reverse().find(m => m.openingName);
+  document.getElementById('openingNameEl').textContent = lastBook ? lastBook.openingName : '';
+}
+
+function navigateTo(ply) {
+  if (ply < 0 || ply > moveHistory.length) return;
+  historyIndex = ply;
+
+  if (ply === 0) {
+    const initialFen = replayStartFen();
+    game.load(initialFen);
+    board.position(initialFen, false);
+    updateEvalBar(0);
+    document.getElementById('evalLabel').textContent = '0.0';
+    clearMoveAnnotation();
+  } else {
+    const entry = moveHistory[ply - 1];
+    game.load(entry.fenAfter);
+    board.position(entry.fenAfter, false);
+    updateEvalBar(entry.whiteAdvAfter || 0);
+    // Restore annotation badge for this move
+    setTimeout(() => showMoveAnnotation(entry.uci.slice(2, 4), entry.classification), 30);
+  }
+
+  updateFenInput();
+  clearArrow();
+  bestMove = null; bestLines = [];
+  bestMoveEl.textContent = '-';
+  evalScoreEl.textContent = '-';
+  lastAnalysis = null;
+  highlightActive();
+  updateNavButtons();
+  updateSelectedMoveLabel();
+}
+
+function updateNavButtons() {
+  document.getElementById('btnFirst').disabled = historyIndex <= 0;
+  document.getElementById('btnPrev').disabled  = historyIndex <= 0;
+  document.getElementById('btnNext').disabled  = historyIndex >= moveHistory.length;
+  document.getElementById('btnLast').disabled  = historyIndex >= moveHistory.length;
+  updateSelectedMoveLabel();
+}
+
+function updateSelectedMoveLabel() {
+  if (!selectedMoveLabel) return;
+  if (historyIndex <= 0) {
+    selectedMoveLabel.textContent = 'Starting position. Select a move to comment.';
+    return;
+  }
+  const move = moveHistory[historyIndex - 1];
+  const moveNo = move?.moveNumber || Math.floor((historyIndex - 1) / 2) + 1;
+  const prefix = move?.color === 'b' ? `${moveNo}...` : `${moveNo}.`;
+  selectedMoveLabel.textContent = move ? `Selected: ${prefix} ${move.san || move.uci || ''}` : 'Select a move to comment.';
+}
+
+// ── Board init ────────────────────────────────────────────────────────────────
+const pieceTheme  = p => `img/pieces/${p.toLowerCase()}.svg`;
+const boardAreaEl = () =>
+  document.getElementById('analysisBoard').querySelector('.board-b72b1') ||
+  document.getElementById('analysisBoard');
+
+function onPlayDrop(source, target) {
+  const preMoveAnalysis = lastAnalysis;
+  const fenBefore = game.fen();
+  const move = game.move({ from: source, to: target, promotion: 'q' });
+  if (!move) return 'snapback';
+
+  const fenAfter = game.fen();
+  updateFenInput();
+
+  if (autoAnalyze.checked) {
+    runAnalysis(move, fenBefore, preMoveAnalysis);
+  } else {
+    addMove(move, fenBefore, fenAfter, preMoveAnalysis, preMoveAnalysis ? preMoveAnalysis.whiteAdvantageCp : 0)
+      .then(clearArrow);
+  }
+}
+
+function onSetupDrop() {
+  setTimeout(() => {
+    syncFenFromBoard({ quiet: true });
+    clearAnalysis();
+    setStatus('Setup mode active.', 'success');
+  }, 0);
+}
+
+function initBoard(position, editing) {
+  if (board) board.destroy();
+  const config = {
+    draggable: true,
+    position,
+    pieceTheme,
+    orientation: currentOrientation,
+    onDrop: editing ? onSetupDrop : onPlayDrop,
+    onSnapEnd: () => {
+      if (editing) { syncFenFromBoard({ quiet: true }); }
+      else         { board.position(game.fen()); }
       refreshArrow();
-    };
+    }
+  };
+  if (editing) { config.sparePieces = true; config.dropOffBoard = 'trash'; }
+  board = Chessboard('analysisBoard', config);
+  currentOrientation = board.orientation();
+  applyPlayerLabels();
+  setTimeout(() => { refreshArrow(); syncEvalBarHeight(); }, 80);
+}
 
-    const formatLine = (line, idx) => {
-      const evalLabel = line.evaluation ? `(${line.evaluation})` : "";
-      const pvLabel = line.pv ? line.pv : "";
-      const parts = [line.move, evalLabel, pvLabel].filter(Boolean);
-      return `${idx + 1}. ${parts.join(" ")}`.trim();
-    };
+// ── Status ────────────────────────────────────────────────────────────────────
+function setStatus(msg, tone = 'info') {
+  const colors = { info: 'var(--muted)', success: 'var(--accent-2)', warn: '#f5b841' };
+  statusEl.textContent = msg;
+  statusEl.style.color = colors[tone] || colors.info;
+}
 
-    const updateMetrics = (data) => {
-      const rawLines = Array.isArray(data.lines) ? data.lines : [];
-      bestLines = rawLines
-        .filter((line) => line && line.move)
-        .slice(0, 3);
+function setSavedGameStatus(msg, tone = 'info') {
+  const colors = { info: 'var(--muted)', success: 'var(--accent-2)', warn: '#f5b841' };
+  savedGameStatus.textContent = msg;
+  savedGameStatus.style.color = colors[tone] || colors.info;
+}
 
-      if (!bestLines.length && data.pv) {
-        const firstMove = data.bestMove || data.pv.split(/\s+/)[0];
-        if (firstMove) {
-          bestLines = [{ move: firstMove, evaluation: data.evaluation, pv: data.pv }];
-        }
-      }
+function getResultFromWinner() {
+  const winner = winnerInput.value || 'UNKNOWN';
+  if (winner === 'WHITE_WIN') return '1-0';
+  if (winner === 'BLACK_WIN') return '0-1';
+  if (winner === 'DRAW') return '1/2-1/2';
+  return '*';
+}
 
-      bestMove = bestLines[0]?.move || data.bestMove || null;
-      bestMoveEl.textContent = bestMove || "-";
-      evalEl.textContent = bestLines[0]?.evaluation || data.evaluation || "-";
-      if (bestLines.length) {
-        pvEl.textContent = bestLines.map(formatLine).join("\n");
-      } else {
-        pvEl.textContent = data.pv || "-";
-      }
-      refreshArrow();
-    };
+function formatResult(result) {
+  if (result === 'WHITE_WIN') return '1-0';
+  if (result === 'BLACK_WIN') return '0-1';
+  if (result === 'DRAW') return '1/2-1/2';
+  return '*';
+}
 
-    const setSetupMode = (enabled) => {
-      if (enabled === setupMode) return true;
-      if (enabled) {
-        setupMode = true;
-        setupPanel.classList.add("is-active");
-        setupToggle.textContent = "Use position";
-        initBoard(board ? board.position() : game.fen(), true);
-        syncFenFromBoard({ quiet: true });
-        clearAnalysis();
-        setStatus("Setup mode active.", "success");
-        return true;
-      }
+function resultLabelToEnum(result) {
+  if (result === '1-0') return 'WHITE_WIN';
+  if (result === '0-1') return 'BLACK_WIN';
+  if (result === '1/2-1/2') return 'DRAW';
+  return result || 'UNKNOWN';
+}
 
-      const fen = fenInput.value.trim();
-      const error = validateAnalysisFen(fen);
-      if (error) {
-        setStatus(error, "warn");
-        return false;
-      }
-      game.load(fen);
-      setupMode = false;
-      setupPanel.classList.remove("is-active");
-      setupToggle.textContent = "Setup position";
-      initBoard(game.fen(), false);
-      updateFenInput();
-      clearAnalysis();
-      setStatus("Position ready for legal moves.", "success");
-      return true;
-    };
+function cleanOptional(value) {
+  return value && value.trim() ? value.trim() : null;
+}
 
-    const analyze = async () => {
-      if (setupMode && !syncFenFromBoard({ loadGame: true, quiet: true })) {
-        setStatus(validateAnalysisFen(fenInput.value.trim()) || "Invalid setup position.", "warn");
-        return;
-      }
-      const depthVal = parseInt(depthInput.value, 10);
-      const timeVal = parseInt(timeInput.value, 10);
-      const payload = {
-        fen: game.fen(),
-        depth: Number.isFinite(depthVal) ? depthVal : null,
-        movetime: Number.isFinite(timeVal) ? timeVal : null,
-        multipv: 3
-      };
-      try {
-        setStatus("Analyzing...");
-        const res = await fetch("/api/analysis", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeaders },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          setStatus(data.error || "Engine error", "warn");
-          return;
-        }
-        updateMetrics(data);
-        setStatus("Best move ready.", "success");
-      } catch (err) {
-        setStatus("Engine error. Check backend logs.", "warn");
-      }
-    };
+function defaultGameName() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `Untitled Game - ${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
-    document.getElementById("btnAnalyze").addEventListener("click", analyze);
-    document.getElementById("btnReset").addEventListener("click", () => {
-      game.reset();
-      setupMode = false;
-      setupPanel.classList.remove("is-active");
-      setupToggle.textContent = "Setup position";
-      initBoard("start", false);
-      updateFenInput();
-      clearAnalysis();
-      setStatus("Reset to start.");
-    });
-    document.getElementById("btnFlip").addEventListener("click", () => {
-      currentOrientation = board.flip();
-      refreshArrow();
-    });
-    document.getElementById("btnApplyFen").addEventListener("click", () => {
-      const fen = fenInput.value.trim();
-      if (!fen) return;
-      const error = validateAnalysisFen(fen);
-      if (error) {
-        setStatus(error, "warn");
-        return;
-      }
-      game.load(fen);
-      updateSetupControlsFromFen(game.fen());
-      initBoard(game.fen(), setupMode);
-      updateFenInput();
-      clearAnalysis();
-      setStatus("FEN loaded.", "success");
-    });
-    setupToggle.addEventListener("click", () => {
-      setSetupMode(!setupMode);
-    });
-    clearBoardBtn.addEventListener("click", () => {
-      if (!setupMode) setSetupMode(true);
-      castlingInput.value = "-";
-      epInput.value = "-";
-      halfmoveInput.value = 0;
-      fullmoveInput.value = 1;
-      board.clear(false);
-      fenInput.value = buildFenFromPosition({});
-      clearAnalysis();
-      setStatus("Board cleared.", "success");
-    });
-    startPositionBtn.addEventListener("click", () => {
-      updateSetupControlsFromFen(startFen);
-      if (setupMode) {
-        board.start(false);
-        syncFenFromBoard({ quiet: true });
-      } else {
-        game.reset();
-        initBoard("start", false);
-        updateFenInput();
-      }
-      clearAnalysis();
-      setStatus("Starting position loaded.", "success");
-    });
-    useBoardFenBtn.addEventListener("click", () => {
-      if (!setupMode) {
-        updateFenInput();
-        setStatus("Current board FEN copied.", "success");
-        return;
-      }
-      syncFenFromBoard({ loadGame: false });
-    });
-    [sideToMove, castlingInput, epInput, halfmoveInput, fullmoveInput].forEach((control) => {
-      control.addEventListener("change", () => {
-        if (setupMode) {
-          syncFenFromBoard({ quiet: true });
-          clearAnalysis();
-        }
-      });
-    });
-    document.getElementById("btnPlayBest").addEventListener("click", () => {
-      if (setupMode && !syncFenFromBoard({ loadGame: true, quiet: true })) {
-        setStatus(validateAnalysisFen(fenInput.value.trim()) || "Invalid setup position.", "warn");
-        return;
-      }
-      if (!bestMove || bestMove.length < 4) {
-        setStatus("No best move yet.", "warn");
-        return;
-      }
-      const move = game.move({
-        from: bestMove.slice(0, 2),
-        to: bestMove.slice(2, 4),
-        promotion: bestMove[4]
-      });
-      if (!move) {
-        setStatus("Best move not legal for current position.", "warn");
-        return;
-      }
-      board.position(game.fen());
-      updateFenInput();
-      if (autoAnalyze.checked) {
-        analyze();
-      } else {
-        clearAnalysis();
-      }
-    });
+function openSaveGameModal() {
+  if (!gameTitleInput.value.trim()) gameTitleInput.value = defaultGameName();
+  saveGameModal.classList.remove('hidden');
+  gameTitleInput.focus();
+}
 
+function closeSaveGameModal() {
+  saveGameModal.classList.add('hidden');
+}
+
+function applyPlayerLabels() {
+  const white = (whitePlayerInput.value || 'White').trim() || 'White';
+  const black = (blackPlayerInput.value || 'Black').trim() || 'Black';
+  const top = document.getElementById('topPlayerName');
+  const bot = document.getElementById('bottomPlayerName');
+  const orientation = board ? board.orientation() : currentOrientation;
+  if (orientation === 'black') {
+    top.textContent = white;
+    bot.textContent = black;
+  } else {
+    top.textContent = black;
+    bot.textContent = white;
+  }
+}
+
+function updateFenInput() {
+  const fen = game.fen();
+  fenInput.value = fen;
+  updateSetupControlsFromFen(fen);
+}
+
+// ── Analysis ──────────────────────────────────────────────────────────────────
+async function runAnalysis(moveJustMade, fenBefore, preMoveAnalysis) {
+  if (isAnalyzing) return;
+  isAnalyzing = true;
+  setStatus('Analyzing...', 'info');
+
+  const currentFen = game.fen();
+  const payload = {
+    fen: currentFen,
+    depth: parseInt(depthInput.value, 10) || null,
+    movetime: parseInt(timeInput.value, 10) || null,
+    multipv: 3
+  };
+
+  try {
+    const res  = await fetch('/api/analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { setStatus(data.error || `Engine error (${res.status})`, 'warn'); isAnalyzing = false; return; }
+
+    const whiteAdv = parseEvalToWhiteCp(data.evaluation, currentFen);
+    updateEvalBar(whiteAdv);
+
+    lastAnalysis = { whiteAdvantageCp: whiteAdv, bestMove: data.bestMove,
+                     evaluation: data.evaluation, pv: data.pv, lines: data.lines || [] };
+
+    bestMove  = data.bestMove;
+    bestLines = (data.lines || []).slice(0, 3);
+    bestMoveEl.textContent  = uciToSan(data.bestMove, currentFen) || '-';
+    evalScoreEl.textContent = formatEvalDisplay(data.evaluation, currentFen);
+
+    if (moveJustMade) {
+      await addMove(moveJustMade, fenBefore, currentFen,
+                    preMoveAnalysis, whiteAdv);
+    }
+
+    refreshArrow();
+    setStatus('Analysis ready.', 'success');
+  } catch (err) {
+    setStatus(`Engine error. ${err.message || 'Check backend.'}`, 'warn');
+  }
+  isAnalyzing = false;
+}
+
+async function analyzePosition() {
+  if (isAnalyzing) return;
+  isAnalyzing = true;
+  setStatus('Analyzing...', 'info');
+
+  const currentFen = game.fen();
+  const payload = {
+    fen: currentFen,
+    depth: parseInt(depthInput.value, 10) || null,
+    movetime: parseInt(timeInput.value, 10) || null,
+    multipv: 3
+  };
+
+  try {
+    const res  = await fetch('/api/analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { setStatus(data.error || `Engine error (${res.status})`, 'warn'); isAnalyzing = false; return; }
+
+    const whiteAdv = parseEvalToWhiteCp(data.evaluation, currentFen);
+    updateEvalBar(whiteAdv);
+
+    lastAnalysis = { whiteAdvantageCp: whiteAdv, bestMove: data.bestMove,
+                     evaluation: data.evaluation, pv: data.pv, lines: data.lines || [] };
+
+    bestMove  = data.bestMove;
+    bestLines = (data.lines || []).slice(0, 3);
+    bestMoveEl.textContent  = uciToSan(data.bestMove, currentFen) || '-';
+    evalScoreEl.textContent = formatEvalDisplay(data.evaluation, currentFen);
+
+    refreshArrow();
+    setStatus('Analysis ready.', 'success');
+  } catch (err) {
+    setStatus(`Engine error. ${err.message || 'Check backend.'}`, 'warn');
+  }
+  isAnalyzing = false;
+}
+
+function clearAnalysis() {
+  bestMove = null; bestLines = []; lastAnalysis = null;
+  bestMoveEl.textContent = '-';
+  evalScoreEl.textContent = '-';
+  clearArrow();
+}
+
+// ── Arrows ────────────────────────────────────────────────────────────────────
+const arrowStyles = [
+  { fill: 'rgba(34,197,94,0.55)',  stroke: 'rgba(15,23,42,0.3)',  hl: 'rgba(34,197,94,0.22)' },
+  { fill: 'rgba(59,130,246,0.45)', stroke: 'rgba(15,23,42,0.28)', hl: 'rgba(59,130,246,0.2)' },
+  { fill: 'rgba(245,158,11,0.45)', stroke: 'rgba(15,23,42,0.28)', hl: 'rgba(245,158,11,0.2)' }
+];
+
+function resizeArrowCanvas() {
+  const boardArea = boardAreaEl();
+  const boardEl   = document.getElementById('analysisBoard');
+  const rect      = boardArea.getBoundingClientRect();
+  const wrapRect  = boardEl.parentElement.getBoundingClientRect();
+  const dpr       = window.devicePixelRatio || 1;
+  arrowCanvas.width  = rect.width  * dpr;
+  arrowCanvas.height = rect.height * dpr;
+  arrowCanvas.style.left   = `${rect.left - wrapRect.left}px`;
+  arrowCanvas.style.top    = `${rect.top  - wrapRect.top}px`;
+  arrowCanvas.style.width  = `${rect.width}px`;
+  arrowCanvas.style.height = `${rect.height}px`;
+  arrowCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function clearArrow() {
+  arrowCtx.clearRect(0, 0, arrowCanvas.width, arrowCanvas.height);
+}
+
+function drawArrow(from, to, style) {
+  const boardEl   = document.getElementById('analysisBoard');
+  const boardArea = boardAreaEl();
+  if (!from || !to) return;
+  const fromEl = boardEl.querySelector(`[data-square="${from}"]`);
+  const toEl   = boardEl.querySelector(`[data-square="${to}"]`);
+  if (!fromEl || !toEl) return;
+
+  const boardRect = boardArea.getBoundingClientRect();
+  const fr = fromEl.getBoundingClientRect();
+  const tr = toEl.getBoundingClientRect();
+  const fx = fr.left + fr.width  / 2 - boardRect.left;
+  const fy = fr.top  + fr.height / 2 - boardRect.top;
+  const tx = tr.left + tr.width  / 2 - boardRect.left;
+  const ty = tr.top  + tr.height / 2 - boardRect.top;
+
+  const dx = tx - fx, dy = ty - fy, len = Math.hypot(dx, dy);
+  if (len < 1) return;
+  const sq = boardRect.width / 8;
+  const tw = Math.max(6, sq * 0.2), hw = Math.max(12, sq * 0.55);
+  const hl = Math.max(16, sq * 0.65);
+  const ps = sq * 0.18, pe = sq * 0.28;
+  const ux = dx / len, uy = dy / len, px = -uy, py = ux;
+  const sx = fx + ux * ps, sy = fy + uy * ps;
+  const ex = tx - ux * pe, ey = ty - uy * pe;
+  const bx = ex - ux * Math.min(hl, len * 0.6);
+  const by = ey - uy * Math.min(hl, len * 0.6);
+
+  arrowCtx.save();
+  arrowCtx.fillStyle   = style.fill;
+  arrowCtx.strokeStyle = style.stroke;
+  arrowCtx.lineJoin    = 'round';
+  arrowCtx.lineWidth   = Math.max(1.5, sq * 0.04);
+  arrowCtx.beginPath();
+  arrowCtx.moveTo(sx + px * tw/2, sy + py * tw/2);
+  arrowCtx.lineTo(bx + px * tw/2, by + py * tw/2);
+  arrowCtx.lineTo(bx + px * hw/2, by + py * hw/2);
+  arrowCtx.lineTo(ex, ey);
+  arrowCtx.lineTo(bx - px * hw/2, by - py * hw/2);
+  arrowCtx.lineTo(bx - px * tw/2, by - py * tw/2);
+  arrowCtx.lineTo(sx - px * tw/2, sy - py * tw/2);
+  arrowCtx.closePath();
+  arrowCtx.fill(); arrowCtx.stroke();
+  arrowCtx.fillStyle = style.hl;
+  arrowCtx.beginPath(); arrowCtx.arc(sx, sy, sq * 0.18, 0, Math.PI * 2); arrowCtx.fill();
+  arrowCtx.beginPath(); arrowCtx.arc(ex, ey, sq * 0.16, 0, Math.PI * 2); arrowCtx.fill();
+  arrowCtx.restore();
+}
+
+function refreshArrow() {
+  resizeArrowCanvas(); clearArrow();
+  if (bestLines.length) {
+    bestLines.slice(0, 3).forEach((line, i) => {
+      if (line.move && line.move.length >= 4)
+        drawArrow(line.move.slice(0, 2), line.move.slice(2, 4), arrowStyles[i] || arrowStyles[0]);
+    });
+    return;
+  }
+  if (bestMove && bestMove.length >= 4)
+    drawArrow(bestMove.slice(0, 2), bestMove.slice(2, 4), arrowStyles[0]);
+}
+
+// ── FEN / Setup helpers ───────────────────────────────────────────────────────
+const normCastling = v => {
+  const r = (v || '-').trim();
+  if (r === '-') return '-';
+  const o = ['K','Q','k','q'].filter(t => r.includes(t)).join('');
+  return o || '-';
+};
+const normEp  = v => { const r=(v||'-').trim().toLowerCase(); return /^[a-h][36]$/.test(r)?r:'-'; };
+const normNum = (v,fb,min) => { const p=parseInt(v,10); return Number.isFinite(p)&&p>=min?p:fb; };
+
+const boardObjToPlacement = pos => {
+  let s = '';
+  for (let r = 8; r >= 1; r--) {
+    let e = 0;
+    for (const f of files) {
+      const pc = pos[f+r];
+      if (!pc) { e++; continue; }
+      if (e) { s += e; e = 0; }
+      s += pc[0]==='w' ? pc[1].toUpperCase() : pc[1].toLowerCase();
+    }
+    if (e) s += e;
+    if (r > 1) s += '/';
+  }
+  return s;
+};
+
+const buildFenFromPosition = pos => {
+  return `${boardObjToPlacement(pos)} ${sideToMove.value||'w'} ${normCastling(castlingInput.value)} ${normEp(epInput.value)} ${normNum(halfmoveInput.value,0,0)} ${normNum(fullmoveInput.value,1,1)}`;
+};
+
+const updateSetupControlsFromFen = fen => {
+  const p = (fen||'').trim().split(/\s+/);
+  if (p.length < 6) return;
+  sideToMove.value    = p[1]==='b'?'b':'w';
+  castlingInput.value = p[2]||'-';
+  epInput.value       = p[3]||'-';
+  halfmoveInput.value = normNum(p[4],0,0);
+  fullmoveInput.value = normNum(p[5],1,1);
+};
+
+const validateFen = fen => {
+  const t = new Chess();
+  const v = t.validate_fen(fen);
+  if (!v.valid) return v.error;
+  const pos = Chessboard.fenToObj(fen) || {};
+  const wk = Object.values(pos).filter(p => p==='wK').length;
+  const bk = Object.values(pos).filter(p => p==='bK').length;
+  if (wk !== 1 || bk !== 1) return 'Need exactly one king of each color.';
+  if (!t.load(fen)) return 'Invalid position.';
+  return '';
+};
+
+const syncFenFromBoard = (opts={}) => {
+  if (!board) return false;
+  const fen = buildFenFromPosition(board.position());
+  fenInput.value = fen;
+  const err = validateFen(fen);
+  if (err) { if (!opts.quiet) setStatus(err, 'warn'); return false; }
+  if (opts.loadGame) game.load(fen);
+  if (!opts.quiet) setStatus('FEN ready.', 'success');
+  return true;
+};
+
+function setSetupMode(enabled) {
+  if (enabled === setupMode) return true;
+  if (enabled) {
+    setupMode = true;
+    setupPanel.classList.add('is-active');
+    setupToggle.textContent = 'Use Position';
+    initBoard(board ? board.position() : game.fen(), true);
+    syncFenFromBoard({ quiet: true });
+    clearAnalysis();
+    setStatus('Setup: drag pieces, then click "Use Position".', 'success');
+    return true;
+  }
+  const fen = fenInput.value.trim();
+  const err = validateFen(fen);
+  if (err) { setStatus(err, 'warn'); return false; }
+  game.load(fen);
+  setupMode = false;
+  setupPanel.classList.remove('is-active');
+  setupToggle.textContent = 'Setup Position';
+  moveHistory = []; historyIndex = 0;
+  renderMoveList(); updateCounts();
+  initBoard(game.fen(), false);
+  updateFenInput(); clearAnalysis();
+  updateEvalBar(0);
+  setStatus('Position loaded. Ready to play.', 'success');
+  return true;
+}
+
+// ── PGN Save ──────────────────────────────────────────────────────────────────
+function pgnEscape(value) {
+  return String(value || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function commentEscape(value) {
+  return String(value || '').replace(/[{}]/g, '').trim();
+}
+
+function parseMoveAnnotations(raw) {
+  try {
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function parsePgnSanMoves(pgn) {
+  let body = String(pgn || '').replace(/\r/g, '\n');
+  body = body.replace(/\[[^\]]*\]/g, ' ');
+  body = body.replace(/\{[^}]*\}/g, ' ');
+  while (/\([^()]*\)/.test(body)) body = body.replace(/\([^()]*\)/g, ' ');
+  body = body.replace(/;[^\n]*/g, ' ');
+  body = body.replace(/\$\d+/g, ' ');
+  body = body.replace(/\d+\.(\.\.)?/g, ' ');
+  return body.split(/\s+/)
+    .map(t => t.trim())
+    .filter(t => t && !['1-0', '0-1', '1/2-1/2', '*'].includes(t));
+}
+
+function rebuildMoveHistoryFromPgn(pgn) {
+  const parser = new Chess();
+  const rebuilt = [];
+  parsePgnSanMoves(pgn).forEach(token => {
+    const fenBefore = parser.fen();
+    let move = null;
+    try { move = parser.move(token, { sloppy: true }); } catch { move = null; }
+    if (!move) return;
+    rebuilt.push({
+      ply: rebuilt.length + 1,
+      moveNumber: Math.floor(rebuilt.length / 2) + 1,
+      san: move.san,
+      uci: `${move.from}${move.to}${move.promotion || ''}`,
+      fenBefore,
+      fenAfter: parser.fen(),
+      classification: 'good',
+      bestMove: null,
+      evalBefore: null,
+      evalAfter: null,
+      whiteAdvBefore: 0,
+      whiteAdvAfter: 0,
+      color: move.color
+    });
+  });
+  return rebuilt;
+}
+
+function normalizeFlatMoveHistory(moves) {
+  return moves.map((m, idx) => ({
+    san: m.san || m.move || '',
+    uci: m.uci || '',
+    color: m.color || (idx % 2 === 0 ? 'w' : 'b'),
+    fenBefore: m.fenBefore || '',
+    fenAfter: m.fenAfter || '',
+    classification: m.classification || 'good',
+    bestMove: m.bestMove || null,
+    evalBefore: m.evalBefore || m.evaluationBefore || null,
+    evalAfter: m.evalAfter || m.evaluationAfter || null,
+    whiteAdvBefore: Number.isFinite(Number(m.whiteAdvBefore)) ? Number(m.whiteAdvBefore) : 0,
+    whiteAdvAfter: Number.isFinite(Number(m.whiteAdvAfter)) ? Number(m.whiteAdvAfter) : 0,
+    openingName: m.openingName || '',
+    ply: idx + 1,
+    moveNumber: Math.floor(idx / 2) + 1
+  }));
+}
+
+function normalizeMoveHistory(rawMoves, pgn) {
+  let moves = Array.isArray(rawMoves) ? rawMoves : [];
+  if (!moves.length && pgn) return rebuildMoveHistoryFromPgn(pgn);
+
+  if (moves.length && moves.every(m => m && typeof m === 'object' && m.fenAfter && (m.san || m.uci || m.move) && !m.white && !m.black)) {
+    return normalizeFlatMoveHistory(moves);
+  }
+
+  const tokens = moves.flatMap(m => {
+    if (typeof m === 'string') return [m];
+    if (m && typeof m === 'object') return [m.san, m.white, m.black, m.move].filter(Boolean);
+    return [];
+  });
+  return tokens.length ? rebuildMoveHistoryFromPgn(tokens.join(' ')) : [];
+}
+
+function replayStartFen() {
+  return moveHistory[0]?.fenBefore || startFen;
+}
+
+function buildPgn() {
+  const date = new Date().toISOString().slice(0,10).replace(/-/g,'.');
+  const title = cleanOptional(eventNameInput.value) || cleanOptional(gameTitleInput.value) || 'Analysis';
+  const white = cleanOptional(whitePlayerInput.value) || 'White';
+  const black = cleanOptional(blackPlayerInput.value) || 'Black';
+  const result = getResultFromWinner();
+  const gameDate = cleanOptional(gameDateInput.value) ? gameDateInput.value.replace(/-/g, '.') : date;
+  const headers = [
+    ['Event', title],
+    ['Site', cleanOptional(siteInput.value) || '?'],
+    ['Date', gameDate],
+    ['Round', cleanOptional(roundInput.value) || '?'],
+    ['White', white],
+    ['Black', black],
+    ['Result', result]
+  ];
+  let pgn = headers.map(([key, value]) => `[${key} "${pgnEscape(value)}"]`).join('\n') + '\n\n';
+  let num = 1;
+  for (let i = 0; i < moveHistory.length; i++) {
+    const m = moveHistory[i];
+    if (m.color === 'w') pgn += num + '. ';
+    pgn += m.san + ' ';
+    (moveAnnotations[String(i + 1)] || []).forEach(comment => {
+      if (comment && comment.text) pgn += `{${commentEscape(comment.text)}} `;
+    });
+    if (m.color === 'b') num++;
+  }
+  pgn += result;
+  return pgn;
+}
+
+function buildSavedGamePayload() {
+  const gameName = cleanOptional(gameTitleInput.value) || defaultGameName();
+  const lastBook = [...moveHistory].reverse().find(m => m.openingName);
+  return {
+    gameName,
+    whitePlayer: cleanOptional(whitePlayerInput.value),
+    blackPlayer: cleanOptional(blackPlayerInput.value),
+    result: winnerInput.value || 'UNKNOWN',
+    fen: game.fen(),
+    pgn: buildPgn(),
+    movesJson: JSON.stringify(moveHistory),
+    moveAnnotationsJson: JSON.stringify(moveAnnotations),
+    notes: cleanOptional(notesInput.value),
+    source: 'ANALYSIS_BOARD',
+    eventName: cleanOptional(eventNameInput.value),
+    round: cleanOptional(roundInput.value),
+    site: cleanOptional(siteInput.value),
+    gameDate: cleanOptional(gameDateInput.value),
+    openingName: lastBook ? lastBook.openingName : '',
+    analysisEnabled: !!saveAnalysisEnabled.checked
+  };
+}
+
+function renderSavedGamesList() {
+  savedGamesList.innerHTML = '';
+  if (!savedGamesCache.length) {
+    const empty = document.createElement('div');
+    empty.className = 'status-bar';
+    empty.textContent = 'No saved games yet.';
+    savedGamesList.appendChild(empty);
+    return;
+  }
+  savedGamesCache.forEach(item => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'saved-game-item' + (item.id === currentSavedGameId ? ' is-active' : '');
+    const name = document.createElement('span');
+    name.className = 'saved-game-name';
+    name.textContent = item.gameName || item.title || `Game #${item.id}`;
+    const meta = document.createElement('span');
+    meta.className = 'saved-game-meta';
+    const white = item.whitePlayer || 'White';
+    const black = item.blackPlayer || 'Black';
+    meta.textContent = `${white} vs ${black} | ${formatResult(item.result)} | ${item.updatedAt ? item.updatedAt.replace('T', ' ').slice(0, 16) : ''}`;
+    btn.appendChild(name);
+    btn.appendChild(meta);
+    btn.addEventListener('click', () => loadSavedGame(item.id));
+    savedGamesList.appendChild(btn);
+  });
+}
+
+async function fetchSavedGames() {
+  try {
+    const res = await fetch('/api/games/my', { headers: authHeaders });
+    const data = await res.json().catch(() => []);
+    if (!res.ok) throw new Error(data.error || `Load failed (${res.status})`);
+    savedGamesCache = Array.isArray(data) ? data : [];
+    renderSavedGamesList();
+  } catch (err) {
+    setSavedGameStatus(err.message || 'Failed to retrieve saved games.', 'warn');
+  }
+}
+
+async function saveGameToDatabase(saveAsNewCopy = false) {
+  const payload = buildSavedGamePayload();
+  const method = currentSavedGameId && !saveAsNewCopy ? 'PUT' : 'POST';
+  const url = currentSavedGameId && !saveAsNewCopy ? `/api/games/${currentSavedGameId}` : '/api/games/save';
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Save failed (${res.status})`);
+    currentSavedGameId = data.id;
+    gameTitleInput.value = data.gameName || payload.gameName;
+    applyPlayerLabels();
+    closeSaveGameModal();
+    setSavedGameStatus(`Saved game #${currentSavedGameId}.`, 'success');
+    setStatus('Game saved to My Games.', 'success');
+    await fetchSavedGames();
+  } catch (err) {
+    setSavedGameStatus(err.message || 'Save failed.', 'warn');
+  }
+}
+
+async function persistCurrentSavedGame() {
+  if (!currentSavedGameId) {
+    setSavedGameStatus('Save the game before adding comments.', 'warn');
+    return false;
+  }
+  const payload = buildSavedGamePayload();
+  payload.fen = moveHistory.length ? moveHistory[moveHistory.length - 1].fenAfter : game.fen();
+  try {
+    const res = await fetch(`/api/games/${currentSavedGameId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Save failed (${res.status})`);
+    currentSavedGameId = data.id;
+    moveAnnotations = parseMoveAnnotations(data.moveAnnotationsJson);
+    setSavedGameStatus('Comments saved.', 'success');
+    await fetchSavedGames();
+    return true;
+  } catch (err) {
+    setSavedGameStatus(err.message || 'Could not save comments.', 'warn');
+    return false;
+  }
+}
+
+async function addCommentToSelectedMove() {
+  if (historyIndex <= 0) {
+    setSavedGameStatus('Select a move first.', 'warn');
+    return;
+  }
+  const text = prompt('Comment for selected move:');
+  if (!text || !text.trim()) return;
+  const key = String(historyIndex);
+  moveAnnotations[key] = moveAnnotations[key] || [];
+  moveAnnotations[key].push({
+    authorRole: currentRole,
+    text: text.trim(),
+    createdAt: new Date().toISOString()
+  });
+  renderMoveList();
+  await persistCurrentSavedGame();
+}
+
+async function editComment(ply, idx) {
+  const key = String(ply);
+  const comment = moveAnnotations[key]?.[idx];
+  if (!comment || (comment.authorRole || 'STUDENT').toUpperCase() !== currentRole) return;
+  const text = prompt('Edit comment:', comment.text || '');
+  if (!text || !text.trim()) return;
+  comment.text = text.trim();
+  comment.updatedAt = new Date().toISOString();
+  renderMoveList();
+  await persistCurrentSavedGame();
+}
+
+async function deleteComment(ply, idx) {
+  const key = String(ply);
+  const comment = moveAnnotations[key]?.[idx];
+  if (!comment || (comment.authorRole || 'STUDENT').toUpperCase() !== currentRole) return;
+  if (!confirm('Delete this comment?')) return;
+  moveAnnotations[key].splice(idx, 1);
+  if (!moveAnnotations[key].length) delete moveAnnotations[key];
+  renderMoveList();
+  await persistCurrentSavedGame();
+}
+
+async function loadSavedGame(id) {
+  try {
+    const res = await fetch(`/api/games/${id}`, { headers: authHeaders });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Load failed (${res.status})`);
+
+    currentSavedGameId = data.id;
+    gameTitleInput.value = data.gameName || data.title || '';
+    whitePlayerInput.value = data.whitePlayer || '';
+    blackPlayerInput.value = data.blackPlayer || '';
+    winnerInput.value = resultLabelToEnum(data.result);
+    eventNameInput.value = data.eventName || '';
+    roundInput.value = data.round || '';
+    siteInput.value = data.site || '';
+    gameDateInput.value = data.gameDate || '';
+    notesInput.value = data.notes || '';
+    moveAnnotations = parseMoveAnnotations(data.moveAnnotationsJson);
+    saveAnalysisEnabled.checked = data.analysisEnabled !== false;
+    autoAnalyze.checked = saveAnalysisEnabled.checked;
+
+    try {
+      const parsedMoves = data.movesJson ? JSON.parse(data.movesJson) : (data.moveHistoryJson ? JSON.parse(data.moveHistoryJson) : []);
+      moveHistory = normalizeMoveHistory(parsedMoves, data.pgn);
+    } catch {
+      moveHistory = rebuildMoveHistoryFromPgn(data.pgn);
+    }
+
+    const fen = data.fen || data.currentFen || (moveHistory.length ? moveHistory[moveHistory.length - 1].fenAfter : startFen);
+    if (!game.load(fen)) game.reset();
+    historyIndex = moveHistory.length;
+    setupMode = false;
+    setupPanel.classList.remove('is-active');
+    setupToggle.textContent = 'Setup Position';
+    initBoard(game.fen(), false);
     updateFenInput();
-    initBoard("start", false);
-    window.addEventListener("resize", refreshArrow);
-    setTimeout(refreshArrow, 60);
-  </script>
+    renderMoveList();
+    updateCounts();
+    clearAnalysis();
+    if (moveHistory.length) {
+      const last = moveHistory[moveHistory.length - 1];
+      updateEvalBar(last.whiteAdvAfter || 0);
+      setTimeout(() => showMoveAnnotation(last.uci.slice(2, 4), last.classification), 30);
+    } else {
+      updateEvalBar(0);
+    }
+    updateNavButtons();
+    applyPlayerLabels();
+    setSavedGameStatus(`Loaded game #${id}.`, 'success');
+    renderSavedGamesList();
+  } catch (err) {
+    setSavedGameStatus(err.message || 'Load failed.', 'warn');
+  }
+}
+
+async function deleteSavedGame() {
+  if (!currentSavedGameId) {
+    setSavedGameStatus('Select a saved game first.', 'warn');
+    return;
+  }
+  try {
+    const deletingId = currentSavedGameId;
+    const res = await fetch(`/api/games/${deletingId}`, { method: 'DELETE', headers: authHeaders });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Delete failed (${res.status})`);
+    currentSavedGameId = null;
+    setSavedGameStatus(`Deleted game #${deletingId}.`, 'success');
+    await fetchSavedGames();
+  } catch (err) {
+    setSavedGameStatus(err.message || 'Delete failed.', 'warn');
+  }
+}
+
+function newSavedGameRecord() {
+  currentSavedGameId = null;
+  moveAnnotations = {};
+  gameTitleInput.value = '';
+  winnerInput.value = 'UNKNOWN';
+  setSavedGameStatus('Ready to create a new database record.', 'success');
+  renderSavedGamesList();
+}
+
+function savePgn() {
+  const pgn = buildPgn();
+  const blob = new Blob([pgn], { type: 'text/plain' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'analysis.pgn'; a.click();
+  URL.revokeObjectURL(url);
+  setStatus('PGN saved.', 'success');
+}
+
+// ── Event listeners ───────────────────────────────────────────────────────────
+document.getElementById('btnAnalyze').addEventListener('click', analyzePosition);
+
+document.getElementById('btnPlayBest').addEventListener('click', async () => {
+  if (!bestMove || bestMove.length < 4) { setStatus('No best move. Run Analyze first.', 'warn'); return; }
+  const preMoveAnalysis = lastAnalysis;
+  const fenBefore = game.fen();
+  const move = game.move({ from: bestMove.slice(0,2), to: bestMove.slice(2,4), promotion: bestMove[4] || 'q' });
+  if (!move) { setStatus('Best move not legal for current position.', 'warn'); return; }
+  board.position(game.fen());
+  updateFenInput();
+  if (autoAnalyze.checked) runAnalysis(move, fenBefore, preMoveAnalysis);
+  else await addMove(move, fenBefore, game.fen(), preMoveAnalysis, preMoveAnalysis ? preMoveAnalysis.whiteAdvantageCp : 0);
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  game.reset(); moveHistory = []; historyIndex = 0;
+  currentSavedGameId = null;
+  moveAnnotations = {};
+  setupMode = false;
+  setupPanel.classList.remove('is-active');
+  setupToggle.textContent = 'Setup Position';
+  initBoard('start', false);
+  updateFenInput(); clearAnalysis();
+  updateEvalBar(0);
+  renderMoveList(); updateCounts();
+  document.getElementById('openingNameEl').textContent = '';
+  clearMoveAnnotation();
+  lastAnalysis = null;
+  setStatus('New game started.', 'success');
+  setSavedGameStatus('New unsaved game.', 'success');
+  renderSavedGamesList();
+  updateNavButtons();
+  if (autoAnalyze.checked) analyzePosition();
+});
+
+document.getElementById('btnFlip').addEventListener('click', () => {
+  currentOrientation = board.flip();
+  const topDot = document.getElementById('topDot');
+  const botDot = document.getElementById('bottomDot');
+  [topDot.style.background, botDot.style.background] = [botDot.style.background, topDot.style.background];
+  [topDot.style.border, botDot.style.border] = [botDot.style.border, topDot.style.border];
+  applyPlayerLabels();
+  refreshArrow();
+});
+
+setupToggle.addEventListener('click', () => setSetupMode(!setupMode));
+
+document.getElementById('btnClearBoard').addEventListener('click', () => {
+  if (!setupMode) setSetupMode(true);
+  castlingInput.value = '-'; epInput.value = '-';
+  halfmoveInput.value = 0;  fullmoveInput.value = 1;
+  board.clear(false);
+  fenInput.value = buildFenFromPosition({});
+  clearAnalysis();
+  setStatus('Board cleared.', 'success');
+});
+
+document.getElementById('btnStartPosition').addEventListener('click', () => {
+  updateSetupControlsFromFen(startFen);
+  if (setupMode) { board.start(false); syncFenFromBoard({ quiet: true }); }
+  else { game.reset(); initBoard('start', false); updateFenInput(); }
+  clearAnalysis();
+  setStatus('Start position.', 'success');
+});
+
+document.getElementById('btnUseBoardFen').addEventListener('click', () => {
+  if (!setupMode) { updateFenInput(); setStatus('FEN synced.', 'success'); return; }
+  syncFenFromBoard({ loadGame: false });
+});
+
+document.getElementById('btnApplyFen').addEventListener('click', () => {
+  const fen = fenInput.value.trim();
+  if (!fen) return;
+  const err = validateFen(fen);
+  if (err) { setStatus(err, 'warn'); return; }
+  game.load(fen);
+  updateSetupControlsFromFen(game.fen());
+  moveHistory = []; historyIndex = 0;
+  initBoard(game.fen(), setupMode);
+  updateFenInput(); clearAnalysis();
+  updateEvalBar(0);
+  renderMoveList(); updateCounts();
+  setStatus('FEN loaded.', 'success');
+  updateNavButtons();
+});
+
+[sideToMove, castlingInput, epInput, halfmoveInput, fullmoveInput].forEach(ctrl => {
+  ctrl.addEventListener('change', () => {
+    if (setupMode) { syncFenFromBoard({ quiet: true }); clearAnalysis(); }
+  });
+});
+
+document.getElementById('btnSaveGame').addEventListener('click', savePgn);
+btnOpenSaveGameModal.addEventListener('click', openSaveGameModal);
+document.getElementById('btnSaveToDatabase')?.addEventListener('click', openSaveGameModal);
+document.getElementById('btnConfirmSaveGame').addEventListener('click', () => saveGameToDatabase(false));
+document.getElementById('btnSaveAsNewCopy').addEventListener('click', () => saveGameToDatabase(true));
+document.getElementById('btnCloseSaveGameModal').addEventListener('click', closeSaveGameModal);
+saveGameModal.addEventListener('click', e => { if (e.target === saveGameModal) closeSaveGameModal(); });
+document.getElementById('btnNewSavedGame').addEventListener('click', newSavedGameRecord);
+document.getElementById('btnDeleteSavedGame')?.addEventListener('click', deleteSavedGame);
+[whitePlayerInput, blackPlayerInput].forEach(ctrl => ctrl.addEventListener('input', applyPlayerLabels));
+saveAnalysisEnabled.addEventListener('change', () => { autoAnalyze.checked = saveAnalysisEnabled.checked; });
+document.getElementById('btnFirst').addEventListener('click', () => navigateTo(0));
+document.getElementById('btnPrev').addEventListener('click',  () => navigateTo(historyIndex - 1));
+document.getElementById('btnNext').addEventListener('click',  () => navigateTo(historyIndex + 1));
+document.getElementById('btnLast').addEventListener('click',  () => navigateTo(moveHistory.length));
+document.getElementById('btnAddComment').addEventListener('click', addCommentToSelectedMove);
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); navigateTo(historyIndex - 1); }
+  if (e.key === 'ArrowRight'){ e.preventDefault(); navigateTo(historyIndex + 1); }
+  if (e.key === 'Home')      { e.preventDefault(); navigateTo(0); }
+  if (e.key === 'End')       { e.preventDefault(); navigateTo(moveHistory.length); }
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+updateFenInput();
+initBoard('start', false);
+updateNavButtons();
+fetchSavedGames();
+const initialGameId = new URLSearchParams(window.location.search).get('gameId');
+if (initialGameId) {
+  loadSavedGame(initialGameId);
+}
+window.addEventListener('resize', () => { refreshArrow(); syncEvalBarHeight(); });
+setTimeout(() => { refreshArrow(); syncEvalBarHeight(); }, 80);
+if (!initialGameId && autoAnalyze.checked) analyzePosition();
+</script>
 </body>
 </html>

@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: educhess-fyp
+    env: java
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/*.jar
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: APP_BASE_URL
+        sync: false
+      - key: PUZZLE_AI_BASE_URL
+        sync: false
+      - key: STOCKFISH_PATH
+        sync: false
+      - key: PUZZLE_VISION_SCRIPT
+        sync: false
+      - key: PUZZLE_VISION_MODEL
+        sync: false
+      - key: PUZZLE_UPLOAD_STORAGE_DIR
+        sync: false
+      - key: PUZZLE_RECOGNITION_STORAGE_DIR
+        sync: false
+      - key: STRIPE_SUCCESS_URL
+        sync: false
+      - key: STRIPE_CANCEL_URL
+        sync: false
+      - key: PORT
+        sync: false

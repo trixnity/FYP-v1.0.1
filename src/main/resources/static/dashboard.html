@@ -155,6 +155,7 @@
     table { width: 100%; border-collapse: collapse; color: var(--text); }
     th, td { padding: 10px; border-bottom: 1px solid var(--stroke); text-align: left; font-size: 14px; }
     th { color: var(--muted); font-weight: 600; }
+    .theme-name-cell { max-width: 280px; white-space: normal; overflow-wrap: anywhere; }
 
     /* Puzzle catalog */
     .catalog-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -180,6 +181,8 @@
     .coach-controls textarea { min-height: 110px; }
     .coach-controls .hint { color: var(--muted); font-size: 12px; }
     .coach-control-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+    .upload-box { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--stroke); display: grid; gap: 10px; }
+    .upload-box input[type="file"] { width: 100%; }
 
     @media (max-width: 900px) { .app { grid-template-columns: 1fr; } aside { flex-direction: row; flex-wrap: wrap; } .footer-links { border-top: none; padding-top: 0; margin-top: 0; } .nav-title { display: none; } }
     @media (max-width: 700px) {
@@ -453,6 +456,142 @@
         background: rgba(11, 17, 27, 0.9);
       }
     }
+
+    /* ── Dashboard Visual Enhancements ─────────────────────────────────────────── */
+
+    /* Nav icon */
+    .nav-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+      opacity: 0.78;
+      display: inline-block;
+      width: 18px;
+      text-align: center;
+    }
+    .nav-link:hover .nav-icon,
+    .nav-link.active .nav-icon {
+      opacity: 1;
+    }
+
+    /* Stat cards — value with accent color glow */
+    body.dashboard-scene .stat .value {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff 40%, #d9ffae 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Progress section stat color */
+    body.dashboard-scene #progressAttempted,
+    body.dashboard-scene #statAttempted { -webkit-text-fill-color: #94ca5c; }
+    body.dashboard-scene #progressSolved,
+    body.dashboard-scene #statSolved    { -webkit-text-fill-color: #5cf5a5; }
+    body.dashboard-scene #progressAccuracy,
+    body.dashboard-scene #statAccuracy  { -webkit-text-fill-color: #f4c95d; }
+
+    /* Topbar upgrade */
+    body.dashboard-scene .topbar h1 {
+      font-size: 24px;
+      background: linear-gradient(135deg, #ffffff 50%, rgba(255,255,255,0.72) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Panel h2 with subtle green left marker */
+    body.dashboard-scene .panel > h2::before {
+      content: "";
+      display: inline-block;
+      width: 3px;
+      height: 1em;
+      background: linear-gradient(180deg, #94ca5c, #f4c95d);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* Section panel entrance stagger */
+    .views > section.active .panel:nth-child(1) { animation-delay: 0ms; }
+    .views > section.active .panel:nth-child(2) { animation-delay: 50ms; }
+    .views > section.active .panel:nth-child(3) { animation-delay: 100ms; }
+    .views > section.active .panel:nth-child(4) { animation-delay: 150ms; }
+
+    /* Input focus ring */
+    body.dashboard-scene input:focus,
+    body.dashboard-scene select:focus,
+    body.dashboard-scene textarea:focus {
+      outline: none;
+      border-color: rgba(130, 189, 74, 0.55) !important;
+      box-shadow: 0 0 0 3px rgba(130, 189, 74, 0.10) !important;
+    }
+
+    /* Custom scrollbar */
+    body.dashboard-scene ::-webkit-scrollbar { width: 5px; height: 5px; }
+    body.dashboard-scene ::-webkit-scrollbar-track { background: transparent; }
+    body.dashboard-scene ::-webkit-scrollbar-thumb { background: rgba(130, 189, 74, 0.22); border-radius: 99px; }
+    body.dashboard-scene ::-webkit-scrollbar-thumb:hover { background: rgba(130, 189, 74, 0.40); }
+
+    /* btn active state */
+    body.dashboard-scene .btn:active,
+    body.dashboard-scene button:active { transform: scale(0.97) translateY(1px) !important; transition: transform 80ms ease !important; }
+
+    /* table hover */
+    body.dashboard-scene tbody tr:hover td { background: rgba(130, 189, 74, 0.05); }
+    body.dashboard-scene tbody tr:nth-child(even) td { background: rgba(255,255,255,0.016); }
+
+    /* Quick actions spacing */
+    body.dashboard-scene .quick-actions { gap: 10px; margin-top: 14px; }
+
+    /* Nav link active — left accent bar */
+    body.dashboard-scene .nav-link { position: relative; }
+    body.dashboard-scene .nav-link.active::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 18%;
+      bottom: 18%;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: linear-gradient(180deg, #94ca5c, #b0da6a);
+    }
+
+    /* Timeline item hover */
+    body.dashboard-scene .timeline li {
+      transition: border-color 120ms ease, background 120ms ease;
+    }
+    body.dashboard-scene .timeline li:hover {
+      border-color: rgba(130, 189, 74, 0.28);
+      background: rgba(130, 189, 74, 0.04);
+    }
+
+    /* Plan card hover */
+    body.dashboard-scene .plan-card {
+      transition: border-color 140ms ease, box-shadow 140ms ease;
+    }
+    body.dashboard-scene .plan-card:hover {
+      border-color: rgba(130, 189, 74, 0.32);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.36);
+    }
+
+    /* Class card hover */
+    body.dashboard-scene .class-card:hover {
+      border-color: rgba(130, 189, 74, 0.42);
+      box-shadow: 0 18px 36px rgba(0,0,0,0.38);
+    }
+
+    /* Pay card hover */
+    body.dashboard-scene .pay-card {
+      transition: border-color 140ms ease, box-shadow 140ms ease;
+    }
+    body.dashboard-scene .pay-card:hover {
+      box-shadow: 0 18px 40px rgba(0,0,0,0.36);
+    }
+
+    /* chat bubble mine nicer color */
+    body.dashboard-scene .chat-bubble.mine {
+      background: linear-gradient(135deg, rgba(130,189,74,0.28), rgba(130,189,74,0.16));
+    }
   </style>
 </head>
 <body class="theme-light dashboard-scene">
@@ -460,52 +599,54 @@
     <div class="header-wrap">
       <div class="brand"><img src="logo.png" alt="EduChess logo">EduChess</div>
     </div>
-    <nav class="header-nav" id="headerNav">
-      <a href="#" data-target="dashboard">Home</a>
-      <a href="puzzle.html">Puzzles</a>
-      <a href="analysis.html">Analysis</a>
-      <a href="#" data-target="lessons">Lessons</a>
-      <a href="#" data-target="progress">Progress</a>
-    </nav>
+    <nav class="header-nav" id="headerNav" aria-label="Current workspace"></nav>
   </header>
 
   <div class="app active" id="appShell">
     <aside>
       <div class="logo"><img src="logo.png" alt="EduChess logo">EduChess</div>
       <nav>
-        <!-- Student-only overview links -->
-        <div class="nav-title student-only">Overview</div>
-        <a href="#" data-target="dashboard" class="nav-link student-only active">Home</a>
-        <a href="#" data-target="progress" class="nav-link student-only">My Progress</a>
-        <a href="#" data-target="payments" class="nav-link student-only">My Payments</a>
-        <a href="#" data-target="messages" class="nav-link student-only">Messages <span id="chatUnreadBadge" style="display:none;background:#f87171;color:#fff;border-radius:999px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;"></span></a>
-
-        <!-- Practice — visible to all roles -->
-        <div class="nav-title">Practice</div>
-        <a href="puzzle.html" class="nav-link">Puzzles</a>
-        <a href="analysis.html" class="nav-link">Game Analysis</a>
-        <a href="#" data-target="lessons" class="nav-link">Lessons</a>
+        <!-- Student navigation -->
+        <div class="nav-title student-only">Student</div>
+        <a href="#" data-target="dashboard" class="nav-link student-only active"><span class="nav-icon">⊞</span>Home</a>
+        <a href="#" data-target="progress" class="nav-link student-only"><span class="nav-icon">📈</span>My Progress</a>
+        <a href="#" data-target="payments" class="nav-link student-only"><span class="nav-icon">💳</span>My Payments</a>
+        <a href="#" data-target="dashboard" data-focus="studentSessionPlansList" class="nav-link student-only"><span class="nav-icon">🗓</span>My Classes</a>
+        <a href="classes.html" class="nav-link student-only"><span class="nav-icon">♙</span>Class Plans</a>
+        <a href="my-class-applications.html" class="nav-link student-only"><span class="nav-icon">📝</span>Class Applications</a>
+        <a href="know-our-coaches.html" class="nav-link student-only"><span class="nav-icon">♛</span>Know Our Coaches</a>
+        <a href="achievements.html" class="nav-link student-only"><span class="nav-icon">★</span>Achievements</a>
+        <a href="#" data-target="messages" class="nav-link student-only"><span class="nav-icon">💬</span>Messages <span id="chatUnreadBadge" style="display:none;background:#f87171;color:#fff;border-radius:999px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;"></span></a>
+        <a href="puzzle.html" class="nav-link student-only"><span class="nav-icon">♟</span>Puzzle Library</a>
+        <a href="analysis.html" class="nav-link student-only"><span class="nav-icon">♞</span>Game Analysis</a>
+        <a href="my-games.html" class="nav-link student-only"><span class="nav-icon">♜</span>My Games</a>
+        <a href="#" data-target="lessons" class="nav-link student-only"><span class="nav-icon">📚</span>Lessons</a>
 
         <!-- Coach Tools — coach only -->
-        <div class="nav-title coach-only">Coach Tools</div>
-        <a href="#" data-target="coach-dashboard" class="nav-link coach-only">Overview</a>
-        <a href="#" data-target="classes" class="nav-link coach-only">My Classes</a>
-        <a href="#" data-target="students" class="nav-link coach-only">My Students</a>
-        <a href="#" data-target="exercise-sets" class="nav-link coach-only">Assign Exercises</a>
-        <a href="#" data-target="lesson-management" class="nav-link coach-only">Lesson Management</a>
-        <a href="#" data-target="messages" class="nav-link coach-only">Messages <span id="chatUnreadBadgeCoach" style="display:none;background:#f87171;color:#fff;border-radius:999px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;"></span></a>
-        <a href="#" data-target="reports" class="nav-link coach-only">Reports</a>
+        <div class="nav-title coach-only">Coach</div>
+        <a href="#" data-target="coach-dashboard" class="nav-link coach-only"><span class="nav-icon">⊞</span>Overview</a>
+        <a href="#" data-target="students" class="nav-link coach-only"><span class="nav-icon">👥</span>My Students</a>
+        <a href="coach-class-applications.html" class="nav-link coach-only"><span class="nav-icon">📝</span>Assigned Applications</a>
+        <a href="classes.html" class="nav-link coach-only"><span class="nav-icon">♙</span>Class Plans</a>
+        <a href="#" data-target="classes" class="nav-link coach-only"><span class="nav-icon">🗓</span>Sessions</a>
+        <a href="#" data-target="lesson-management" data-focus="sessionPlansList" class="nav-link coach-only"><span class="nav-icon">🔗</span>Lessons</a>
+        <a href="#" data-target="puzzle-upload" class="nav-link coach-only"><span class="nav-icon">📷</span>Puzzle Upload</a>
+        <a href="puzzle-editor.html" class="nav-link coach-only"><span class="nav-icon">♟</span>Puzzle Editor</a>
+        <a href="#" data-target="messages" class="nav-link coach-only"><span class="nav-icon">💬</span>Messages <span id="chatUnreadBadgeCoach" style="display:none;background:#f87171;color:#fff;border-radius:999px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;"></span></a>
+        <a href="#" data-target="reports" class="nav-link coach-only"><span class="nav-icon">📊</span>Reports</a>
 
         <!-- Administration — admin only -->
         <div class="nav-title admin-only">Administration</div>
-        <a href="#" data-target="admin-dashboard" class="nav-link admin-only">Dashboard</a>
-        <a href="#" data-target="users" class="nav-link admin-only">User Management</a>
-        <a href="#" data-target="settings" class="nav-link admin-only">System Settings</a>
-        <a href="#" data-target="logs" class="nav-link admin-only">Audit Logs</a>
+        <a href="#" data-target="admin-dashboard" class="nav-link admin-only"><span class="nav-icon">⊞</span>Dashboard</a>
+        <a href="#" data-target="users" class="nav-link admin-only"><span class="nav-icon">👤</span>User Management</a>
+        <a href="admin-class-applications.html" class="nav-link admin-only"><span class="nav-icon">📝</span>Class Applications</a>
+        <a href="classes.html" class="nav-link admin-only"><span class="nav-icon">♙</span>Class Plans</a>
+        <a href="#" data-target="settings" class="nav-link admin-only"><span class="nav-icon">⚙</span>System Settings</a>
+        <a href="#" data-target="logs" class="nav-link admin-only"><span class="nav-icon">📄</span>Audit Logs</a>
       </nav>
       <div class="footer-links">
-        <a href="#" data-target="profile" class="nav-link">Profile</a>
-        <a href="index.html" class="nav-link" id="logoutLink">Logout</a>
+        <a href="#" data-target="profile" class="nav-link"><span class="nav-icon">👤</span>Profile</a>
+        <a href="index.html" class="nav-link" id="logoutLink"><span class="nav-icon">↩</span>Logout</a>
       </div>
     </aside>
 
@@ -529,37 +670,43 @@
                 <div class="stat"><div class="label">Accuracy</div><div class="value" id="statAccuracy">—</div></div>
                 <div class="stat"><div class="label">Rating</div><div class="value" id="statRating">—</div></div>
                 <div class="stat"><div class="label">Puzzles solved</div><div class="value" id="statSolved">—</div></div>
-                <div class="stat"><div class="label">Attempted</div><div class="value" id="statAttempted">—</div></div>
+                <div class="stat"><div class="label">Lessons completed</div><div class="value" id="statLessonsCompleted">—</div></div>
               </div>
               <div class="quick-actions">
-                <a class="btn primary" href="puzzle.html">Attempt Puzzle</a>
+                <a class="btn primary" href="puzzle.html">Practice Puzzle</a>
                 <a class="btn ghost" href="analysis.html">Upload PGN</a>
                 <a class="btn ghost" href="lessons.html">View Lessons</a>
               </div>
             </div>
             <div class="panel">
-              <h2>My Exercises</h2>
+              <h2>Assigned Exercises</h2>
               <ul class="timeline" id="assignmentsList">
                 <li class="muted">Loading assigned exercises...</li>
               </ul>
             </div>
             <div class="panel">
-              <h2>Upcoming Sessions</h2>
+              <h2>Upcoming Class</h2>
               <ul class="timeline" id="upcomingSessionsList">
-                <li class="muted">Loading sessions...</li>
+                <li class="muted">Loading next class...</li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h2>My Classes</h2>
+              <ul class="timeline" id="studentSessionPlansList">
+                <li class="muted">Loading class links...</li>
               </ul>
             </div>
           </div>
           <div class="grid">
             <div class="panel">
-              <h2>Roster overview</h2>
-              <div class="cards" id="usersList">
-                <div class="empty">No players yet. Add one to start tracking.</div>
+              <h2>Recent Activity</h2>
+              <div class="cards" id="recentActivityList">
+                <div class="empty">Loading recent activity...</div>
               </div>
             </div>
             <div class="panel">
-              <h2>Quick training board</h2>
-              <div class="board-placeholder">Chessboard placeholder</div>
+              <h2>Recommended Next Step</h2>
+              <div id="recommendedNextStep" class="empty">Checking what needs your attention...</div>
             </div>
           </div>
         </section>
@@ -583,7 +730,7 @@
               <div class="quick-actions">
                 <button class="btn primary" id="puzzleNext">Next puzzle</button>
                 <button class="btn ghost" id="puzzleReset">Reset</button>
-                <button class="btn ghost" id="puzzleLichess">Lichess daily</button>
+                <button class="btn ghost" id="puzzlePracticeLoad">Load practice puzzle</button>
                 <input id="puzzleApiId" placeholder="Local ID (e.g. 1)" aria-label="Local puzzle id">
                 <button class="btn ghost" id="puzzleApiLoad">Load from API</button>
               </div>
@@ -635,7 +782,10 @@
               <div class="stat-grid" id="progressSummary">
                 <div class="stat"><div class="label">Total attempted</div><div class="value" id="progressAttempted">—</div></div>
                 <div class="stat"><div class="label">Total solved</div><div class="value" id="progressSolved">—</div></div>
-                <div class="stat"><div class="label">Overall accuracy</div><div class="value" id="progressAccuracy">—</div></div>
+                <div class="stat"><div class="label">Performance accuracy</div><div class="value" id="progressAccuracy">—</div></div>
+                <div class="stat"><div class="label">Avg time</div><div class="value" id="progressAvgTime">—</div></div>
+                <div class="stat"><div class="label">Avg attempts</div><div class="value" id="progressAvgAttempts">—</div></div>
+                <div class="stat"><div class="label">Mastery</div><div class="value" id="progressMastery">—</div></div>
               </div>
             </div>
           </div>
@@ -645,7 +795,7 @@
               <canvas id="chartDaily" height="160"></canvas>
             </div>
             <div class="panel">
-              <h2>Accuracy by theme</h2>
+              <h2>Performance by theme</h2>
               <canvas id="chartTheme" height="160"></canvas>
             </div>
           </div>
@@ -654,8 +804,8 @@
               <h2>Theme breakdown</h2>
               <div class="table-placeholder" style="min-height:unset; display:block; padding:0;">
                 <table id="themeTable">
-                  <thead><tr><th>Theme</th><th>Attempted</th><th>Solved</th><th>Accuracy</th></tr></thead>
-                  <tbody><tr><td colspan="4" class="muted" style="text-align:center;">Loading...</td></tr></tbody>
+                  <thead><tr><th>Theme</th><th>Attempted</th><th>Solved</th><th>Performance</th><th>Avg attempts</th><th>Avg time</th><th>Mastery</th></tr></thead>
+                  <tbody><tr><td colspan="7" class="muted" style="text-align:center;">Loading...</td></tr></tbody>
                 </table>
               </div>
             </div>
@@ -732,8 +882,113 @@
                     <button class="btn ghost" type="button" id="coachPuzzleUseFen">Use board FEN</button>
                     <button class="btn primary" type="button" id="coachPuzzleCreate">Create puzzle</button>
                   </div>
+                  <div class="upload-box">
+                    <label>Image or PDF puzzle<input id="coachPuzzleUploadFile" type="file" accept="image/*,application/pdf"></label>
+                    <label>Recognized text / FEN<textarea id="coachPuzzleUploadText" placeholder="Paste OCR text, FEN, or PDF puzzle text when the file is an image"></textarea></label>
+                    <div class="hint">PDF text is extracted automatically. For image diagrams, paste OCR text or a FEN until the YOLO model is trained.</div>
+                    <div class="quick-actions">
+                      <button class="btn ghost" type="button" id="coachPuzzleVisionStatus">Check vision setup</button>
+                      <button class="btn primary" type="button" id="coachPuzzleProcessUpload">Process upload</button>
+                    </div>
+                  </div>
                   <div class="status" id="coachPuzzleStatus">Ready to build a puzzle.</div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Puzzle Upload Library -->
+        <section id="section-puzzle-upload">
+          <div class="grid">
+            <div class="panel" style="grid-column:1/-1;">
+              <h2>YOLO Puzzle Recognition</h2>
+              <div class="muted">Upload a chess puzzle screenshot. The AI service detects pieces, generates FEN, and saves the puzzle as pending review.</div>
+              <form id="yoloPuzzleUploadForm">
+                <div class="grid-2">
+                  <label>Screenshot image
+                    <input id="yoloPuzzleImage" name="file" type="file" accept="image/*" required>
+                  </label>
+                  <label>Title
+                    <input id="yoloPuzzleTitle" name="title" placeholder="Back rank tactic">
+                  </label>
+                  <label>Topic
+                    <input id="yoloPuzzleTopic" name="topic" placeholder="mate / fork / pin">
+                  </label>
+                  <label>Difficulty
+                    <input id="yoloPuzzleDifficulty" name="difficulty" type="number" min="1" placeholder="1200">
+                  </label>
+                  <label>Side to move
+                    <select id="yoloPuzzleSide" name="sideToMove">
+                      <option value="w">White</option>
+                      <option value="b">Black</option>
+                    </select>
+                  </label>
+                  <label>Solution moves
+                    <input id="yoloPuzzleSolution" name="solutionMoves" placeholder="e2e4 e7e5">
+                  </label>
+                </div>
+                <div class="quick-actions">
+                  <button class="btn primary" type="submit">Recognize Puzzle</button>
+                  <button class="btn ghost" type="button" id="yoloPuzzleSaveReview">Save Review</button>
+                  <button class="btn primary" type="button" id="yoloPuzzlePublish">Publish</button>
+                </div>
+              </form>
+              <div class="grid" style="margin-top:12px;">
+                <div class="panel" style="box-shadow:none;">
+                  <h3>Image Preview</h3>
+                  <div id="yoloPuzzlePreview" class="board-placeholder" style="min-height:260px;">Choose an image to preview.</div>
+                </div>
+                <div class="panel" style="box-shadow:none;">
+                  <h3>Recognition Result</h3>
+                  <label>Detected FEN
+                    <textarea id="yoloPuzzleFen" placeholder="Detected FEN appears here for coach review"></textarea>
+                  </label>
+                  <div class="stat-grid" style="margin-top:10px;">
+                    <div class="stat"><div class="label">Confidence</div><div class="value" id="yoloPuzzleConfidence">-</div></div>
+                    <div class="stat"><div class="label">Status</div><div class="value" id="yoloPuzzleReviewStatus">-</div></div>
+                  </div>
+                  <div class="status" id="yoloPuzzleStatus">Ready. Start FastAPI on port 8000 before recognition.</div>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <h2>Puzzle Upload</h2>
+              <div class="muted">Upload puzzle images or PDFs into the library first. Processing into playable puzzles can happen after the files are stored.</div>
+              <form id="puzzleUploadLibraryForm">
+                <label>Image/PDF files
+                  <input id="puzzleUploadLibraryFiles" name="files" type="file" accept="image/*,application/pdf" multiple required>
+                </label>
+                <div class="quick-actions">
+                  <button class="btn primary" type="submit">Upload to library</button>
+                  <button class="btn ghost" type="button" id="refreshPuzzleUploadLibrary">Refresh library</button>
+                </div>
+                <div class="status" id="puzzleUploadLibraryStatus">Ready to upload puzzle files.</div>
+              </form>
+              <div id="puzzleUploadPreviewPanel" style="display:none;margin-top:14px;">
+                <h3 id="puzzleUploadPreviewTitle" style="margin:0 0 8px;">Preview</h3>
+                <div id="puzzleUploadPreviewBody" class="board-placeholder" style="display:block;min-height:320px;padding:10px;overflow:auto;"></div>
+              </div>
+            </div>
+            <div class="panel">
+              <h2>Upload library</h2>
+              <div class="table-placeholder" style="display:block;overflow:auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>File</th>
+                      <th>Type</th>
+                      <th>Size</th>
+                      <th>Status</th>
+                      <th>Uploaded</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="puzzleUploadLibraryRows">
+                    <tr><td colspan="7">No uploads loaded yet.</td></tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -1087,6 +1342,30 @@
                 </div>
               </div>
               <div id="usersListAdmin"><div class="empty">Loading users...</div></div>
+              <div id="userEditPanel" class="panel" style="display:none;margin-top:14px;background:rgba(255,255,255,0.035);">
+                <h3 style="margin:0 0 12px;">Edit user</h3>
+                <form id="userEditForm">
+                  <input type="hidden" name="id">
+                  <div class="grid-2">
+                    <label>Full name<input name="name" required></label>
+                    <label>Email<input type="email" name="email" required></label>
+                  </div>
+                  <div class="grid-2">
+                    <label>Role<select name="role"><option value="STUDENT">Student</option><option value="COACH">Coach</option><option value="ADMIN">Admin</option></select></label>
+                    <label>Rating<input type="number" name="rating" min="0" max="3500" step="10"></label>
+                  </div>
+                  <div class="grid-2">
+                    <label>Chess username<input name="chessUsername" placeholder="optional"></label>
+                    <label>New password<input type="password" name="password" placeholder="Leave blank to keep current password"></label>
+                  </div>
+                  <label>Goals / notes<input name="goals"></label>
+                  <div class="quick-actions">
+                    <button class="btn primary" type="submit">Save changes</button>
+                    <button class="btn ghost" type="button" onclick="cancelEditUser()">Cancel</button>
+                  </div>
+                  <div class="status" id="userEditStatus"></div>
+                </form>
+              </div>
             </div>
           </div>
           <div class="grid">
@@ -1153,6 +1432,12 @@
             .pay-card .pay-amount { font-size:22px; font-weight:800; }
             .pay-card.pay-pending .pay-amount { color:var(--accent); }
             .pay-card.pay-paid .pay-amount { color:#5cf5a5; }
+            .receipt-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.68); z-index:240; display:flex; align-items:flex-start; justify-content:center; padding:42px 16px; overflow:auto; }
+            .receipt-overlay.hidden { display:none; }
+            .receipt-modal { width:100%; max-width:620px; border:1px solid var(--stroke); border-radius:16px; background:linear-gradient(145deg,#0f1c33,#0a1220); padding:22px; box-shadow:0 24px 70px rgba(0,0,0,0.45); }
+            .receipt-row { display:grid; grid-template-columns:190px 1fr; gap:12px; padding:9px 0; border-bottom:1px solid rgba(184,199,219,0.1); font-size:13px; }
+            .receipt-row span:first-child { color:var(--muted); }
+            .receipt-row span:last-child { color:var(--text); font-weight:600; word-break:break-all; }
           </style>
 
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
@@ -1161,6 +1446,18 @@
 
           <div id="paymentsList">
             <div class="empty muted" style="text-align:center;padding:48px;">Loading payments...</div>
+          </div>
+          <div id="receiptOverlay" class="receipt-overlay hidden" onclick="closeReceiptModal(event)">
+            <div class="receipt-modal" onclick="event.stopPropagation()">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;">
+                <h2 style="margin:0;">Payment Receipt</h2>
+                <button class="btn ghost" onclick="closeReceiptModal()">Close</button>
+              </div>
+              <div id="receiptContent"></div>
+              <div class="quick-actions" style="margin-top:18px;">
+                <button id="receiptDownloadBtn" class="btn primary" type="button" onclick="downloadReceiptPdf()">Download PDF</button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -1328,7 +1625,7 @@
                     <option value="Universal">Universal / Adaptive</option>
                   </select>
                 </label>
-                <label>Lichess / Chess.com username<input name="chessUsername" id="profileChessUsernameInput" placeholder="e.g. MagnusCarlsen99"></label>
+                <label>Online chess username<input name="chessUsername" id="profileChessUsernameInput" placeholder="e.g. MagnusCarlsen99"></label>
                 <label>FIDE ID<input name="fideId" id="profileFideIdInput" placeholder="e.g. 12345678"></label>
                 <label>Favourite opening as White<input name="favouriteWhiteOpening" id="profileWhiteOpeningInput" placeholder="e.g. King's Indian Attack"></label>
                 <label>Favourite opening as Black<input name="favouriteBlackOpening" id="profileBlackOpeningInput" placeholder="e.g. Sicilian Defence"></label>
@@ -1398,6 +1695,9 @@
   const studentsList = document.getElementById("studentsList");
   const studentsListCoach = document.getElementById("studentsListCoach");
   const userForm = document.getElementById("userForm");
+  const userEditPanel = document.getElementById("userEditPanel");
+  const userEditForm = document.getElementById("userEditForm");
+  const userEditStatus = document.getElementById("userEditStatus");
   const statPlayers = document.getElementById("statPlayers");
   const statStudents = document.getElementById("statStudents");
   const statRating = document.getElementById("statRating");
@@ -1412,7 +1712,7 @@
   const puzzleStatus = document.getElementById("puzzleStatus");
   const puzzleNextBtn = document.getElementById("puzzleNext");
   const puzzleResetBtn = document.getElementById("puzzleReset");
-  const puzzleLichessBtn = document.getElementById("puzzleLichess");
+  const puzzlePracticeLoadBtn = document.getElementById("puzzlePracticeLoad");
   const puzzleApiIdInput = document.getElementById("puzzleApiId");
   const puzzleApiLoadBtn = document.getElementById("puzzleApiLoad");
   const acBoardEl = document.getElementById("acBoard");
@@ -1431,7 +1731,35 @@
   const coachPuzzleApplyFenBtn = document.getElementById("coachPuzzleApplyFen");
   const coachPuzzleUseFenBtn = document.getElementById("coachPuzzleUseFen");
   const coachPuzzleCreateBtn = document.getElementById("coachPuzzleCreate");
+  const coachPuzzleUploadFileInput = document.getElementById("coachPuzzleUploadFile");
+  const coachPuzzleUploadTextInput = document.getElementById("coachPuzzleUploadText");
+  const coachPuzzleVisionStatusBtn = document.getElementById("coachPuzzleVisionStatus");
+  const coachPuzzleProcessUploadBtn = document.getElementById("coachPuzzleProcessUpload");
   const coachPuzzleStatus = document.getElementById("coachPuzzleStatus");
+  const puzzleUploadLibraryForm = document.getElementById("puzzleUploadLibraryForm");
+  const puzzleUploadLibraryFilesInput = document.getElementById("puzzleUploadLibraryFiles");
+  const puzzleUploadLibraryRows = document.getElementById("puzzleUploadLibraryRows");
+  const puzzleUploadLibraryStatus = document.getElementById("puzzleUploadLibraryStatus");
+  const refreshPuzzleUploadLibraryBtn = document.getElementById("refreshPuzzleUploadLibrary");
+  const puzzleUploadPreviewPanel = document.getElementById("puzzleUploadPreviewPanel");
+  const puzzleUploadPreviewTitle = document.getElementById("puzzleUploadPreviewTitle");
+  const puzzleUploadPreviewBody = document.getElementById("puzzleUploadPreviewBody");
+  const yoloPuzzleUploadForm = document.getElementById("yoloPuzzleUploadForm");
+  const yoloPuzzleImageInput = document.getElementById("yoloPuzzleImage");
+  const yoloPuzzleTitleInput = document.getElementById("yoloPuzzleTitle");
+  const yoloPuzzleTopicInput = document.getElementById("yoloPuzzleTopic");
+  const yoloPuzzleDifficultyInput = document.getElementById("yoloPuzzleDifficulty");
+  const yoloPuzzleSideSelect = document.getElementById("yoloPuzzleSide");
+  const yoloPuzzleSolutionInput = document.getElementById("yoloPuzzleSolution");
+  const yoloPuzzleFenInput = document.getElementById("yoloPuzzleFen");
+  const yoloPuzzleConfidence = document.getElementById("yoloPuzzleConfidence");
+  const yoloPuzzleReviewStatus = document.getElementById("yoloPuzzleReviewStatus");
+  const yoloPuzzleStatus = document.getElementById("yoloPuzzleStatus");
+  const yoloPuzzlePreview = document.getElementById("yoloPuzzlePreview");
+  const yoloPuzzleSaveReviewBtn = document.getElementById("yoloPuzzleSaveReview");
+  const yoloPuzzlePublishBtn = document.getElementById("yoloPuzzlePublish");
+  let yoloCurrentPuzzleId = null;
+  let yoloPreviewUrl = "";
   const updateGreeting = (nameOverride = "") => {
     const textEl = document.getElementById("greetingText") || greetingEl;
     if (!textEl) return;
@@ -1454,6 +1782,7 @@
   let acSelected = null;
   let acLegal = new Set();
   let coachBoard = null;
+  let puzzleUploadPreviewUrl = "";
 
   const puzzleCatalog = {
     tactic: [
@@ -1522,15 +1851,67 @@
     };
   };
 
+  const formatPuzzleThemeName = (rawTheme) => {
+    const raw = String(rawTheme || "").trim();
+    if (!raw) return "Puzzle";
+    const spaced = raw.replace(/[_-]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+    const rules = [
+      [/mate\s*in\s*1|matein1|mate1|one\s*move|mate/, "Mate in 1"],
+      [/mate\s*in\s*2|matein2|mate2/, "Mate in 2"],
+      [/fork|double\s*attack/, "Fork"],
+      [/pin/, "Pin"],
+      [/skewer/, "Skewer"],
+      [/discovered\s*attack/, "Discovered Attack"],
+      [/discovered\s*check/, "Discovered Check"],
+      [/trapped\s*piece/, "Trapped Piece"],
+      [/deflection/, "Deflection"],
+      [/clearance/, "Clearance"]
+    ];
+    const matched = rules.find(([pattern]) => pattern.test(spaced));
+    if (matched) return matched[1];
+    return spaced.replace(/\b\w/g, (m) => m.toUpperCase()).split(/\s+/).slice(0, 3).join(" ");
+  };
+
+  const displayPuzzleTitle = (p) => {
+    const rawTitle = String(p?.title || "").trim();
+    if (!rawTitle || /^lichess\s+/i.test(rawTitle)) {
+      const theme = formatPuzzleThemeName(p?.theme);
+      return `${theme} Puzzle`;
+    }
+    return rawTitle.replace(/^imported\s+puzzle\s+/i, "Puzzle ");
+  };
+
+  const fenTurn = (fen) => {
+    const side = String(fen || "").trim().split(/\s+/)[1];
+    return side === "b" ? "b" : "w";
+  };
+
+  const oppositeSide = (side) => side === "b" ? "w" : "b";
+
+  const hasLeadInMove = (p) => {
+    const title = String(p?.title || "").trim();
+    return Array.isArray(p?.solution)
+      && p.solution.length > 1
+      && /^(lichess|imported\s+puzzle)\s+/i.test(title);
+  };
+
+  const playablePuzzleSide = (p) => hasLeadInMove(p) ? oppositeSide(fenTurn(p?.fen)) : (fenTurn(p?.fen) || p?.side || "w");
+
   const convertFirstMoveToSan = (p) => {
     if (!p || !p.fen || !p.solution || !p.solution.length || !window.Chess) return null;
-    const first = p.solution[0];
+    const expectedIndex = p._playIndex || 0;
+    const first = p.solution[expectedIndex];
     if (!/^[a-h][1-8][a-h][1-8]/.test(first)) return first; // already SAN
     try {
       const tmp = new Chess(p.fen);
+      for (let i = 0; i < expectedIndex; i++) {
+        const leadIn = p.solution[i];
+        tmp.move({ from: leadIn.slice(0, 2), to: leadIn.slice(2, 4), promotion: leadIn[4] });
+      }
       const move = tmp.move({ from: first.slice(0, 2), to: first.slice(2, 4), promotion: first[4] });
       if (move) {
-        p.solutionSan = [move.san];
+        p.solutionSan = p.solutionSan || [];
+        p.solutionSan[expectedIndex] = move.san;
         return move.san;
       }
     } catch (_) { /* ignore */ }
@@ -1552,6 +1933,20 @@
     const colors = { info: "var(--muted)", success: "var(--accent-2)", warn: "var(--accent)" };
     coachPuzzleStatus.style.color = colors[tone] || colors.info;
   };
+
+  const setPuzzleUploadLibraryStatus = (message, tone = "info") => {
+    if (!puzzleUploadLibraryStatus) return;
+    puzzleUploadLibraryStatus.textContent = message;
+    const colors = { info: "var(--muted)", success: "var(--accent-2)", warn: "var(--accent)" };
+    puzzleUploadLibraryStatus.style.color = colors[tone] || colors.info;
+  };
+
+  const escapeHtml = (value) => String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
   const normalizeCoachFen = (fen, side) => {
     const cleaned = (fen || "").trim();
@@ -1691,16 +2086,329 @@
     }
   };
 
-  const call = (fn) => { if (typeof fn === "function") fn(); };
+  const checkVisionStatus = async () => {
+    try {
+      setCoachStatus("Checking vision setup...");
+      const res = await fetch("/api/vision/status", { headers: roleHeaders });
+      if (!res.ok) throw new Error("Could not check vision setup");
+      const status = await res.json();
+      const details = [
+        `Python: ${status.pythonAvailable ? "OK" : "missing"}`,
+        `Script: ${status.scriptExists ? "OK" : "missing"}`,
+        `Model: ${status.modelExists ? "OK" : "missing"}`
+      ].join(" | ");
+      setCoachStatus(`${status.message} ${details}`, status.ready ? "success" : "warn");
+    } catch (err) {
+      setCoachStatus(`Vision status failed: ${err.message}`, "warn");
+    }
+  };
 
-  const switchView = (targetId) => {
+  const processPuzzleUpload = async () => {
+    const file = coachPuzzleUploadFileInput?.files?.[0] || null;
+    const extractedText = (coachPuzzleUploadTextInput?.value || "").trim();
+    if (!file && !extractedText) {
+      setCoachStatus("Choose a PDF/image or paste puzzle text first.", "warn");
+      return;
+    }
+
+    const formData = new FormData();
+    if (file) formData.append("file", file);
+    if (extractedText) formData.append("extractedText", extractedText);
+    formData.append("title", (coachPuzzleTitleInput?.value || "").trim() || "Uploaded puzzle");
+    formData.append("theme", (coachPuzzleTopicInput?.value || "").trim() || "uploaded");
+    formData.append("side", coachPuzzleSideSelect?.value || "w");
+    const level = (coachPuzzleLevelInput?.value || "").trim();
+    const solutionMove = (coachPuzzleSolutionInput?.value || "").trim();
+    if (level) formData.append("difficulty", level);
+    if (solutionMove) formData.append("solutionMove", solutionMove);
+    formData.append("published", "true");
+
+    try {
+      setCoachStatus("Processing upload...");
+      const res = await fetch("/api/puzzles/process-upload", {
+        method: "POST",
+        headers: roleHeaders,
+        body: formData
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.error || "Upload processing failed");
+      }
+      const result = await res.json();
+      const created = result.puzzle;
+      const mapped = mapApiPuzzle(created);
+      puzzlesPlayable.unshift(mapped);
+      ensureThemeInCatalog(mapped.theme);
+      activeCategory = "coach";
+      activeThemeId = mapped.theme;
+      renderTabs();
+      renderPuzzleGrid();
+      renderPuzzleDetail();
+      loadPuzzleForTheme();
+      if (coachPuzzleFenInput) coachPuzzleFenInput.value = created.fen || "";
+      if (coachPuzzleSolutionInput && created.solutionMove) coachPuzzleSolutionInput.value = created.solutionMove;
+      if (coachBoard && created.fen) coachBoard.position(created.fen, false);
+      if (puzzleApiIdInput) puzzleApiIdInput.value = created.id || "";
+      setCoachStatus(`Upload became puzzle #${created.id}.`, "success");
+    } catch (err) {
+      setCoachStatus(`Upload failed: ${err.message}`, "warn");
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!Number.isFinite(bytes)) return "-";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const clearPuzzleUploadPreview = () => {
+    if (puzzleUploadPreviewUrl) {
+      URL.revokeObjectURL(puzzleUploadPreviewUrl);
+      puzzleUploadPreviewUrl = "";
+    }
+    if (puzzleUploadPreviewPanel) puzzleUploadPreviewPanel.style.display = "none";
+    if (puzzleUploadPreviewBody) puzzleUploadPreviewBody.innerHTML = "";
+  };
+
+  const previewPuzzleUpload = async (item) => {
+    if (!item?.id || !puzzleUploadPreviewPanel || !puzzleUploadPreviewBody) return;
+    try {
+      setPuzzleUploadLibraryStatus(`Loading preview for ${item.originalFilename || "upload"}...`);
+      const res = await fetch(`/api/puzzle-uploads/${item.id}/file`, { headers: roleHeaders });
+      if (!res.ok) throw new Error("Could not load upload preview");
+      const blob = await res.blob();
+      clearPuzzleUploadPreview();
+      puzzleUploadPreviewUrl = URL.createObjectURL(blob);
+      const contentType = (item.contentType || blob.type || "").toLowerCase();
+      const filename = escapeHtml(item.originalFilename || `Upload #${item.id}`);
+      if (puzzleUploadPreviewTitle) puzzleUploadPreviewTitle.innerHTML = `Preview: ${filename}`;
+      if (contentType.includes("pdf")) {
+        puzzleUploadPreviewBody.innerHTML = `<iframe title="Puzzle upload preview" src="${puzzleUploadPreviewUrl}" style="width:100%;height:520px;border:0;border-radius:10px;background:#fff;"></iframe>`;
+      } else if (contentType.startsWith("image/")) {
+        puzzleUploadPreviewBody.innerHTML = `<img alt="${filename}" src="${puzzleUploadPreviewUrl}" style="max-width:100%;height:auto;border-radius:10px;display:block;margin:0 auto;">`;
+      } else {
+        puzzleUploadPreviewBody.innerHTML = `<a class="btn ghost" href="${puzzleUploadPreviewUrl}" target="_blank" rel="noopener">Open file</a>`;
+      }
+      puzzleUploadPreviewPanel.style.display = "block";
+      setPuzzleUploadLibraryStatus("Preview loaded.", "success");
+    } catch (err) {
+      setPuzzleUploadLibraryStatus(`Preview failed: ${err.message}`, "warn");
+    }
+  };
+
+  const renderPuzzleUploadLibrary = (items = []) => {
+    if (!puzzleUploadLibraryRows) return;
+    if (!items.length) {
+      puzzleUploadLibraryRows.innerHTML = '<tr><td colspan="7">No puzzle uploads yet.</td></tr>';
+      return;
+    }
+    puzzleUploadLibraryRows.innerHTML = items.map((item) => `
+      <tr>
+        <td>${escapeHtml(item.id || "-")}</td>
+        <td>${escapeHtml(item.originalFilename || "Unnamed file")}</td>
+        <td>${escapeHtml(item.contentType || "-")}</td>
+        <td>${formatFileSize(item.fileSize)}</td>
+        <td><span class="badge tiny">${escapeHtml(item.status || "UPLOADED")}</span></td>
+        <td>${escapeHtml(item.uploadedAt ? new Date(item.uploadedAt).toLocaleString() : "-")}</td>
+        <td><button class="small-action" type="button" data-upload-preview="${escapeHtml(item.id)}">Preview</button></td>
+      </tr>
+    `).join("");
+    puzzleUploadLibraryRows.querySelectorAll("[data-upload-preview]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const id = Number(button.dataset.uploadPreview);
+        previewPuzzleUpload(items.find((item) => Number(item.id) === id));
+      });
+    });
+  };
+
+  const fetchPuzzleUploadLibrary = async () => {
+    if (!puzzleUploadLibraryRows) return;
+    try {
+      setPuzzleUploadLibraryStatus("Loading upload library...");
+      const res = await fetch("/api/puzzle-uploads", { headers: roleHeaders });
+      if (!res.ok) throw new Error("Could not load upload library");
+      const items = await res.json();
+      renderPuzzleUploadLibrary(Array.isArray(items) ? items : []);
+      setPuzzleUploadLibraryStatus("Upload library loaded.", "success");
+    } catch (err) {
+      setPuzzleUploadLibraryStatus(err.message, "warn");
+    }
+  };
+
+  const uploadPuzzleLibraryFiles = async () => {
+    const files = Array.from(puzzleUploadLibraryFilesInput?.files || []);
+    if (!files.length) {
+      setPuzzleUploadLibraryStatus("Choose one or more image/PDF files first.", "warn");
+      return;
+    }
+    const formData = new FormData();
+    files.forEach((file) => formData.append("files", file));
+
+    try {
+      setPuzzleUploadLibraryStatus(`Uploading ${files.length} file(s)...`);
+      const headers = { ...roleHeaders, "X-User-Email": localStorage.getItem("userEmail") || "" };
+      const res = await fetch("/api/puzzle-uploads", {
+        method: "POST",
+        headers,
+        body: formData
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.error || "Upload failed");
+      }
+      puzzleUploadLibraryFilesInput.value = "";
+      await fetchPuzzleUploadLibrary();
+      setPuzzleUploadLibraryStatus("Puzzle files saved to library.", "success");
+    } catch (err) {
+      setPuzzleUploadLibraryStatus(`Upload failed: ${err.message}`, "warn");
+    }
+  };
+
+  const setYoloStatus = (message, tone = "info") => {
+    if (!yoloPuzzleStatus) return;
+    const colors = { info: "var(--muted)", success: "var(--accent-2)", warn: "var(--accent)" };
+    yoloPuzzleStatus.textContent = message;
+    yoloPuzzleStatus.style.color = colors[tone] || colors.info;
+  };
+
+  const previewYoloImage = () => {
+    const file = yoloPuzzleImageInput?.files?.[0];
+    if (yoloPreviewUrl) URL.revokeObjectURL(yoloPreviewUrl);
+    yoloPreviewUrl = "";
+    if (!yoloPuzzlePreview) return;
+    if (!file) {
+      yoloPuzzlePreview.textContent = "Choose an image to preview.";
+      return;
+    }
+    yoloPreviewUrl = URL.createObjectURL(file);
+    yoloPuzzlePreview.innerHTML = `<img src="${yoloPreviewUrl}" alt="Puzzle preview" style="max-width:100%;height:auto;border-radius:10px;display:block;margin:0 auto;">`;
+  };
+
+  const yoloReviewPayload = () => {
+    const difficulty = Number(yoloPuzzleDifficultyInput?.value || "");
+    return {
+      title: (yoloPuzzleTitleInput?.value || "").trim() || "Uploaded puzzle",
+      topic: (yoloPuzzleTopicInput?.value || "").trim() || "uploaded",
+      difficulty: Number.isFinite(difficulty) ? difficulty : null,
+      fen: (yoloPuzzleFenInput?.value || "").trim(),
+      sideToMove: yoloPuzzleSideSelect?.value || "w",
+      solutionMoves: (yoloPuzzleSolutionInput?.value || "").trim(),
+      status: "PENDING_REVIEW"
+    };
+  };
+
+  const uploadYoloPuzzle = async () => {
+    const file = yoloPuzzleImageInput?.files?.[0];
+    if (!file) {
+      setYoloStatus("Choose a chess puzzle image first.", "warn");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    const payload = yoloReviewPayload();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && String(value).trim() !== "") formData.append(key, value);
+    });
+
+    try {
+      setYoloStatus("Recognizing puzzle with YOLO...");
+      const headers = { ...roleHeaders, "X-User-Email": localStorage.getItem("userEmail") || "" };
+      const res = await fetch("/api/puzzles/upload", { method: "POST", headers, body: formData });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Puzzle recognition failed");
+      yoloCurrentPuzzleId = data.id;
+      if (yoloPuzzleFenInput) yoloPuzzleFenInput.value = data.fen || "";
+      if (yoloPuzzleTitleInput) yoloPuzzleTitleInput.value = data.title || "";
+      if (yoloPuzzleTopicInput) yoloPuzzleTopicInput.value = data.topic || data.theme || "";
+      if (yoloPuzzleDifficultyInput && data.difficulty) yoloPuzzleDifficultyInput.value = data.difficulty;
+      if (yoloPuzzleSideSelect) yoloPuzzleSideSelect.value = data.sideToMove || data.side || "w";
+      if (yoloPuzzleSolutionInput) yoloPuzzleSolutionInput.value = data.solutionMoves || data.solutionMove || "";
+      if (yoloPuzzleConfidence) yoloPuzzleConfidence.textContent = data.recognitionConfidence != null ? `${Math.round(Number(data.recognitionConfidence) * 100)}%` : "-";
+      if (yoloPuzzleReviewStatus) yoloPuzzleReviewStatus.textContent = data.status || "PENDING_REVIEW";
+      setYoloStatus(`Puzzle #${data.id} recognized. Review FEN before publishing.`, "success");
+    } catch (err) {
+      setYoloStatus(err.message || "YOLO model not found. Please train model and place best.pt in ai/models.", "warn");
+    }
+  };
+
+  const saveYoloReview = async () => {
+    if (!yoloCurrentPuzzleId) {
+      setYoloStatus("Recognize a puzzle first.", "warn");
+      return;
+    }
+    try {
+      setYoloStatus("Saving review...");
+      const res = await fetch(`/api/puzzles/${yoloCurrentPuzzleId}/review`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...roleHeaders },
+        body: JSON.stringify(yoloReviewPayload())
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not save review");
+      if (yoloPuzzleReviewStatus) yoloPuzzleReviewStatus.textContent = data.status || "PENDING_REVIEW";
+      setYoloStatus("Review saved.", "success");
+    } catch (err) {
+      setYoloStatus(err.message || "Could not save review.", "warn");
+    }
+  };
+
+  const publishYoloPuzzle = async () => {
+    if (!yoloCurrentPuzzleId) {
+      setYoloStatus("Recognize a puzzle first.", "warn");
+      return;
+    }
+    await saveYoloReview();
+    try {
+      setYoloStatus("Publishing puzzle...");
+      const res = await fetch(`/api/puzzles/${yoloCurrentPuzzleId}/publish`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...roleHeaders },
+        body: JSON.stringify({ published: true })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not publish puzzle");
+      if (yoloPuzzleReviewStatus) yoloPuzzleReviewStatus.textContent = data.status || "PUBLISHED";
+      setYoloStatus(`Puzzle #${yoloCurrentPuzzleId} published. Students can now play it.`, "success");
+      fetchApiPuzzles();
+    } catch (err) {
+      setYoloStatus(err.message || "Could not publish puzzle.", "warn");
+    }
+  };
+
+  const call = (fn) => { if (typeof fn === "function") fn(); };
+  const roleHomeView = { STUDENT: "dashboard", COACH: "coach-dashboard", ADMIN: "admin-dashboard" };
+  const roleAllowedViews = {
+    STUDENT: new Set(["dashboard", "progress", "payments", "messages", "lessons", "profile"]),
+    COACH: new Set(["coach-dashboard", "students", "classes", "puzzle-upload", "lesson-management", "messages", "reports", "profile"]),
+    ADMIN: new Set(["admin-dashboard", "users", "settings", "logs", "profile"])
+  };
+  let activeNavFocus = "";
+
+  const canOpenView = (targetId) => {
+    const allowed = roleAllowedViews[storedRole];
+    return !allowed || allowed.has(targetId);
+  };
+
+  const switchView = (targetId, focusId = "") => {
+    if (!canOpenView(targetId)) {
+      targetId = roleHomeView[storedRole] || "dashboard";
+      focusId = "";
+    }
+    activeNavFocus = focusId || "";
     views.forEach((v) => v.classList.toggle("active", v.id === `section-${targetId}`));
-    document.querySelectorAll("a[data-target]").forEach((link) => link.classList.toggle("active", link.dataset.target === targetId));
+    document.querySelectorAll("a[data-target]").forEach((link) => {
+      const linkFocus = link.dataset.focus || "";
+      const active = link.dataset.target === targetId && linkFocus === activeNavFocus;
+      link.classList.toggle("active", active);
+    });
     if (targetId === "coach-dashboard") { ensureCoachBoard(); call(fetchCoachSessions); call(fetchStudents); }
+    if (targetId === "puzzle-upload")   { call(fetchPuzzleUploadLibrary); }
     if (targetId === "students")        { call(fetchStudents); }
     if (targetId === "exercise-sets")   { call(fetchCoachAssignments); }
     if (targetId === "progress")        { call(fetchProgressData); }
-    if (targetId === "dashboard")       { if (storedRole === "STUDENT") { call(fetchMyAssignments); call(fetchUpcomingSessions); call(fetchProgressData); } }
+    if (targetId === "dashboard")       { if (storedRole === "STUDENT") { call(fetchMyAssignments); call(fetchUpcomingSessions); call(fetchStudentSessionPlans); call(fetchProgressData); } }
     if (targetId === "reports")         { call(fetchCoachReports); }
     if (targetId === "classes")         { call(fetchCoachClasses); }
     if (targetId === "profile")         { call(fetchMyProfile); }
@@ -1708,12 +2416,22 @@
     if (targetId === "lesson-management") { call(fetchSessionPlans); call(fetchLmSessions); call(initPlanForm); }
     if (targetId === "payments")        { call(fetchMyPayments); }
     if (targetId === "messages")        { call(initMessages); }
+    if (focusId) {
+      setTimeout(() => document.getElementById(focusId)?.scrollIntoView({ block: "start", behavior: "smooth" }), 80);
+    }
   };
 
   // Wire sidebar + header nav (any [data-target] link inside the page)
   document.querySelectorAll("a[data-target]").forEach((link) => {
-    link.addEventListener("click", (e) => { e.preventDefault(); switchView(link.dataset.target); });
+    link.addEventListener("click", (e) => { e.preventDefault(); switchView(link.dataset.target, link.dataset.focus || ""); });
   });
+
+  const dashboardRouteParams = new URLSearchParams(window.location.search);
+  const dashboardInitialView = dashboardRouteParams.get("view");
+  const dashboardInitialFocus = dashboardRouteParams.get("focus") || "";
+  if (dashboardInitialView) {
+    setTimeout(() => switchView(dashboardInitialView, dashboardInitialFocus), 0);
+  }
 
     const enforceRoleVisibility = (role) => {
       const studentItems = document.querySelectorAll(".student-only");
@@ -1757,16 +2475,28 @@
           <th>Role</th>
           <th>Rating</th>
           <th>Coach</th>
+          <th>Actions</th>
         </tr></thead>
         <tbody>
-          ${filtered.map((u, i) => `<tr>
+          ${filtered.map((u, i) => {
+            const isSelf = String(u.id) === String(localStorage.getItem("userId") || "");
+            return `<tr>
             <td style="color:var(--muted);font-size:13px;">${i + 1}</td>
             <td><strong>${u.name || "—"}</strong></td>
             <td style="color:var(--muted);font-size:13px;">${u.email || "—"}</td>
             <td><span class="badge" style="${roleBadgeStyle(u.role)}">${u.role || "STUDENT"}</span></td>
             <td>${u.rating ? `<span class="badge" style="background:rgba(245,184,65,0.14);color:var(--accent);border-color:rgba(245,184,65,0.3);">${u.rating}</span>` : '<span style="color:var(--muted);">—</span>'}</td>
             <td>${u.coachId ? (coachById[u.coachId] || `<span style="color:var(--muted);">ID ${u.coachId}</span>`) : '<span style="color:var(--muted);">—</span>'}</td>
-          </tr>`).join("")}
+            <td>
+              ${isSelf
+                ? '<span class="muted" style="font-size:12px;">Current admin</span>'
+                : `<div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="small-action" type="button" onclick="editUser(${u.id})">Edit</button>
+                    <button class="small-action" type="button" style="color:#fecaca;border-color:rgba(248,113,113,.45);" onclick="deleteUser(${u.id})">Delete</button>
+                  </div>`}
+            </td>
+          </tr>`;
+          }).join("")}
         </tbody>
       </table>
     </div>`;
@@ -1967,24 +2697,42 @@
     const p = puzzlesPlayable[puzzleIndex];
     if (!p) return;
     puzzleGame = new Chess(p.fen);
+    p._playIndex = 0;
+    if (hasLeadInMove(p)) {
+      const leadIn = p.solution[0];
+      const leadInMove = puzzleGame.move({
+        from: leadIn.slice(0, 2),
+        to: leadIn.slice(2, 4),
+        promotion: leadIn[4]
+      });
+      if (leadInMove) p._playIndex = 1;
+    }
+    p.side = puzzleGame.turn();
     if (!puzzleBoard) {
       puzzleBoard = Chessboard("puzzleBoard", {
-        position: p.fen,
-        orientation: p.side === "b" ? "black" : "white",
+        position: puzzleGame.fen(),
+        orientation: playablePuzzleSide(p) === "b" ? "black" : "white",
         draggable: true,
         pieceTheme: coachPieceTheme,
         onDragStart: (source, piece) => {
-          if (p.side === "w" && piece.startsWith("b")) return false;
-          if (p.side === "b" && piece.startsWith("w")) return false;
+          const side = playablePuzzleSide(p);
+          if (side === "w" && piece.startsWith("b")) return false;
+          if (side === "b" && piece.startsWith("w")) return false;
           if (puzzleGame.game_over()) return false;
         },
         onDrop: (source, target) => handlePuzzleDrop(p, source, target),
         onSnapEnd: () => puzzleBoard.position(puzzleGame.fen())
       });
     } else {
-      puzzleBoard.orientation(p.side === "b" ? "black" : "white");
-      puzzleBoard.position(p.fen, false);
+      puzzleBoard.orientation(playablePuzzleSide(p) === "b" ? "black" : "white");
+      puzzleBoard.position(puzzleGame.fen(), false);
       puzzleBoard.config({
+        onDragStart: (source, piece) => {
+          const side = playablePuzzleSide(p);
+          if (side === "w" && piece.startsWith("b")) return false;
+          if (side === "b" && piece.startsWith("w")) return false;
+          if (puzzleGame.game_over()) return false;
+        },
         onDrop: (source, target) => handlePuzzleDrop(p, source, target),
         pieceTheme: coachPieceTheme
       });
@@ -1995,8 +2743,9 @@
   const handlePuzzleDrop = (p, source, target) => {
     const move = puzzleGame.move({ from: source, to: target, promotion: "q" });
     if (!move) return "snapback";
-    const expectedSan = p.solutionSan?.[0] || convertFirstMoveToSan(p) || p.solution?.[0];
-    const expectedUci = p.solution?.[0];
+    const expectedIndex = p._playIndex || 0;
+    const expectedSan = p.solutionSan?.[expectedIndex] || convertFirstMoveToSan(p) || p.solution?.[expectedIndex];
+    const expectedUci = p.solution?.[expectedIndex];
     const moveUci = (move.from + move.to + (move.promotion || "")).toLowerCase();
     const matchSan = expectedSan && move.san === expectedSan;
     const matchUci = expectedUci && /^[a-h][1-8][a-h][1-8]/.test(expectedUci) && moveUci === expectedUci.toLowerCase();
@@ -2012,32 +2761,24 @@
 
   const updatePuzzleUI = (p, message, tone = "info") => {
     if (puzzleStatus) puzzleStatus.textContent = message;
-    if (puzzleTitle) puzzleTitle.textContent = p.title || "Puzzle";
-    if (puzzleMeta) puzzleMeta.textContent = `Side to move: ${p.side === "b" ? "Black" : "White"}`;
+    if (puzzleTitle) puzzleTitle.textContent = displayPuzzleTitle(p);
+    if (puzzleMeta) {
+      const theme = formatPuzzleThemeName(p.theme);
+      const side = playablePuzzleSide(p) === "b" ? "Black" : "White";
+      const rating = p.rating ? ` | Level ${p.rating}` : "";
+      puzzleMeta.textContent = `${theme} | ${side} to move${rating}`;
+    }
   };
 
-  const loadLichessPuzzle = async (puzzleId = null) => {
-    const url = puzzleId
-      ? `https://lichess.org/api/puzzle/${puzzleId}`
-      : "https://lichess.org/api/puzzle/daily";
+  const loadPracticePuzzle = async () => {
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to load puzzle");
-      const data = await res.json();
-      const p = {
-        id: data?.puzzle?.id || puzzleId || "lichess-daily",
-        theme: (data?.puzzle?.themes || [])[0] || "lichess",
-        fen: data?.game?.fen,
-        side: (data?.game?.fen || " w ").split(" ")[1] || "w",
-        solution: data?.puzzle?.solution || [],
-        title: `Lichess ${data?.puzzle?.id || "puzzle"}${data?.puzzle?.rating ? ` (Rating ${data.puzzle.rating})` : ""}`,
-        rating: data?.puzzle?.rating
-      };
-      puzzlesPlayable[0] = p;
+      const loaded = await loadPuzzlesFromApi();
+      if (!loaded && !puzzlesPlayable.length) throw new Error("No local puzzles found");
       loadPuzzle(0);
-      updatePuzzleUI(p, "Loaded Lichess puzzle", "success");
+      updatePuzzleUI(puzzlesPlayable[0], "Loaded practice puzzle.", "success");
     } catch (err) {
-      updatePuzzleUI({ title: "Puzzle" }, "Could not load Lichess puzzle", "warn");
+      updatePuzzleUI({ title: "Puzzle" }, "Could not load a practice puzzle.", "warn");
+      if (!puzzleBoard) initPuzzleBoard();
     }
   };
 
@@ -2069,8 +2810,8 @@
 
   if (puzzleNextBtn) puzzleNextBtn.addEventListener("click", () => loadPuzzle(puzzleIndex + 1));
   if (puzzleResetBtn) puzzleResetBtn.addEventListener("click", () => loadPuzzle(puzzleIndex));
-  if (puzzleLichessBtn) {
-    puzzleLichessBtn.addEventListener("click", () => loadLichessPuzzle(null));
+  if (puzzlePracticeLoadBtn) {
+    puzzlePracticeLoadBtn.addEventListener("click", () => loadPracticePuzzle());
   }
   if (puzzleApiLoadBtn) {
     puzzleApiLoadBtn.addEventListener("click", () => {
@@ -2226,8 +2967,12 @@
       if (cached && statRating) statRating.textContent = cached;
     });
 
-  fetchUsers();
-  fetchStudents();
+  if (storedRole === "ADMIN") {
+    fetchUsers();
+    fetchStudents();
+  } else if (storedRole === "COACH") {
+    fetchStudents();
+  }
   renderTabs();
   renderPuzzleGrid();
   renderPuzzleDetail();
@@ -2405,6 +3150,51 @@
     });
   }
 
+  if (puzzleUploadLibraryForm) {
+    puzzleUploadLibraryForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      uploadPuzzleLibraryFiles();
+    });
+  }
+
+  if (yoloPuzzleImageInput) {
+    yoloPuzzleImageInput.addEventListener("change", previewYoloImage);
+  }
+
+  if (yoloPuzzleUploadForm) {
+    yoloPuzzleUploadForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      uploadYoloPuzzle();
+    });
+  }
+
+  if (yoloPuzzleSaveReviewBtn) {
+    yoloPuzzleSaveReviewBtn.addEventListener("click", saveYoloReview);
+  }
+
+  if (yoloPuzzlePublishBtn) {
+    yoloPuzzlePublishBtn.addEventListener("click", publishYoloPuzzle);
+  }
+
+  if (refreshPuzzleUploadLibraryBtn) {
+    refreshPuzzleUploadLibraryBtn.addEventListener("click", () => {
+      fetchPuzzleUploadLibrary();
+    });
+  }
+
+  if (coachPuzzleVisionStatusBtn) {
+    coachPuzzleVisionStatusBtn.addEventListener("click", () => {
+      checkVisionStatus();
+    });
+  }
+
+  if (coachPuzzleProcessUploadBtn) {
+    coachPuzzleProcessUploadBtn.addEventListener("click", () => {
+      ensureCoachBoard();
+      processPuzzleUpload();
+    });
+  }
+
   if (coachPuzzleSideSelect) {
     coachPuzzleSideSelect.addEventListener("change", () => {
       if (!coachPuzzleFenInput) return;
@@ -2425,28 +3215,112 @@
   const coachAssignmentsList = document.getElementById("coachAssignmentsList");
   const assignForm         = document.getElementById("assignForm");
   const assignStatus       = document.getElementById("assignStatus");
+  const recentActivityList = document.getElementById("recentActivityList");
+  const recommendedNextStep = document.getElementById("recommendedNextStep");
+
+  const studentDashboardState = {
+    assignments: [],
+    upcomingClass: null,
+    pendingPayments: [],
+    progress: null,
+    latestSavedGame: null
+  };
 
   const statusColor = { PENDING: "var(--accent)", COMPLETED: "var(--accent-2)", OVERDUE: "#f87171" };
+
+  const fmtShortDate = (value) => {
+    if (!value) return "No due date";
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? String(value).slice(0, 10) : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  const renderRecentActivity = () => {
+    if (!recentActivityList) return;
+    const progress = studentDashboardState.progress || {};
+    const latestSaved = studentDashboardState.latestSavedGame;
+    const items = [];
+    if ((progress.totalAttempted || 0) > 0) {
+      items.push({
+        title: "Latest puzzle training",
+        text: `${progress.totalSolved || 0} solved from ${progress.totalAttempted || 0} attempts · ${progress.performanceAccuracyPct ?? progress.accuracyPct ?? 0}% performance`
+      });
+    }
+    items.push({ title: "Latest lesson completed", text: "No lesson completion recorded yet." });
+    if (latestSaved) {
+      items.push({
+        title: "Latest game analysis upload",
+        text: `${latestSaved.title || "Saved game"} · ${latestSaved.updatedAt ? fmtShortDate(latestSaved.updatedAt) : "Saved analysis"}`
+      });
+    } else {
+      items.push({ title: "Latest game analysis upload", text: "No saved analysis yet. Upload a PGN from Game Analysis." });
+    }
+    recentActivityList.innerHTML = items.map((item) => `
+      <div class="card">
+        <h3>${escapeHtml(item.title)}</h3>
+        <div class="meta">${escapeHtml(item.text)}</div>
+      </div>
+    `).join("");
+  };
+
+  const renderRecommendedNextStep = () => {
+    if (!recommendedNextStep) return;
+    const pendingPayment = studentDashboardState.pendingPayments[0];
+    const upcoming = studentDashboardState.upcomingClass;
+    const assignment = studentDashboardState.assignments.find((a) => a.status !== "COMPLETED");
+    let html;
+    if (pendingPayment) {
+      html = `<div style="display:grid;gap:8px;">
+        <strong>Complete your payment</strong>
+        <div class="meta">RM ${(pendingPayment.totalAmount || 0).toFixed(2)} for ${escapeHtml(pendingPayment.month || "your class plan")} is still pending.</div>
+        <button class="btn primary" onclick="switchView('payments')">Pay Now</button>
+      </div>`;
+    } else if (upcoming) {
+      html = `<div style="display:grid;gap:8px;">
+        <strong>${upcoming.zoomLink ? "Join your upcoming class" : "Upcoming class scheduled"}</strong>
+        <div class="meta">${escapeHtml(upcoming.title || upcoming.month || "Class")} · ${escapeHtml(upcoming.when || "Time pending")}</div>
+        ${upcoming.zoomLink
+          ? `<a class="btn primary" href="${escapeHtml(upcoming.zoomLink)}" target="_blank" rel="noopener">Join Class</a>`
+          : `<div class="meta">Zoom link not assigned yet.</div>`}
+      </div>`;
+    } else if (assignment) {
+      html = `<div style="display:grid;gap:8px;">
+        <strong>Start assigned exercise</strong>
+        <div class="meta">${escapeHtml(assignment.puzzleTitle || "Assigned puzzle")} ${assignment.dueDate ? "· Due " + escapeHtml(fmtShortDate(assignment.dueDate)) : ""}</div>
+        <a class="btn primary" href="puzzle-play.html?id=${encodeURIComponent(assignment.puzzleId || "")}">Start Exercise</a>
+      </div>`;
+    } else {
+      html = `<div style="display:grid;gap:8px;">
+        <strong>Practice a puzzle</strong>
+        <div class="meta">No urgent task right now. Keep your tactics sharp with Puzzle Library.</div>
+        <a class="btn primary" href="puzzle.html">Practice Puzzle</a>
+      </div>`;
+    }
+    recommendedNextStep.className = "card";
+    recommendedNextStep.innerHTML = html;
+  };
 
   const fetchMyAssignments = () => {
     if (!assignmentsList) return;
     fetch("/api/assignments/my-assignments", { headers: authHeaders })
       .then((r) => r.json())
       .then((data) => {
+        studentDashboardState.assignments = Array.isArray(data) ? data : [];
+        renderRecommendedNextStep();
         if (!data || !data.length) {
-          assignmentsList.innerHTML = "<li class='muted'>No exercises assigned yet.</li>";
+          assignmentsList.innerHTML = `<li class="muted">No exercises assigned yet. <a href="puzzle.html" style="color:var(--accent-2);">Practice puzzles while waiting.</a></li>`;
           return;
         }
         assignmentsList.innerHTML = data.map((a) => `
-          <li style="display:flex;justify-content:space-between;align-items:center;">
+          <li style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
             <div>
-              <strong>${a.puzzleTitle || "Puzzle #" + a.puzzleId}</strong>
-              <div class="meta">${a.puzzleTheme || ""} ${a.dueDate ? "· Due: " + a.dueDate.slice(0, 10) : ""}</div>
+              <strong>${escapeHtml(a.puzzleTitle || "Puzzle #" + a.puzzleId)}</strong>
+              <div class="meta">${escapeHtml(a.puzzleTheme || "Puzzle")} ${a.dueDate ? "· Due: " + escapeHtml(fmtShortDate(a.dueDate)) : "· No due date"}</div>
+              <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;">
+                ${a.puzzleId ? `<a class="small-action" href="puzzle-play.html?id=${encodeURIComponent(a.puzzleId)}">Start Exercise</a>` : ""}
+                ${a.status === "PENDING" ? `<button class="small-action" onclick="completeAssignment(${a.id})">Mark Complete</button>` : ""}
+              </div>
             </div>
             <span style="color:${statusColor[a.status] || "var(--muted)"}; font-weight:600; font-size:13px;">${a.status}</span>
-            ${a.status === "PENDING"
-              ? `<button class="small-action" onclick="completeAssignment(${a.id})">Mark done</button>`
-              : ""}
           </li>
         `).join("");
       })
@@ -2518,6 +3392,7 @@
 
   // --- Zoom sessions ---
   const upcomingSessionsList = document.getElementById("upcomingSessionsList");
+  const studentSessionPlansList = document.getElementById("studentSessionPlansList");
   const coachSessionsList    = document.getElementById("coachSessionsList");
   const sessionForm          = document.getElementById("sessionForm");
   const sessionFormStatus    = document.getElementById("sessionFormStatus");
@@ -2535,18 +3410,66 @@
       .then((data) => {
         if (!data || !data.length) {
           upcomingSessionsList.innerHTML = "<li class='muted'>No upcoming sessions scheduled.</li>";
+          renderRecommendedNextStep();
           return;
         }
-        upcomingSessionsList.innerHTML = data.map((s) => `
+        const next = data[0];
+        studentDashboardState.upcomingClass = {
+          title: next.title,
+          coachName: next.coachName || "Your coach",
+          topic: next.description || "",
+          when: fmtDateTime(next.scheduledAt),
+          zoomLink: next.zoomLink
+        };
+        renderRecommendedNextStep();
+        upcomingSessionsList.innerHTML = `
           <li>
-            <strong>${s.title}</strong>
-            <div class="meta">${fmtDateTime(s.scheduledAt)} · Coach: ${s.coachName || "Your coach"}</div>
-            ${s.description ? `<div class="meta">${s.description}</div>` : ""}
-            <a href="${s.zoomLink}" target="_blank" rel="noopener" class="btn ghost" style="margin-top:6px;padding:4px 10px;font-size:13px;">Join Zoom</a>
+            <strong>${escapeHtml(next.title || "Scheduled class")}</strong>
+            <div class="meta">${escapeHtml(fmtDateTime(next.scheduledAt))} · Coach: ${escapeHtml(next.coachName || "Your coach")}</div>
+            ${next.description ? `<div class="meta">Topic: ${escapeHtml(next.description)}</div>` : ""}
+            ${next.zoomLink ? `<a href="${escapeHtml(next.zoomLink)}" target="_blank" rel="noopener" class="btn primary" style="margin-top:6px;padding:4px 10px;font-size:13px;">Join Class</a>` : `<div class="meta">Class link not assigned yet.</div>`}
           </li>
-        `).join("");
+        `;
       })
       .catch(() => { if (upcomingSessionsList) upcomingSessionsList.innerHTML = "<li class='muted'>Could not load sessions.</li>"; });
+  };
+
+  const fetchStudentSessionPlans = () => {
+    if (!studentSessionPlansList) return;
+    fetch("/api/session-plans/student", { headers: authHeaders })
+      .then((r) => r.json())
+      .then((plans) => {
+        const paidPlans = (plans || []).filter((p) => p.payment && p.payment.status === "PAID");
+        if (!paidPlans.length) {
+          studentSessionPlansList.innerHTML = "<li class='muted'>No paid class plans yet.</li>";
+          renderRecommendedNextStep();
+          return;
+        }
+        const linkedPlan = paidPlans.find((p) => p.zoomLink || p.classDate || p.classTime);
+        if (!studentDashboardState.upcomingClass && linkedPlan) {
+          const classTime = [linkedPlan.classDate, linkedPlan.classTime].filter(Boolean).join(" ");
+          studentDashboardState.upcomingClass = {
+            title: linkedPlan.month || "Class plan",
+            month: linkedPlan.month,
+            coachName: linkedPlan.coachName || "Your coach",
+            topic: linkedPlan.coachNote || "",
+            when: classTime || "Time pending",
+            zoomLink: linkedPlan.zoomLink
+          };
+          renderRecommendedNextStep();
+        }
+        studentSessionPlansList.innerHTML = paidPlans.map((p) => {
+          const classTime = [p.classDate, p.classTime].filter(Boolean).join(" ");
+          return `<li>
+            <strong>${escapeHtml(p.month || "Class plan")}</strong>
+            <div class="meta">${escapeHtml(p.sessionsPerMonth || 0)} sessions · Coach: ${escapeHtml(p.coachName || "Your coach")}</div>
+            ${classTime ? `<div class="meta">${escapeHtml(classTime)}</div>` : ""}
+            ${p.coachNote ? `<div class="meta">${escapeHtml(p.coachNote)}</div>` : ""}
+            ${p.zoomLink ? `<a href="${escapeHtml(p.zoomLink)}" target="_blank" rel="noopener" class="btn primary" style="margin-top:6px;padding:4px 10px;font-size:13px;">Join Class</a>` : `<div class="meta">Class link not assigned yet.</div>`}
+          </li>`;
+        }).join("");
+      })
+      .catch(() => { studentSessionPlansList.innerHTML = "<li class='muted'>Could not load class links.</li>"; });
   };
 
   const fetchCoachSessions = () => {
@@ -2582,12 +3505,41 @@
 
   // sessionForm listener is defined in the Lesson Management JS block below
 
-  if (storedRole === "STUDENT") fetchUpcomingSessions();
+  if (storedRole === "STUDENT") { fetchUpcomingSessions(); fetchStudentSessionPlans(); }
   if (storedRole === "COACH")   fetchCoachSessions();
 
   // --- Progress charts ---
   let chartDailyInstance = null;
   let chartThemeInstance = null;
+
+  const simplifyThemeName = (rawTheme) => {
+    const raw = String(rawTheme || "").trim();
+    if (!raw) return "Unknown";
+    const spaced = raw
+      .replace(/[_-]+/g, " ")
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .toLowerCase();
+    const rules = [
+      [/mate\s*in\s*1|matein1|mate1|one\s*move|mate/, "Mate in 1"],
+      [/mate\s*in\s*2|matein2|mate2/, "Mate in 2"],
+      [/fork|double\s*attack/, "Fork"],
+      [/pin/, "Pin"],
+      [/skewer/, "Skewer"],
+      [/discovered\s*attack/, "Discovered Attack"],
+      [/discovered\s*check/, "Discovered Check"],
+      [/double\s*check/, "Double Check"],
+      [/trapped\s*piece/, "Trapped Piece"],
+      [/remove\s*defender/, "Remove Defender"],
+      [/deflection/, "Deflection"],
+      [/clearance/, "Clearance"],
+      [/sacrifice/, "Sacrifice"],
+      [/endgame|rook|pawn|queen|bishop|knight/, "Endgame"],
+      [/opening|kingside|queenside/, "Opening"]
+    ];
+    const matched = rules.find(([pattern]) => pattern.test(spaced));
+    if (matched) return matched[1];
+    return spaced.replace(/\b\w/g, (m) => m.toUpperCase()).split(/\s+/).slice(0, 3).join(" ");
+  };
 
   const fetchProgressData = async () => {
     try {
@@ -2598,13 +3550,27 @@
       // Update summary stats
       const fmt = (n) => (n === undefined || n === null) ? "—" : n;
       const el = (id) => document.getElementById(id);
+      const fmtDuration = (seconds) => {
+        if (seconds === undefined || seconds === null) return "—";
+        if (seconds < 60) return `${seconds}s`;
+        const minutes = Math.floor(seconds / 60);
+        const rest = Math.round(seconds % 60);
+        return `${minutes}m ${rest}s`;
+      };
+      const performanceAccuracy = data.performanceAccuracyPct ?? data.accuracyPct;
+      studentDashboardState.progress = data;
+      renderRecentActivity();
       if (el("progressAttempted")) el("progressAttempted").textContent = fmt(data.totalAttempted);
       if (el("progressSolved"))    el("progressSolved").textContent    = fmt(data.totalSolved);
-      if (el("progressAccuracy"))  el("progressAccuracy").textContent  = data.totalAttempted > 0 ? data.accuracyPct + "%" : "—";
+      if (el("progressAccuracy"))  el("progressAccuracy").textContent  = data.totalAttempted > 0 ? performanceAccuracy + "%" : "—";
+      if (el("progressAvgTime"))   el("progressAvgTime").textContent   = fmtDuration(data.avgTimeSeconds);
+      if (el("progressAvgAttempts")) el("progressAvgAttempts").textContent = data.totalAttempted > 0 ? fmt(data.avgAttempts) : "—";
+      if (el("progressMastery"))   el("progressMastery").textContent   = data.totalAttempted > 0 ? fmt(data.masteryLabel) : "—";
       // also update student landing card stats
-      if (el("statAccuracy")) el("statAccuracy").textContent = data.totalAttempted > 0 ? data.accuracyPct + "%" : "—";
+      if (el("statAccuracy")) el("statAccuracy").textContent = data.totalAttempted > 0 ? performanceAccuracy + "%" : "—";
       if (el("statSolved"))   el("statSolved").textContent   = fmt(data.totalSolved);
       if (el("statAttempted")) el("statAttempted").textContent = fmt(data.totalAttempted);
+      if (el("statLessonsCompleted")) el("statLessonsCompleted").textContent = "0";
 
       // Daily activity bar chart
       const dailyLabels = (data.dailyActivity || []).map((d) => d.date.slice(5)); // MM-DD
@@ -2634,10 +3600,10 @@
         });
       }
 
-      // Theme accuracy horizontal bar chart (top 8 themes)
+      // Theme performance horizontal bar chart (top 8 themes)
       const topThemes = (data.themeBreakdown || []).slice(0, 8);
-      const themeLabels = topThemes.map((t) => t.theme);
-      const themeAccuracy = topThemes.map((t) => t.accuracyPct);
+      const themeLabels = topThemes.map((t) => simplifyThemeName(t.theme));
+      const themeAccuracy = topThemes.map((t) => t.performanceAccuracyPct ?? t.accuracyPct);
 
       const ctxTheme = document.getElementById("chartTheme");
       if (ctxTheme && window.Chart) {
@@ -2647,7 +3613,7 @@
           data: {
             labels: themeLabels,
             datasets: [{
-              label: "Accuracy %",
+              label: "Performance %",
               data: themeAccuracy,
               backgroundColor: themeAccuracy.map((v) => v >= 70 ? "rgba(92,245,165,0.7)" : v >= 40 ? "rgba(245,184,65,0.7)" : "rgba(248,113,113,0.65)"),
               borderRadius: 4
@@ -2669,14 +3635,17 @@
       const tbody = document.querySelector("#themeTable tbody");
       if (tbody) {
         if (!data.themeBreakdown || !data.themeBreakdown.length) {
-          tbody.innerHTML = '<tr><td colspan="4" class="muted" style="text-align:center;">No attempts yet.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="muted" style="text-align:center;">No attempts yet.</td></tr>';
         } else {
           tbody.innerHTML = data.themeBreakdown.map((t) => `
             <tr>
-              <td>${t.theme}</td>
+              <td class="theme-name-cell" title="${t.theme}">${simplifyThemeName(t.theme)}</td>
               <td>${t.total}</td>
               <td>${t.solved}</td>
-              <td style="color:${t.accuracyPct >= 70 ? 'var(--accent-2)' : t.accuracyPct >= 40 ? 'var(--accent)' : '#f87171'}">${t.accuracyPct}%</td>
+              <td style="color:${(t.performanceAccuracyPct ?? t.accuracyPct) >= 70 ? 'var(--accent-2)' : (t.performanceAccuracyPct ?? t.accuracyPct) >= 40 ? 'var(--accent)' : '#f87171'}">${t.performanceAccuracyPct ?? t.accuracyPct}%</td>
+              <td>${t.avgAttempts ?? "—"}</td>
+              <td>${fmtDuration(t.avgTimeSeconds)}</td>
+              <td>${t.masteryLabel || "—"}</td>
             </tr>
           `).join("");
         }
@@ -2687,6 +3656,21 @@
   };
 
   if (storedRole === "STUDENT") fetchProgressData();
+
+  const fetchRecentSavedGames = () => {
+    if (storedRole !== "STUDENT") return;
+    fetch("/api/saved-games", { headers: authHeaders })
+      .then((r) => r.ok ? r.json() : [])
+      .then((games) => {
+        studentDashboardState.latestSavedGame = Array.isArray(games) && games.length ? games[0] : null;
+        renderRecentActivity();
+      })
+      .catch(() => {
+        studentDashboardState.latestSavedGame = null;
+        renderRecentActivity();
+      });
+  };
+  if (storedRole === "STUDENT") fetchRecentSavedGames();
 
   // --- Coach Reports ---
   const fetchCoachReports = () => {
@@ -2854,6 +3838,98 @@
         assignCoachStatus.style.color = "var(--accent-2)";
         if (currentCoachLabel) currentCoachLabel.textContent = "No coach assigned.";
         fetchAllUsersAdmin();
+      }
+    });
+  }
+
+  window.editUser = (id) => {
+    const user = (_allUsersCache || []).find((u) => Number(u.id) === Number(id));
+    if (!user || !userEditForm || !userEditPanel) return;
+    if (String(user.id) === String(localStorage.getItem("userId") || "")) {
+      alert("You cannot edit your own admin account from User Management.");
+      return;
+    }
+    userEditPanel.style.display = "";
+    userEditForm.elements.id.value = user.id;
+    userEditForm.elements.name.value = user.name || "";
+    userEditForm.elements.email.value = user.email || "";
+    userEditForm.elements.role.value = user.role || "STUDENT";
+    userEditForm.elements.rating.value = user.rating || "";
+    userEditForm.elements.chessUsername.value = user.chessUsername || "";
+    userEditForm.elements.password.value = "";
+    userEditForm.elements.goals.value = user.goals || "";
+    if (userEditStatus) userEditStatus.textContent = "";
+    userEditPanel.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  };
+
+  window.cancelEditUser = () => {
+    if (userEditForm) userEditForm.reset();
+    if (userEditPanel) userEditPanel.style.display = "none";
+    if (userEditStatus) userEditStatus.textContent = "";
+  };
+
+  window.deleteUser = async (id) => {
+    const user = (_allUsersCache || []).find((u) => Number(u.id) === Number(id));
+    if (!user) return;
+    if (String(user.id) === String(localStorage.getItem("userId") || "")) {
+      alert("You cannot delete your own admin account.");
+      return;
+    }
+    if (!confirm(`Delete user "${user.name || user.email}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/users/${id}`, { method: "DELETE", headers: authHeaders });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || "Delete failed.");
+        return;
+      }
+      if (userEditForm?.elements.id.value === String(id)) cancelEditUser();
+      fetchAllUsersAdmin();
+    } catch (_) {
+      alert("Network error.");
+    }
+  };
+
+  if (userEditForm) {
+    userEditForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(userEditForm);
+      const id = fd.get("id");
+      const password = (fd.get("password") || "").toString();
+      const rating = fd.get("rating");
+      const payload = {
+        name: fd.get("name"),
+        email: fd.get("email"),
+        role: fd.get("role") || "STUDENT",
+        rating: rating ? Number(rating) : null,
+        chessUsername: fd.get("chessUsername") || null,
+        goals: fd.get("goals") || null
+      };
+      if (password.trim()) payload.password = password;
+      try {
+        const res = await fetch(`/api/users/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          if (userEditStatus) {
+            userEditStatus.textContent = data.error || "Update failed.";
+            userEditStatus.style.color = "var(--accent)";
+          }
+          return;
+        }
+        if (userEditStatus) {
+          userEditStatus.textContent = "User updated successfully.";
+          userEditStatus.style.color = "var(--accent-2)";
+        }
+        fetchAllUsersAdmin();
+      } catch (_) {
+        if (userEditStatus) {
+          userEditStatus.textContent = "Network error.";
+          userEditStatus.style.color = "var(--accent)";
+        }
       }
     });
   }
@@ -3487,24 +4563,74 @@
       const cls = pay.status === "PAID" ? "status-active" : "status-pending";
       return `<span class="status-pill ${cls}" style="font-size:11px;">${pay.status === "PAID" ? "✓ Paid" : "⏳ Unpaid"}</span>`;
     };
-    container.innerHTML = plans.map(p => `
-      <div class="plan-card">
-        <div style="font-size:28px;opacity:0.5;flex-shrink:0;">👤</div>
-        <div class="pc-info">
-          <div class="pc-name">${p.studentName || "Student"}</div>
-          <div class="pc-meta">${p.month || "—"} &nbsp;·&nbsp; ${p.sessionsPerMonth} sessions &nbsp;·&nbsp; RM ${(p.pricePerSession || 0).toFixed(2)}/session</div>
-          <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <span class="status-pill ${statusCls(p.status)}">${statusLabel(p.status)}</span>
-            ${payBadge(p.payment)}
-            <span style="font-size:13px;color:var(--muted);">Total: <strong style="color:var(--text);">RM ${(p.totalAmount || 0).toFixed(2)}</strong></span>
+    container.innerHTML = plans.map(p => {
+      const isPaid = p.payment && p.payment.status === "PAID";
+      return `
+        <div class="plan-card">
+          <div style="font-size:28px;opacity:0.5;flex-shrink:0;">👤</div>
+          <div class="pc-info">
+            <div class="pc-name">${escapeHtml(p.studentName || "Student")}</div>
+            <div class="pc-meta">${escapeHtml(p.month || "—")} &nbsp;·&nbsp; ${escapeHtml(p.sessionsPerMonth)} sessions &nbsp;·&nbsp; RM ${(p.pricePerSession || 0).toFixed(2)}/session</div>
+            <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <span class="status-pill ${statusCls(p.status)}">${statusLabel(p.status)}</span>
+              ${payBadge(p.payment)}
+              <span style="font-size:13px;color:var(--muted);">Total: <strong style="color:var(--text);">RM ${(p.totalAmount || 0).toFixed(2)}</strong></span>
+            </div>
+            ${p.notes ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">📝 ${escapeHtml(p.notes)}</div>` : ""}
+            ${isPaid ? `
+              <div style="margin-top:12px;padding:12px;border:1px solid var(--stroke);border-radius:12px;background:rgba(255,255,255,0.03);">
+                <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Class Zoom Assignment</div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;">
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);">Zoom link
+                    <input id="zoomLink-${p.id}" type="url" value="${escapeHtml(p.zoomLink || "")}" placeholder="https://zoom.us/j/..." style="padding:8px;border-radius:8px;border:1px solid var(--stroke);background:var(--bg-card);color:var(--text);">
+                  </label>
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);">Class date
+                    <input id="classDate-${p.id}" type="date" value="${escapeHtml(p.classDate || "")}" style="padding:8px;border-radius:8px;border:1px solid var(--stroke);background:var(--bg-card);color:var(--text);">
+                  </label>
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);">Class time
+                    <input id="classTime-${p.id}" type="time" value="${escapeHtml(p.classTime || "")}" style="padding:8px;border-radius:8px;border:1px solid var(--stroke);background:var(--bg-card);color:var(--text);">
+                  </label>
+                </div>
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);margin-top:8px;">Coach note
+                  <input id="coachNote-${p.id}" value="${escapeHtml(p.coachNote || "")}" placeholder="Preparation notes for student" style="padding:8px;border-radius:8px;border:1px solid var(--stroke);background:var(--bg-card);color:var(--text);">
+                </label>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;">
+                  <button class="btn primary" style="font-size:12px;padding:6px 12px;" onclick="savePlanZoom(${p.id})">Save Zoom Link</button>
+                  ${p.zoomLink ? `<a class="btn ghost" style="font-size:12px;padding:6px 12px;" href="${escapeHtml(p.zoomLink)}" target="_blank" rel="noopener">Open Link</a>` : ""}
+                  <span id="zoomStatus-${p.id}" class="muted" style="font-size:12px;"></span>
+                </div>
+              </div>
+            ` : `<div style="font-size:12px;color:var(--muted);margin-top:8px;">Zoom link can be assigned after payment is PAID.</div>`}
           </div>
-          ${p.notes ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">📝 ${p.notes}</div>` : ""}
+          <div style="flex-shrink:0;">
+            <button class="btn ghost" style="font-size:12px;padding:6px 12px;" onclick="deletePlan(${p.id})">Delete</button>
+          </div>
         </div>
-        <div style="flex-shrink:0;">
-          <button class="btn ghost" style="font-size:12px;padding:6px 12px;" onclick="deletePlan(${p.id})">Delete</button>
-        </div>
-      </div>
-    `).join("");
+      `;
+    }).join("");
+  };
+
+  window.savePlanZoom = async (planId) => {
+    const status = document.getElementById(`zoomStatus-${planId}`);
+    const payload = {
+      zoomLink: document.getElementById(`zoomLink-${planId}`)?.value || null,
+      classDate: document.getElementById(`classDate-${planId}`)?.value || null,
+      classTime: document.getElementById(`classTime-${planId}`)?.value || null,
+      coachNote: document.getElementById(`coachNote-${planId}`)?.value || null
+    };
+    try {
+      const res = await fetch(`/api/session-plans/${planId}/zoom`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to save Zoom link.");
+      if (status) { status.textContent = "Saved."; status.style.color = "var(--accent-2)"; }
+      fetchSessionPlans();
+    } catch (err) {
+      if (status) { status.textContent = err.message || "Failed."; status.style.color = "var(--accent)"; }
+    }
   };
 
   window.deletePlan = (id) => {
@@ -3626,21 +4752,70 @@
           <div class="pay-meta">${isPaid ? `Paid on ${p.paidAt ? p.paidAt.slice(0,10) : "—"}` : "Payment pending — pay to activate your sessions"}</div>
         </div>
         <div class="pay-amount">RM ${(p.totalAmount || 0).toFixed(2)}</div>
-        ${!isPaid ? `<button class="btn primary" onclick="payNow(${p.id})">Pay Now</button>` : '<span class="status-pill status-active">Paid</span>'}
+        ${!isPaid ? `<button class="btn primary" onclick="payNow(${p.id})">Pay Now</button>` : `<button class="btn ghost" onclick="viewReceipt(${p.id})">View Receipt</button><span class="status-pill status-active">Paid</span>`}
       </div>`;
     }).join("");
   };
 
-  window.payNow = async (paymentId) => {
-    if (!confirm("Confirm payment? This will activate your session plan for the month.")) return;
+  window.viewReceipt = async (paymentId) => {
     try {
-      const res = await fetch(`/api/payments/${paymentId}/pay`, { method: "POST", headers: authHeaders });
-      if (res.ok) {
-        fetchMyPayments();
-        // Also show payment alert on home
-        fetchPendingPaymentBanner();
+      const res = await fetch(`/api/payments/${paymentId}/receipt`, { headers: authHeaders });
+      const receipt = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(receipt.error || "Could not load receipt.");
+      const content = document.getElementById("receiptContent");
+      const download = document.getElementById("receiptDownloadBtn");
+      if (download) download.dataset.paymentId = paymentId;
+      if (content) {
+        const amount = Number(receipt.totalAmount || 0).toFixed(2);
+        content.innerHTML = [
+          ["Student name", receipt.studentName],
+          ["Month", receipt.month],
+          ["Session count", receipt.sessionCount],
+          ["Total amount", `RM ${amount}`],
+          ["Payment status", receipt.status],
+          ["Paid date", receipt.paidAt ? String(receipt.paidAt).slice(0, 19).replace("T", " ") : "—"],
+          ["Stripe Checkout Session ID", receipt.stripeCheckoutSessionId || "—"],
+          ["Stripe Payment Intent ID", receipt.stripePaymentIntentId || "—"]
+        ].map(([label, value]) => `<div class="receipt-row"><span>${escapeHtml(label)}</span><span>${escapeHtml(value || "—")}</span></div>`).join("");
       }
-    } catch (_) {}
+      document.getElementById("receiptOverlay")?.classList.remove("hidden");
+    } catch (err) {
+      alert(err.message || "Could not load receipt.");
+    }
+  };
+
+  window.closeReceiptModal = (event) => {
+    if (event && event.target && event.target.id !== "receiptOverlay") return;
+    document.getElementById("receiptOverlay")?.classList.add("hidden");
+  };
+
+  window.downloadReceiptPdf = async () => {
+    const paymentId = document.getElementById("receiptDownloadBtn")?.dataset.paymentId;
+    if (!paymentId) return;
+    try {
+      const res = await fetch(`/api/payments/${paymentId}/receipt/pdf`, { headers: authHeaders });
+      if (!res.ok) throw new Error("Could not download receipt PDF.");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `educhess-payment-${paymentId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.message || "Could not download receipt PDF.");
+    }
+  };
+
+  window.payNow = async (paymentId) => {
+    try {
+      const res = await fetch(`/api/payments/${paymentId}/checkout`, { method: "POST", headers: authHeaders });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not start checkout.");
+      if (data.checkoutUrl) window.location.href = data.checkoutUrl;
+    } catch (err) {
+      alert(err.message || "Could not start checkout.");
+    }
   };
 
   const fetchPendingPaymentBanner = () => {
@@ -3648,6 +4823,8 @@
     fetch("/api/payments/student", { headers: authHeaders })
       .then(r => r.json()).then(payments => {
         const pending = (payments || []).filter(p => p.status === "PENDING");
+        studentDashboardState.pendingPayments = pending;
+        renderRecommendedNextStep();
         renderPaymentBanner(pending);
       }).catch(() => {});
   };
@@ -3677,6 +4854,7 @@
   var _chatPartnerId = null;
   var _chatPartnerName = "";
   var _chatPollTimer = null;
+  var _chatListPollTimer = null;
 
   const initMessages = () => {
     if (storedRole === "COACH") {
@@ -3696,22 +4874,27 @@
 
   // Coach: load student list in sidebar
   const loadCoachChatStudents = () => {
-    fetch("/api/users/my-students", { headers: authHeaders })
-      .then(r => r.json()).then(students => {
+    fetch("/api/chat/conversations", { headers: authHeaders })
+      .then(r => r.json()).then(conversations => {
         const list = document.getElementById("chatStudentListItems");
         if (!list) return;
-        if (!students || !students.length) {
+        if (!conversations || !conversations.length) {
           list.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--muted);">No students yet.</div>';
           return;
         }
-        list.innerHTML = students.map(s => {
-          const initials = (s.name || "?").split(" ").map(w => w[0]).slice(0,2).join("").toUpperCase();
-          return `<div class="chat-person" id="chat-person-${s.id}" onclick="openCoachChat(${s.id},'${(s.name || "Student").replace(/'/g, "\\'")}')">
-            <div class="cp-avatar">${initials}</div>
+        list.innerHTML = conversations.map(c => {
+          const name = c.name || "Student";
+          const initials = name.split(" ").map(w => w[0]).slice(0,2).join("").toUpperCase();
+          const latest = c.latestMessage ? escapeHtml(c.latestMessage) : escapeHtml(c.email || "");
+          const unread = Number(c.unreadCount || 0);
+          const active = Number(c.partnerId) === Number(_chatPartnerId) ? " active" : "";
+          return `<div class="chat-person${active}" id="chat-person-${c.partnerId}" data-partner-name="${escapeHtml(name)}" onclick="openCoachChat(${c.partnerId}, this.dataset.partnerName)">
+            <div class="cp-avatar">${escapeHtml(initials || "?")}</div>
             <div>
-              <div class="cp-name">${s.name || "—"}</div>
-              <div class="cp-sub">${s.email || ""}</div>
+              <div class="cp-name">${escapeHtml(name)}</div>
+              <div class="cp-sub">${latest}</div>
             </div>
+            ${unread > 0 ? `<span class="cp-unread">${unread}</span>` : ""}
           </div>`;
         }).join("");
       }).catch(() => {});
@@ -3748,6 +4931,8 @@
       .then(r => r.json()).then(messages => {
         const containerId = storedRole === "COACH" ? "chatWindowMessages" : "chatStudentMessages";
         renderMessages(messages, userId, containerId);
+        if (storedRole === "COACH") loadCoachChatStudents();
+        pollUnreadCount();
       }).catch(() => {});
   };
 
@@ -3762,7 +4947,7 @@
       const mine = m.fromId === myId;
       const time = m.sentAt ? m.sentAt.slice(0, 16).replace("T", " ") : "";
       return `<div class="chat-bubble ${mine ? "mine" : "theirs"}">
-        ${m.message}
+        ${escapeHtml(m.message)}
         <div class="cb-time">${time}${mine ? "" : " · " + (m.fromName || "")}</div>
       </div>`;
     }).join("");
@@ -3780,6 +4965,7 @@
       body: JSON.stringify({ toId: _chatPartnerId, message })
     }).catch(() => {});
     loadChatMessages();
+    loadCoachChatStudents();
   };
 
   // Student chat init
@@ -3832,10 +5018,15 @@
   const startChatPolling = () => {
     if (_chatPollTimer) clearInterval(_chatPollTimer);
     _chatPollTimer = setInterval(loadChatMessages, 5000);
+    if (storedRole === "COACH") {
+      if (_chatListPollTimer) clearInterval(_chatListPollTimer);
+      _chatListPollTimer = setInterval(loadCoachChatStudents, 5000);
+    }
   };
 
   const stopChatPolling = () => {
     if (_chatPollTimer) { clearInterval(_chatPollTimer); _chatPollTimer = null; }
+    if (_chatListPollTimer) { clearInterval(_chatListPollTimer); _chatListPollTimer = null; }
   };
 
   // Stop polling when leaving the messages view

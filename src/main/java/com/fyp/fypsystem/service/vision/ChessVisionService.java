@@ -1,6 +1,7 @@
 package com.fyp.fypsystem.service.vision;
 
 import com.fyp.fypsystem.dto.vision.ChessVisionResult;
+import com.fyp.fypsystem.dto.vision.VisionStatusResponse;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.ImageType;
@@ -100,6 +101,25 @@ public class ChessVisionService {
         }
     }
 
+    public VisionStatusResponse status() {
+        boolean pythonAvailable = isPythonAvailable();
+        boolean scriptExists = Files.exists(Path.of(scriptPath));
+        boolean modelExists = Files.exists(Path.of(modelPath));
+        boolean ready = pythonAvailable && scriptExists && modelExists;
+        String message;
+        if (ready) {
+            message = "Vision setup is ready.";
+        } else if (!pythonAvailable) {
+            message = "Python command is not available. Check puzzle.vision.python.";
+        } else if (!scriptExists) {
+            message = "Vision script is missing. Check puzzle.vision.script.";
+        } else {
+            message = "YOLO model is missing. Train/export best.pt and place it at puzzle.vision.model.";
+        }
+        return new VisionStatusResponse(ready, pythonAvailable, scriptExists, modelExists,
+                pythonCommand, scriptPath, modelPath, message);
+    }
+
     private byte[] toImageBytes(MultipartFile file) throws IOException {
         String contentType = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
         String filename = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
@@ -132,6 +152,20 @@ public class ChessVisionService {
             }
         }
         throw new IOException("Vision processor did not return JSON");
+    }
+
+    private boolean isPythonAvailable() {
+        ProcessBuilder builder = new ProcessBuilder(pythonCommand, "--version");
+        builder.redirectErrorStream(true);
+        try {
+            Process process = builder.start();
+            return process.waitFor(Duration.ofSeconds(8).toMillis(), TimeUnit.MILLISECONDS) && process.exitValue() == 0;
+        } catch (IOException ex) {
+            return false;
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 
     private Optional<String> readString(String json, String key) {

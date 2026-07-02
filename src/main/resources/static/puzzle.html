@@ -3,218 +3,193 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EduChess Puzzle Library</title>
+  <title>EduChess — Puzzle Library</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/chessboard-1.0.0.min.css">
+  <link rel="stylesheet" href="css/shell.css">
   <style>
     :root {
-      --nav: #2f5597;
-      --nav-dark: #27487e;
-      --bg: #eef2f8;
-      --panel: #ffffff;
-      --text: #1b2b44;
-      --muted: #6a7a94;
-      --accent: #0b6ef3;
-      --stroke: #e1e8f2;
-      --soft: #f6f8fc;
-      --shadow: 0 14px 30px rgba(20, 39, 70, 0.12);
+      --bg: #060b18;
+      --bg-2: #0a1024;
+      --panel: rgba(15, 28, 53, 0.82);
+      --panel-2: rgba(10, 18, 36, 0.9);
+      --text: #f6f8ff;
+      --muted: #9ba6c5;
+      --accent: #82bd4a;
+      --accent-2: #5cf5a5;
+      --blue: #4dabff;
+      --stroke: rgba(184, 199, 219, 0.16);
+      --shadow: 0 18px 45px rgba(3, 8, 20, 0.45);
+      --radius: 16px;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "Manrope", system-ui, sans-serif;
-      background: var(--bg);
+      font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+      background:
+        linear-gradient(90deg, rgba(8, 13, 21, 0.95), rgba(15, 24, 36, 0.78), rgba(8, 13, 21, 0.95)),
+        url("img/custom-chess/background.jpg") center bottom / cover fixed no-repeat,
+        var(--bg);
       color: var(--text);
+      min-height: 100vh;
     }
-    header {
-      background: linear-gradient(90deg, var(--nav), var(--nav-dark));
-      color: #fff;
-      padding: 14px 26px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 8px 20px rgba(16, 32, 59, 0.25);
-      position: sticky;
-      top: 0;
-      z-index: 20;
-    }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-    }
-    .brand-title {
-      font-family: "Playfair Display", serif;
-      font-size: 18px;
-    }
-    nav a {
-      color: #e7efff;
-      text-decoration: none;
-      font-weight: 600;
-      margin-left: 16px;
-    }
-    nav a:hover { color: #fff; }
+
+    /* header removed — now uses sidebar shell */
+
+    /* MAIN */
     main {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 26px;
+      padding: 24px 24px 44px;
       display: grid;
-      gap: 22px;
+      gap: 20px;
     }
     .panel {
-      background: var(--panel);
-      border-radius: 20px;
+      background: linear-gradient(145deg, var(--panel-2), var(--panel));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 20px 22px;
+      backdrop-filter: blur(8px);
     }
-    .tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
+
+    /* TABS */
+    .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
     .tab-btn {
-      border: 1px solid transparent;
-      background: #edf2ff;
-      color: #2c5ea8;
-      padding: 10px 18px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.05);
+      color: var(--muted);
+      padding: 9px 18px;
       border-radius: 999px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
+      font: inherit;
+      font-size: 14px;
       transition: 120ms ease;
     }
     .tab-btn.active {
-      background: var(--accent);
-      color: #fff;
-      box-shadow: 0 8px 18px rgba(11, 110, 243, 0.25);
+      background: linear-gradient(135deg, #82bd4a, #5ca836);
+      color: #081207;
+      border-color: rgba(130, 189, 74, 0.5);
+      box-shadow: 0 8px 20px rgba(88, 145, 44, 0.28);
     }
+    .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.09); color: var(--text); }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
+
+    /* THEME GRID */
     .theme-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 22px;
-      padding: 10px 8px 6px;
+      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+      gap: 16px;
+      padding: 4px;
     }
     .theme-card {
-      background: var(--soft);
+      background: rgba(255,255,255,0.04);
       border: 1px solid var(--stroke);
-      border-radius: 18px;
-      padding: 18px 16px 16px;
+      border-radius: 14px;
+      padding: 18px 14px 14px;
       text-align: center;
       cursor: pointer;
-      transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+      transition: transform 130ms ease, box-shadow 130ms ease, border-color 130ms ease, background 130ms ease;
     }
     .theme-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 16px 28px rgba(30, 52, 90, 0.12);
+      box-shadow: 0 16px 32px rgba(3, 8, 20, 0.4);
+      border-color: rgba(130, 189, 74, 0.38);
+      background: rgba(130, 189, 74, 0.07);
     }
     .theme-card.selected {
-      border-color: rgba(11, 110, 243, 0.6);
-      box-shadow: 0 16px 32px rgba(11, 110, 243, 0.18);
+      border-color: rgba(130, 189, 74, 0.6);
+      box-shadow: 0 0 0 2px rgba(130, 189, 74, 0.18), 0 16px 32px rgba(88, 145, 44, 0.22);
+      background: rgba(130, 189, 74, 0.1);
     }
     .theme-icon {
-      width: 88px;
-      height: 88px;
-      border-radius: 24px;
-      background: #eaf1ff;
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      background: rgba(77, 171, 255, 0.08);
+      border: 1px solid rgba(77, 171, 255, 0.14);
       margin: 0 auto 12px;
       display: grid;
       place-items: center;
     }
     .theme-icon img {
-      width: 56px;
-      height: 56px;
-      opacity: 0.85;
-      filter: drop-shadow(0 6px 12px rgba(24, 50, 90, 0.2));
+      width: 52px;
+      height: 52px;
+      opacity: 0.88;
+      filter: drop-shadow(0 4px 8px rgba(77, 171, 255, 0.2));
     }
-    .theme-card h3 {
-      margin: 0 0 6px;
-      font-size: 16px;
-    }
-    .theme-meta {
-      color: var(--muted);
-      font-size: 13px;
-    }
+    .theme-card h3 { margin: 0 0 5px; font-size: 13px; font-weight: 700; color: #fff; }
+    .theme-meta { color: var(--muted); font-size: 12px; }
+
+    /* DETAILS SECTION */
     .details {
       display: grid;
       grid-template-columns: minmax(220px, 280px) 1fr;
-      gap: 20px;
-    }
-    .sidebar {
-      background: var(--soft);
-      border-radius: 16px;
-      padding: 16px;
-      border: 1px solid var(--stroke);
-    }
-    .sidebar h2 {
-      margin: 0 0 6px;
-      font-size: 20px;
-    }
-    .sidebar .muted { color: var(--muted); font-size: 14px; }
-    .progress {
-      margin: 14px 0 18px;
-    }
-    .progress-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    .bar {
-      height: 8px;
-      border-radius: 999px;
-      background: #dde6f3;
-      overflow: hidden;
-    }
-    .bar span {
-      display: block;
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #36d1dc, #5b86e5);
-    }
-    .sidebar .actions {
-      display: grid;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .sidebar .actions button {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-weight: 600;
-      cursor: pointer;
-      background: #e9effa;
-      color: #2b4c7f;
-    }
-    .sidebar .actions button.primary {
-      background: var(--accent);
-      color: #fff;
-    }
-    .puzzle-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 18px;
     }
-    .puzzle-card {
-      background: #fff;
+    .sidebar {
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      padding: 18px;
       border: 1px solid var(--stroke);
-      border-radius: 16px;
+    }
+    .sidebar h2 { margin: 0 0 6px; font-size: 18px; font-weight: 700; color: #fff; }
+    .sidebar .muted { color: var(--muted); font-size: 13px; }
+    .progress { margin: 14px 0 18px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+    .bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden; }
+    .bar span {
+      display: block; height: 100%; width: 0%;
+      background: linear-gradient(90deg, #82bd4a, #5cf5a5);
+      transition: width 220ms ease;
+    }
+    .sidebar .actions { display: grid; gap: 9px; margin-bottom: 14px; }
+    .sidebar .actions button {
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      font: inherit;
+      font-size: 14px;
+      transition: background 120ms ease, border 120ms ease, transform 100ms ease;
+      text-align: center;
+    }
+    .sidebar .actions button:hover { background: rgba(255,255,255,0.10); transform: translateY(-1px); }
+    .sidebar .actions button.primary {
+      background: linear-gradient(135deg, #82bd4a, #5ca836);
+      color: #081207;
+      border-color: rgba(130, 189, 74, 0.5);
+      box-shadow: 0 8px 20px rgba(88, 145, 44, 0.28);
+    }
+    .sidebar .actions button.primary:hover { background: linear-gradient(135deg, #94ca5c, #6ca340); }
+
+    /* PUZZLE GRID */
+    .puzzle-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 16px;
+    }
+    .puzzle-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
       padding: 12px;
       text-align: center;
       cursor: pointer;
-      transition: transform 120ms ease, box-shadow 120ms ease;
+      transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
       text-decoration: none;
       color: inherit;
+      display: block;
     }
     .puzzle-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 16px 30px rgba(25, 45, 80, 0.14);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 32px rgba(3, 8, 20, 0.4);
+      border-color: rgba(77, 171, 255, 0.4);
     }
     .puzzle-card .action-row {
       display: flex;
@@ -225,126 +200,174 @@
     }
     .puzzle-card button {
       border: 1px solid var(--stroke);
-      background: #f0f5ff;
-      color: #2b4c7f;
-      padding: 6px 10px;
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 5px 10px;
       border-radius: 999px;
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
+      font: inherit;
     }
     .puzzle-card button.danger {
-      background: #ffe8e8;
-      color: #b91c1c;
-      border-color: #f5b5b5;
+      background: rgba(248, 113, 113, 0.15);
+      color: #f87171;
+      border-color: rgba(248, 113, 113, 0.35);
     }
     .mini-board {
       width: 100%;
-      max-width: 170px;
+      max-width: 155px;
       margin: 0 auto 10px;
-      border-radius: 10px;
+      border-radius: 8px;
       overflow: hidden;
-      border: 1px solid #c9d6ea;
+      border: 1px solid var(--stroke);
     }
-    .puzzle-title {
-      font-size: 14px;
-      margin: 6px 0 4px;
-      font-weight: 600;
-    }
-    .puzzle-meta {
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .stars {
-      margin-top: 6px;
-      color: #f5a524;
-      letter-spacing: 1px;
-      font-size: 12px;
-    }
+    .puzzle-title { font-size: 13px; margin: 6px 0 4px; font-weight: 700; color: #fff; }
+    .puzzle-meta { font-size: 12px; color: var(--muted); }
+    .stars { margin-top: 5px; color: #f5c542; letter-spacing: 1px; font-size: 12px; }
     .badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 8px;
+      padding: 3px 9px;
       border-radius: 999px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       border: 1px solid transparent;
       margin-top: 8px;
     }
-    .badge.live { background: #e8f7f2; color: #0b7a4a; border-color: #b6ead6; }
-    .badge.off { background: #fff2d5; color: #b45309; border-color: #f6d28a; }
+    .badge.live { background: rgba(92, 245, 165, 0.12); color: #5cf5a5; border-color: rgba(92, 245, 165, 0.3); }
+    .badge.off { background: rgba(245, 184, 65, 0.12); color: #f5b841; border-color: rgba(245, 184, 65, 0.3); }
+
+    /* COACH TOOLS */
     .coach-tools {
-      margin-bottom: 14px;
+      margin-bottom: 16px;
       border: 1px solid var(--stroke);
-      border-radius: 14px;
+      border-radius: 12px;
       padding: 12px 14px;
-      background: #fdfefe;
+      background: rgba(77, 171, 255, 0.04);
     }
-    .coach-tools summary {
-      cursor: pointer;
-      font-weight: 600;
-      color: #2f4f82;
-    }
+    .coach-tools summary { cursor: pointer; font-weight: 700; color: var(--blue); font-size: 14px; }
     .coach-controls {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 10px;
-      margin-top: 10px;
+      margin-top: 12px;
     }
     .coach-controls input,
-    .coach-controls select,
-    .coach-controls button {
+    .coach-controls select {
       padding: 8px 10px;
       border-radius: 10px;
       border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      font: inherit;
       font-size: 13px;
+      color-scheme: dark;
     }
     .coach-controls button {
-      background: var(--accent);
-      color: #fff;
-      font-weight: 600;
+      background: linear-gradient(135deg, var(--blue), #73c8ff);
+      color: #031021;
       border: none;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-weight: 700;
       cursor: pointer;
+      font: inherit;
     }
-    .status {
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 10px;
-    }
+
+    .status { color: var(--muted); font-size: 13px; margin-top: 10px; }
     .empty {
-      padding: 24px;
+      padding: 26px;
       text-align: center;
       color: var(--muted);
       border: 1px dashed var(--stroke);
-      border-radius: 14px;
+      border-radius: 12px;
     }
-    @media (max-width: 880px) {
-      .details { grid-template-columns: 1fr; }
-    }
-  </style>
-  <link rel="stylesheet" href="css/theme-light.css">
-</head>
-<body class="theme-light">
-  <header>
-    <div class="brand">
-      <span class="brand-title">EduChess</span>
-      <span>Puzzle Library</span>
-    </div>
-    <nav>
-      <a id="createPuzzleLink" href="puzzle-editor.html">Create puzzle</a>
-      <a href="dashboard.html">Back to dashboard</a>
-    </nav>
-  </header>
 
+    /* footer */
+    footer {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 20px 28px;
+      color: rgba(155, 166, 197, 0.7);
+      font-size: 13px;
+      border-top: 1px solid var(--stroke);
+    }
+
+    @media (max-width: 880px) { .details { grid-template-columns: 1fr; } }
+    @media (max-width: 620px) {
+      header { flex-wrap: wrap; }
+      .theme-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+      .puzzle-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    }
+
+    /* ── Puzzle Page Polish ─────────────────────────────────── */
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: rgba(130, 189, 74, 0.55) !important;
+      box-shadow: 0 0 0 3px rgba(130, 189, 74, 0.10) !important;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(130, 189, 74, 0.22); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(130, 189, 74, 0.40); }
+    *:focus-visible { outline: 2px solid rgba(130, 189, 74, 0.55); outline-offset: 2px; }
+
+    /* Theme card selected ring */
+    .theme-card.selected {
+      border-color: rgba(130, 189, 74, 0.72) !important;
+      box-shadow: 0 0 0 3px rgba(130, 189, 74, 0.16), 0 16px 32px rgba(88, 145, 44, 0.26) !important;
+    }
+
+    /* Theme icon accent glow on hover */
+    .theme-card:hover .theme-icon {
+      border-color: rgba(130, 189, 74, 0.28);
+      background: rgba(130, 189, 74, 0.07);
+      transition: border-color 130ms ease, background 130ms ease;
+    }
+
+    /* Progress bar gradient animation */
+    @keyframes barGrow { from { width: 0 } }
+    .bar span { animation: barGrow 500ms ease both; }
+
+    /* Panel fade-in */
+    @keyframes panelIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
+    .panel { animation: panelIn 300ms ease both; }
+  </style>
+</head>
+<body data-active-nav="puzzle-library">
+<div class="shell">
+
+<aside class="sidebar">
+  <a class="sidebar-logo" href="dashboard.html">
+    <img src="logo.png" alt="EduChess">
+    EduChess
+  </a>
+  <nav class="sidebar-nav">
+  </nav>
+  <div class="sidebar-footer">
+    <button class="sidebar-logout" onclick="localStorage.removeItem('authToken'); window.location.href='index.html'">Logout</button>
+  </div>
+</aside>
+
+<div class="page-content">
   <main>
+    <div class="page-topbar">
+      <div>
+        <h1>Puzzle Library</h1>
+        <div class="muted">Browse published puzzle categories and start training from database positions.</div>
+      </div>
+      <a class="tab-btn" href="dashboard.html">Back to Dashboard</a>
+    </div>
+
     <section class="panel">
       <div class="tabs">
-        <button class="tab-btn active" data-tab="tactic">Tactic</button>
+        <button class="tab-btn active" data-tab="tactic">Tactics</button>
         <button class="tab-btn" data-tab="openings">Openings</button>
         <button class="tab-btn" data-tab="endings">Endings</button>
-        <button class="tab-btn" data-tab="beginners">For beginners</button>
-        <button class="tab-btn" data-tab="coach">For coach</button>
+        <button class="tab-btn" data-tab="beginners">Beginners</button>
+        <button class="tab-btn" data-tab="coach">Coach</button>
       </div>
       <div class="tab-panel active" data-panel="tactic">
         <div class="theme-grid" id="themeGrid"></div>
@@ -374,9 +397,19 @@
           </div>
           <div class="bar"><span id="themeProgressBar"></span></div>
         </div>
+        <label style="display:grid;gap:6px;color:var(--muted);font-size:13px;font-weight:700;margin-bottom:12px;">
+          Difficulty filter
+          <select id="libraryDifficultyFilter" style="padding:10px 12px;border-radius:10px;border:1px solid var(--stroke);background:rgba(255,255,255,0.05);color:var(--text);color-scheme:dark;">
+            <option value="">All difficulties</option>
+            <option value="800">Beginner</option>
+            <option value="1200">Club</option>
+            <option value="1600">Advanced</option>
+            <option value="2000">Expert</option>
+          </select>
+        </label>
         <div class="actions">
-          <button class="primary" id="btnFirstPuzzle">Go to the first puzzle</button>
-          <button id="btnResetTheme">Theme progress reset</button>
+          <button class="primary" id="btnFirstPuzzle">Go to first puzzle</button>
+          <button id="btnResetTheme">Reset progress</button>
         </div>
         <div class="muted" id="themeMeta">No theme selected yet.</div>
       </aside>
@@ -408,9 +441,12 @@
       </div>
     </section>
   </main>
+</div><!-- /page-content -->
+</div><!-- /shell -->
 
   <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
   <script src="lib/chessboard-1.0.0.min.js"></script>
+  <script src="js/role-nav.js"></script>
   <script>
     const themeGrid = document.getElementById("themeGrid");
     const puzzleGrid = document.getElementById("puzzleGrid");
@@ -427,6 +463,7 @@
     const difficultyFilter = document.getElementById("filterDifficulty");
     const sortBySelect = document.getElementById("sortBy");
     const sortDirSelect = document.getElementById("sortDir");
+    const libraryDifficultyFilter = document.getElementById("libraryDifficultyFilter");
     const applyFiltersBtn = document.getElementById("applyFilters");
     const btnFirstPuzzle = document.getElementById("btnFirstPuzzle");
     const btnResetTheme = document.getElementById("btnResetTheme");
@@ -444,15 +481,15 @@
     let lastLoadedPuzzles = [];
 
     const defaultThemes = [
-      { id: "mateIn1", label: "Mate in one", icon: "wk.svg", tokens: ["mateIn1"] },
-      { id: "fork", label: "Double Attack and forks", icon: "wn.svg", tokens: ["fork", "doubleAttack"] },
-      { id: "pin", label: "A pin", icon: "wb.svg", tokens: ["pin"] },
+      { id: "mateIn1", label: "Mate in One", icon: "wk.svg", tokens: ["mateIn1", "mate-in-one", "mate1", "mate"] },
+      { id: "fork", label: "Double Attack & Forks", icon: "wn.svg", tokens: ["fork", "doubleAttack"] },
+      { id: "pin", label: "A Pin", icon: "wb.svg", tokens: ["pin"] },
       { id: "skewer", label: "Skewer", icon: "wr.svg", tokens: ["skewer"] },
-      { id: "discoveredCheck", label: "Discover Check", icon: "wq.svg", tokens: ["discoveredCheck"] },
-      { id: "discoveredAttack", label: "Discover Attack", icon: "wp.svg", tokens: ["discoveredAttack"] },
+      { id: "discoveredCheck", label: "Discovered Check", icon: "wq.svg", tokens: ["discoveredCheck"] },
+      { id: "discoveredAttack", label: "Discovered Attack", icon: "wp.svg", tokens: ["discoveredAttack"] },
       { id: "doubleCheck", label: "Double Check", icon: "wk.svg", tokens: ["doubleCheck"] },
-      { id: "trappedPiece", label: "Trapping a piece", icon: "wr.svg", tokens: ["trappedPiece"] },
-      { id: "removeDefender", label: "Remove the defender", icon: "wb.svg", tokens: ["removeDefender"] },
+      { id: "trappedPiece", label: "Trapping a Piece", icon: "wr.svg", tokens: ["trappedPiece"] },
+      { id: "removeDefender", label: "Remove the Defender", icon: "wb.svg", tokens: ["removeDefender"] },
       { id: "deflection", label: "Deflection", icon: "wn.svg", tokens: ["deflection"] },
       { id: "attraction", label: "Attraction", icon: "wq.svg", tokens: ["attraction"] },
       { id: "mateIn2", label: "Mate in two", icon: "wk.svg", tokens: ["mateIn2"] }
@@ -461,6 +498,8 @@
     if (!isCoach) {
       if (coachTools) coachTools.style.display = "none";
       if (createLink) createLink.style.display = "none";
+      document.querySelector('[data-tab="coach"]')?.remove();
+      document.querySelector('[data-panel="coach"]')?.remove();
     }
 
     const setProgress = (value, total) => {
@@ -473,22 +512,52 @@
 
     const prettyThemeName = (token) => {
       if (!token) return "All puzzles";
-      return token
-        .replace(/([a-z])([A-Z])/g, "$1 $2")
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, (m) => m.toUpperCase());
+      const raw = String(token).trim();
+      const spaced = raw.replace(/[_-]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+      const rules = [
+        [/mate\s*in\s*1|matein1|mate1|one\s*move|mate/, "Mate in 1"],
+        [/mate\s*in\s*2|matein2|mate2/, "Mate in 2"],
+        [/fork|double\s*attack/, "Fork"],
+        [/pin/, "Pin"],
+        [/skewer/, "Skewer"],
+        [/discovered\s*attack/, "Discovered Attack"],
+        [/discovered\s*check/, "Discovered Check"],
+        [/double\s*check/, "Double Check"],
+        [/trapped\s*piece/, "Trapped Piece"],
+        [/remove\s*defender/, "Remove Defender"],
+        [/deflection/, "Deflection"],
+        [/clearance/, "Clearance"],
+        [/opening|kingside|queenside/, "Opening"]
+      ];
+      const matched = rules.find(([pattern]) => pattern.test(spaced));
+      if (matched) return matched[1];
+      return spaced.replace(/\b\w/g, (m) => m.toUpperCase()).split(/\s+/).slice(0, 3).join(" ");
+    };
+
+    const normalizeCategoryParam = (value) => {
+      const raw = String(value || "").trim().toLowerCase();
+      const map = {
+        "mate-in-one": "mateIn1",
+        "mate-in-1": "mateIn1",
+        "mate1": "mateIn1",
+        "mate-in-two": "mateIn2",
+        "mate-in-2": "mateIn2"
+      };
+      return map[raw] || value || "";
     };
 
     const buildListUrl = () => {
       if (!isCoach) {
         const params = new URLSearchParams({ published: "true" });
         if (activeTheme) params.set("theme", activeTheme);
+        const difficulty = (libraryDifficultyFilter?.value || "").trim();
+        if (difficulty) params.set("difficulty", difficulty);
         if (activeTheme) params.set("limit", "9");
         return `/api/puzzles?${params.toString()}`;
       }
       const params = new URLSearchParams();
       const theme = activeTheme || (themeFilter?.value || "").trim();
-      const difficulty = (difficultyFilter?.value || "").trim();
+      const difficulty = (difficultyFilter?.value || libraryDifficultyFilter?.value || "").trim();
       if (theme) params.set("theme", theme);
       if (difficulty) params.set("difficulty", difficulty);
       if (sortBySelect?.value) params.set("sortBy", sortBySelect.value);
@@ -508,18 +577,44 @@
       return 5;
     };
 
+    const fenTurn = (fen) => {
+      const side = String(fen || "").trim().split(/\s+/)[1];
+      return side === "b" ? "b" : "w";
+    };
+
+    const oppositeSide = (side) => side === "b" ? "w" : "b";
+
+    const playableSide = (puzzle) => {
+      const rawTitle = String(puzzle?.title || "").trim();
+      const moves = Array.isArray(puzzle?.moves) ? puzzle.moves : [];
+      const hasLeadIn = moves.length > 1 && /^(lichess|imported\s+puzzle)\s+/i.test(rawTitle);
+      const startSide = fenTurn(puzzle?.fen) || puzzle?.side || "w";
+      return hasLeadIn ? oppositeSide(startSide) : startSide;
+    };
+
+    const displayPuzzleTitle = (puzzle, index) => {
+      const rawTitle = String(puzzle?.title || "").trim();
+      const sourceCodeTitle = /^lichess\s+/i.test(rawTitle);
+      if (!rawTitle || sourceCodeTitle) {
+        const theme = prettyThemeName(puzzle?.theme);
+        const number = Number.isInteger(index) ? index + 1 : puzzle?.id;
+        return `${theme} Puzzle ${number || ""}`.trim();
+      }
+      return rawTitle.replace(/^imported\s+puzzle\s+/i, "Puzzle ");
+    };
+
     const renderPuzzleGrid = (puzzles) => {
       puzzleGrid.innerHTML = "";
       lastLoadedPuzzles = puzzles;
 
       if (!puzzles.length) {
-        puzzleGrid.innerHTML = `<div class="empty">${activeTheme ? "No puzzles found for this theme." : "Pick a theme to show puzzles."}</div>`;
+        puzzleGrid.innerHTML = `<div class="empty">${activeTheme ? "No puzzles published yet. Ask your coach to upload puzzles." : "Pick a theme to show puzzles."}</div>`;
         puzzleStatus.textContent = "";
         return;
       }
 
       const fragment = document.createDocumentFragment();
-      puzzles.forEach((p) => {
+      puzzles.forEach((p, index) => {
         const card = document.createElement("a");
         card.className = "puzzle-card";
         card.href = `puzzle-play.html?id=${p.id}`;
@@ -531,11 +626,12 @@
 
         const title = document.createElement("div");
         title.className = "puzzle-title";
-        title.textContent = p.title || `Puzzle #${p.id}`;
+        title.textContent = displayPuzzleTitle(p, index);
+        title.title = p.title || "";
 
         const meta = document.createElement("div");
         meta.className = "puzzle-meta";
-        const side = p.side === "b" ? "Black" : "White";
+        const side = playableSide(p) === "b" ? "Black" : "White";
         meta.textContent = `${side} to move · Rating ${p.difficulty ?? "-"}`;
 
         const stars = document.createElement("div");
@@ -621,7 +717,7 @@
         card.innerHTML = `
           <div class="theme-icon"><img alt="" src="img/pieces/${theme.icon}"></div>
           <h3>${theme.label}</h3>
-          <div class="theme-meta">Puzzles ${count}</div>
+          <div class="theme-meta">${count} puzzle${count !== 1 ? "s" : ""}</div>
         `;
         card.addEventListener("click", () => {
           activeTheme = matchedToken;
@@ -641,7 +737,7 @@
           card.innerHTML = `
             <div class="theme-icon"><img alt="" src="img/pieces/wq.svg"></div>
             <h3>${prettyThemeName(theme.theme)}</h3>
-            <div class="theme-meta">Puzzles ${theme.count}</div>
+            <div class="theme-meta">${theme.count} puzzles</div>
           `;
           card.addEventListener("click", () => {
             activeTheme = theme.theme;
@@ -717,7 +813,7 @@
 
     const loadCustomPuzzles = async () => {
       if (!activeTheme && !isCoach) {
-        puzzleGrid.innerHTML = '<div class="empty">Pick a theme to show puzzles.</div>';
+        puzzleGrid.innerHTML = '<div class="empty">Pick a puzzle category to show published puzzles.</div>';
         puzzleStatus.textContent = "";
         lastLoadedPuzzles = [];
         return;
@@ -757,6 +853,10 @@
       });
     }
 
+    if (libraryDifficultyFilter) {
+      libraryDifficultyFilter.addEventListener("change", loadCustomPuzzles);
+    }
+
     const tabs = Array.from(document.querySelectorAll(".tab-btn"));
     const panels = Array.from(document.querySelectorAll(".tab-panel"));
     tabs.forEach((btn) => {
@@ -768,6 +868,14 @@
         });
       });
     });
+
+    const initialParams = new URLSearchParams(window.location.search);
+    const initialCategory = normalizeCategoryParam(initialParams.get("category") || initialParams.get("theme") || "");
+    if (initialCategory) {
+      activeTheme = initialCategory;
+      if (themeFilter) themeFilter.value = initialCategory;
+      setActiveThemeInfo(initialCategory, 0);
+    }
 
     loadCustomPuzzles();
     loadThemeLibrary();

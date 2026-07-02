@@ -9,7 +9,8 @@ import com.fyp.fypsystem.dto.puzzle.ThemeCountResponse;
 import com.fyp.fypsystem.model.Puzzle;
 import com.fyp.fypsystem.model.PuzzleMove;
 import com.fyp.fypsystem.repository.PuzzleRepository;
-import com.fyp.fypsystem.service.LichessPuzzleImportService;
+import com.fyp.fypsystem.service.PuzzleCsvImportService;
+import com.fyp.fypsystem.service.PuzzleService;
 import com.fyp.fypsystem.service.PuzzleUploadProcessingService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,17 +47,20 @@ import java.util.stream.Collectors;
 public class PuzzleController {
 
     private final PuzzleRepository puzzleRepository;
-    private final LichessPuzzleImportService importService;
+    private final PuzzleCsvImportService importService;
     private final PuzzleUploadProcessingService uploadProcessingService;
+    private final PuzzleService puzzleService;
     private static final String ROLE_HEADER = "X-User-Role";
     private static final List<String> SORT_FIELDS = List.of("id", "title", "theme", "difficulty");
 
     public PuzzleController(PuzzleRepository puzzleRepository,
-                            LichessPuzzleImportService importService,
-                            PuzzleUploadProcessingService uploadProcessingService) {
+                            PuzzleCsvImportService importService,
+                            PuzzleUploadProcessingService uploadProcessingService,
+                            PuzzleService puzzleService) {
         this.puzzleRepository = puzzleRepository;
         this.importService = importService;
         this.uploadProcessingService = uploadProcessingService;
+        this.puzzleService = puzzleService;
     }
 
     @PostMapping
@@ -130,6 +134,40 @@ public class PuzzleController {
         return ResponseEntity.ok(puzzle);
     }
 
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadRecognizedPuzzle(@RequestParam("file") MultipartFile file,
+                                                    @RequestParam(required = false) String title,
+                                                    @RequestParam(required = false) String description,
+                                                    @RequestParam(required = false) String topic,
+                                                    @RequestParam(required = false) Integer difficulty,
+                                                    @RequestParam(required = false) String sideToMove,
+                                                    @RequestParam(required = false) String solutionMoves,
+                                                    @RequestHeader(value = ROLE_HEADER, required = false) String role,
+                                                    @RequestHeader(value = "X-User-Email", required = false) String createdBy) {
+        requireCoachOrAdmin(role);
+        try {
+            Puzzle puzzle = puzzleService.uploadAndRecognize(
+                    file,
+                    title,
+                    description,
+                    topic,
+                    difficulty,
+                    sideToMove,
+                    solutionMoves,
+                    createdBy
+            );
+            syncPuzzleMoves(puzzle);
+            return ResponseEntity.ok(puzzle);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        } catch (IOException ex) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Could not save puzzle image: " + ex.getMessage()));
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of("error", "AI recognition service interrupted"));
+        }
+    }
+
     @PutMapping("/{id}")
     public Puzzle update(@PathVariable Long id,
                          @RequestBody Puzzle payload,
@@ -144,6 +182,12 @@ public class PuzzleController {
         if (payload.getTheme() != null) {
             existing.setTheme(payload.getTheme());
         }
+        if (payload.getDescription() != null) {
+            existing.setDescription(payload.getDescription());
+        }
+        if (payload.getImagePath() != null) {
+            existing.setImagePath(payload.getImagePath());
+        }
         if (payload.getDifficulty() != null) {
             existing.setDifficulty(payload.getDifficulty());
         }
@@ -153,8 +197,17 @@ public class PuzzleController {
         if (payload.getSide() != null) {
             existing.setSide(payload.getSide());
         }
+        if (payload.getSideToMove() != null) {
+            existing.setSideToMove(payload.getSideToMove());
+        }
         if (payload.getSolutionMove() != null) {
             existing.setSolutionMove(payload.getSolutionMove());
+        }
+        if (payload.getSolutionMoves() != null) {
+            existing.setSolutionMoves(payload.getSolutionMoves());
+        }
+        if (payload.getStatus() != null) {
+            existing.setStatus(payload.getStatus());
         }
         if (payload.getPublished() != null) {
             existing.setPublished(payload.getPublished());
@@ -179,17 +232,26 @@ public class PuzzleController {
         return puzzleRepository.save(existing);
     }
 
+    @PutMapping("/{id}/review")
+    public Puzzle review(@PathVariable Long id,
+                         @RequestBody Puzzle payload,
+                         @RequestHeader(value = ROLE_HEADER, required = false) String role) {
+        requireCoachOrAdmin(role);
+        Puzzle reviewed = puzzleService.review(id, payload);
+        syncPuzzleMoves(reviewed);
+        return puzzleRepository.save(reviewed);
+    }
+
     @PutMapping("/{id}/publish")
     public Puzzle publish(@PathVariable Long id,
-                          @RequestBody PuzzlePublishRequest payload,
+                          @RequestBody(required = false) PuzzlePublishRequest payload,
                           @RequestHeader(value = ROLE_HEADER, required = false) String role) {
         requireCoachOrAdmin(role);
-        if (payload == null || payload.published() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Published flag is required");
-        }
         Puzzle puzzle = puzzleRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Puzzle not found"));
-        puzzle.setPublished(payload.published());
+        boolean published = payload == null || payload.published() == null || payload.published();
+        puzzle.setPublished(published);
+        puzzle.setStatus(published ? "PUBLISHED" : "PENDING_REVIEW");
         return puzzleRepository.save(puzzle);
     }
 
@@ -211,7 +273,7 @@ public class PuzzleController {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Import request is required");
         }
-        LichessPuzzleImportService.ImportResult result = importService.importFromCsv(
+        PuzzleCsvImportService.ImportResult result = importService.importFromCsv(
             request.path(),
             request.limit(),
             request.offset(),
@@ -309,6 +371,13 @@ public class PuzzleController {
         }
 
         String solutionMove = puzzle.getSolutionMove();
+        if ((solutionMove == null || solutionMove.isBlank()) && puzzle.getSolutionMoves() != null) {
+            String[] tokens = puzzle.getSolutionMoves().trim().split("[,\\s]+");
+            if (tokens.length > 0 && !tokens[0].isBlank()) {
+                solutionMove = tokens[0];
+                puzzle.setSolutionMove(solutionMove);
+            }
+        }
         if (solutionMove == null || solutionMove.isBlank()) {
             if (puzzle.getMoves() != null && !puzzle.getMoves().isEmpty()) {
                 PuzzleMove first = puzzle.getMoves().get(0);

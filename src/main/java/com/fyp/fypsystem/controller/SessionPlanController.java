@@ -32,10 +32,12 @@ public class SessionPlanController {
     @GetMapping("/coach")
     public ResponseEntity<?> getCoachPlans(@RequestHeader("Authorization") String auth) {
         User coach = resolve(auth);
-        if (coach == null || coach.getRole() != Role.COACH)
+        if (coach == null || (coach.getRole() != Role.COACH && coach.getRole() != Role.ADMIN))
             return ResponseEntity.status(403).body(err("Coach access required"));
 
-        List<SessionPlan> plans = planRepo.findByCoachIdOrderByCreatedAtDesc(coach.getId());
+        List<SessionPlan> plans = coach.getRole() == Role.ADMIN
+                ? planRepo.findAll()
+                : planRepo.findByCoachIdOrderByCreatedAtDesc(coach.getId());
         List<Map<String, Object>> result = new ArrayList<>();
         for (SessionPlan p : plans) {
             Map<String, Object> m = planToMap(p);
@@ -129,6 +131,34 @@ public class SessionPlanController {
         return ResponseEntity.ok(Map.of("message", "Deleted"));
     }
 
+    @PutMapping("/{id}/zoom")
+    public ResponseEntity<?> updateZoom(@RequestHeader("Authorization") String auth,
+                                        @PathVariable Long id,
+                                        @RequestBody Map<String, Object> body) {
+        User caller = resolve(auth);
+        if (caller == null || (caller.getRole() != Role.COACH && caller.getRole() != Role.ADMIN))
+            return ResponseEntity.status(403).body(err("Coach/Admin access required"));
+
+        SessionPlan plan = planRepo.findById(id).orElse(null);
+        if (plan == null) return ResponseEntity.notFound().build();
+        if (caller.getRole() == Role.COACH && !plan.getCoachId().equals(caller.getId()))
+            return ResponseEntity.status(403).body(err("Forbidden"));
+
+        Payment payment = paymentRepo.findBySessionPlanId(id).orElse(null);
+        if (payment == null || !"PAID".equals(payment.getStatus()))
+            return ResponseEntity.badRequest().body(err("Zoom link can only be assigned after payment is PAID"));
+
+        plan.setZoomLink(clean(body.get("zoomLink")));
+        plan.setClassDate(clean(body.get("classDate")));
+        plan.setClassTime(clean(body.get("classTime")));
+        plan.setCoachNote(clean(body.get("coachNote")));
+        SessionPlan saved = planRepo.save(plan);
+
+        Map<String, Object> result = planToMap(saved);
+        result.put("payment", payToMap(payment));
+        return ResponseEntity.ok(result);
+    }
+
     private Map<String, Object> planToMap(SessionPlan p) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", p.getId());
@@ -143,6 +173,10 @@ public class SessionPlanController {
         m.put("month", p.getMonth());
         m.put("status", p.getStatus());
         m.put("notes", p.getNotes());
+        m.put("zoomLink", p.getZoomLink());
+        m.put("classDate", p.getClassDate());
+        m.put("classTime", p.getClassTime());
+        m.put("coachNote", p.getCoachNote());
         m.put("createdAt", p.getCreatedAt());
         return m;
     }
@@ -165,5 +199,10 @@ public class SessionPlanController {
     private Long toLong(Object v) { try { return v != null ? Long.parseLong(v.toString()) : null; } catch (Exception e) { return null; } }
     private Integer toInt(Object v) { try { return v != null ? Integer.parseInt(v.toString()) : null; } catch (Exception e) { return null; } }
     private Double toDouble(Object v) { try { return v != null ? Double.parseDouble(v.toString()) : null; } catch (Exception e) { return null; } }
+    private String clean(Object v) {
+        if (v == null) return null;
+        String s = v.toString().trim();
+        return s.isBlank() ? null : s;
+    }
     private Map<String, String> err(String msg) { return Map.of("error", msg); }
 }
