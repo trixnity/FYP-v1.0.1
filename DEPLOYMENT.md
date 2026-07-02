@@ -44,7 +44,7 @@ Set these variables in the Render dashboard:
 - `STRIPE_SUCCESS_URL` (optional if APP_BASE_URL is set)
 - `STRIPE_CANCEL_URL` (optional if APP_BASE_URL is set)
 - `PUZZLE_AI_BASE_URL` (optional; if unset, Puzzle AI is disabled)
-- `STOCKFISH_PATH` (optional; if unset, Stockfish engine is disabled)
+- `STOCKFISH_PATH` (optional; defaults to `/usr/games/stockfish` in the Docker runtime)
 - `PUZZLE_VISION_SCRIPT` (optional; if using vision pipeline)
 - `PUZZLE_VISION_MODEL` (optional; if using vision pipeline)
 - `PUZZLE_UPLOAD_STORAGE_DIR` (optional)

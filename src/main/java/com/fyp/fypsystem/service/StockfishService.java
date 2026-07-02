@@ -29,20 +29,26 @@ public class StockfishService {
     @Value("${stockfish.path:}")
     private String stockfishPath;
 
+    private static final String[] DEFAULT_STOCKFISH_PATHS = {
+            "/usr/games/stockfish",
+            "/usr/bin/stockfish"
+    };
+
     public boolean isEnabled() {
-        return stockfishPath != null && !stockfishPath.isBlank() && Files.exists(Path.of(stockfishPath));
+        return resolvedStockfishPath() != null;
     }
 
     public AnalysisResult analyze(String fen, Integer depth, Integer movetimeMs, Integer multiPv) {
         if (fen == null || fen.isBlank()) {
             throw new IllegalArgumentException("FEN is required");
         }
-        if (stockfishPath == null || stockfishPath.isBlank()) {
+        String resolvedPath = resolvedStockfishPath();
+        if (resolvedPath == null) {
             throw new IllegalStateException("Stockfish engine is not configured. Set STOCKFISH_PATH or stockfish.path.");
         }
-        Path enginePath = Path.of(stockfishPath);
+        Path enginePath = Path.of(resolvedPath);
         if (!Files.exists(enginePath)) {
-            throw new IllegalStateException("Stockfish engine was not found at configured path: " + stockfishPath);
+            throw new IllegalStateException("Stockfish engine was not found at configured path: " + resolvedPath);
         }
 
         ProcessBuilder builder = new ProcessBuilder(enginePath.toString());
@@ -215,6 +221,18 @@ public class StockfishService {
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
                 return null;
+            }
+        }
+        return null;
+    }
+
+    private String resolvedStockfishPath() {
+        if (stockfishPath != null && !stockfishPath.isBlank()) {
+            return stockfishPath;
+        }
+        for (String candidate : DEFAULT_STOCKFISH_PATHS) {
+            if (Files.exists(Path.of(candidate))) {
+                return candidate;
             }
         }
         return null;
