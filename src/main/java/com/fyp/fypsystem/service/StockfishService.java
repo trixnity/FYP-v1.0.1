@@ -1,5 +1,7 @@
 package com.fyp.fypsystem.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +36,8 @@ public class StockfishService {
             "/usr/bin/stockfish"
     };
 
+    private final Logger logger = LoggerFactory.getLogger(StockfishService.class);
+
     public boolean isEnabled() {
         return resolvedStockfishPath() != null;
     }
@@ -50,6 +54,10 @@ public class StockfishService {
         if (!Files.exists(enginePath)) {
             throw new IllegalStateException("Stockfish engine was not found at configured path: " + resolvedPath);
         }
+        if (!Files.isExecutable(enginePath)) {
+            throw new IllegalStateException("Stockfish engine is not executable: " + resolvedPath);
+        }
+        logger.info("Using Stockfish engine at {}", resolvedPath);
 
         ProcessBuilder builder = new ProcessBuilder(enginePath.toString());
         builder.redirectErrorStream(true);
@@ -61,7 +69,7 @@ public class StockfishService {
                  BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
 
                 send(writer, "uci");
-                waitForToken(reader, "uciok", 2000);
+                waitForToken(reader, "uciok", 5000);
 
                 int linesRequested = multiPv != null && multiPv > 0 ? multiPv : 3;
                 send(writer, "setoption name MultiPV value " + linesRequested);
@@ -208,6 +216,48 @@ public class StockfishService {
             }
         }
         throw new IllegalStateException("Stockfish did not respond with " + token);
+    }
+
+    public boolean testEngineAvailable() {
+        String resolvedPath = resolvedStockfishPath();
+        if (resolvedPath == null) {
+            logger.warn("Stockfish engine is not configured or not found.");
+            return false;
+        }
+        Path enginePath = Path.of(resolvedPath);
+        if (!Files.exists(enginePath) || !Files.isExecutable(enginePath)) {
+            logger.warn("Stockfish engine is unavailable at {}", resolvedPath);
+            return false;
+        }
+
+        ProcessBuilder builder = new ProcessBuilder(enginePath.toString());
+        builder.redirectErrorStream(true);
+        Process process = null;
+        try {
+            process = builder.start();
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                send(writer, "uci");
+                waitForToken(reader, "uciok", 5000);
+                send(writer, "quit");
+                return true;
+            }
+        } catch (Exception ex) {
+            logger.warn("Stockfish engine test failed at {}: {}", resolvedPath, ex.getMessage());
+            return false;
+        } finally {
+            if (process != null) {
+                process.destroy();
+                try {
+                    if (!process.waitFor(200, TimeUnit.MILLISECONDS)) {
+                        process.destroyForcibly();
+                    }
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    process.destroyForcibly();
+                }
+            }
+        }
     }
 
     private String readLineWithTimeout(BufferedReader reader, long timeoutMs) throws IOException {

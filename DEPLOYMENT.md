@@ -1,4 +1,57 @@
-# Render + Aiven Deployment Guide for EduChess FYP
+# EduChess FYP Deployment Guide
+
+Recommended: **Railway (Docker)**. The Render + Aiven notes are kept below as an alternative.
+
+---
+
+## 0. Deploy to Railway (recommended)
+
+Railway builds the multi-stage `Dockerfile` (Stockfish is baked into the image) on its
+own build machines, so the 512 MB build-memory limit that breaks Render's free Java
+buildpack does not apply.
+
+### 0.1 Create the project
+
+1. https://railway.app → **New Project** → **Deploy from GitHub repo** → select this repo.
+2. Railway reads `railway.json` and builds with the `Dockerfile`. No build/start command needed.
+3. `PORT` is injected automatically — do **not** set it yourself.
+
+### 0.2 Add a MySQL database
+
+1. In the same project: **New** → **Database** → **Add MySQL**.
+2. This creates a `MySQL` service exposing `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`,
+   `MYSQLUSER`, `MYSQLPASSWORD` on the private network.
+
+### 0.3 Set variables on the web service
+
+Use Railway reference syntax so the values track the database service:
+
+| Variable | Value |
+| --- | --- |
+| `DATABASE_URL` | `jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC` |
+| `DATABASE_USERNAME` | `${{MySQL.MYSQLUSER}}` |
+| `DATABASE_PASSWORD` | `${{MySQL.MYSQLPASSWORD}}` |
+| `JWT_SECRET` | a long random string (`openssl rand -base64 48`) |
+| `SPRING_PROFILES_ACTIVE` | `prod` (already defaulted in the image; set to override) |
+| `APP_BASE_URL` | your public URL, e.g. `https://educhess-fyp.up.railway.app` |
+| `STOCKFISH_PATH` | leave unset (image default `/usr/games/stockfish`) |
+| `STRIPE_SECRET_KEY`, `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL` | optional; Stripe is disabled if unset |
+| `PUZZLE_AI_BASE_URL` | optional; Puzzle AI disabled if unset |
+| `PUZZLE_VISION_SCRIPT`, `PUZZLE_VISION_MODEL` | **leave unset** — the YOLO/OpenCV pipeline is not in the container |
+
+### 0.4 Networking & health
+
+- **Settings → Networking → Generate Domain** to get a public URL, then update `APP_BASE_URL`.
+- Health check is `GET /` (configured in `railway.json`). The app only becomes healthy
+  once MySQL is reachable, so add the database and its variables before the first deploy.
+
+### 0.5 File uploads (optional, for persistence)
+
+`PUZZLE_UPLOAD_STORAGE_DIR` / `PUZZLE_RECOGNITION_STORAGE_DIR` default to `uploads/...`
+inside the container and are lost on redeploy. For durable storage, add a **Volume**
+in Railway (Settings → Volumes), mount it at e.g. `/data`, and set both dirs under `/data`.
+
+---
 
 ## 1. Build and run locally
 
@@ -21,7 +74,12 @@ Local configuration lives in `src/main/resources/application-dev.properties` and
 - local Stripe callback URLs
 - local upload and recognition storage paths
 
-## 2. Render deployment
+## 2. Render deployment (alternative)
+
+> Render's free Java buildpack (`render.yaml`, `env: java`) builds on a 512 MB instance
+> and often fails with an out-of-memory error, and it cannot install the Stockfish
+> binary. If you stay on Render, switch the service to **Docker** (`env: docker`) so it
+> uses the `Dockerfile` like Railway does.
 
 ### Render service setup
 1. Create a new Web Service on Render.
@@ -46,6 +104,8 @@ Set these variables in the Render dashboard:
 - `PUZZLE_AI_BASE_URL` (optional; if unset, Puzzle AI is disabled)
 - `STOCKFISH_PATH` (optional; defaults to `/usr/games/stockfish` in the Docker runtime)
 - `PUZZLE_VISION_SCRIPT` (optional; if using vision pipeline)
+
+> Recommended Render value: `STOCKFISH_PATH=/usr/games/stockfish`
 - `PUZZLE_VISION_MODEL` (optional; if using vision pipeline)
 - `PUZZLE_UPLOAD_STORAGE_DIR` (optional)
 - `PUZZLE_RECOGNITION_STORAGE_DIR` (optional)

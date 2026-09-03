@@ -1,8 +1,32 @@
+# Build context = only what the Dockerfile COPYs (.mvn, mvnw, pom.xml, src)
 target
 .git
+.gitignore
+.gitattributes
+
+# IDE / editor
 .idea
 .vscode
 *.iml
-uploads
+
+# Claude Code / skills / docs / notes
+.claude
+docs
+ai
+scripts
+*.md
+
+# Vision pipeline (Python; not part of the container)
+tools
+datasets
+runs
 models
+
+# Runtime / local artifacts
+uploads
 *.log
+server.err.log
+
+# Other deploy configs
+render.yaml
+skills-lock.json
