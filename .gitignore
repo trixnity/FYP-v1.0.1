@@ -35,7 +35,13 @@ build/
 ### Local runtime files ###
 *.log
 server.err.log
-.claude/
+.claude/*
+!.claude/settings.json
+
+### Obsidian vault ###
+docs/vault/.journal-state
+docs/vault/.obsidian/workspace.json
+docs/vault/.obsidian/workspace-mobile.json
 
 ### Machine learning artifacts ###
 models/**/*.pt

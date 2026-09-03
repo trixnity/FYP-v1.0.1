@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/vault-journal-hook.cjs\"",
+            "timeout": 20,
+            "statusMessage": "Checking dev journal (docs/vault)..."
+          }
+        ]
+      }
+    ]
+  }
+}
