@@ -21,6 +21,11 @@ public class Payment {
     private String stripeCheckoutSessionId;
     private String stripePaymentIntentId;
 
+    @Column(unique = true)
+    private String receiptNumber;
+    private String receiptIssuedAt;
+    private String paymentMethod;
+
     @PrePersist
     protected void prePersist() {
         if (createdAt == null) createdAt = java.time.LocalDateTime.now().toString();
@@ -51,4 +56,10 @@ public class Payment {
     public void setStripeCheckoutSessionId(String stripeCheckoutSessionId) { this.stripeCheckoutSessionId = stripeCheckoutSessionId; }
     public String getStripePaymentIntentId() { return stripePaymentIntentId; }
     public void setStripePaymentIntentId(String stripePaymentIntentId) { this.stripePaymentIntentId = stripePaymentIntentId; }
+    public String getReceiptNumber() { return receiptNumber; }
+    public void setReceiptNumber(String receiptNumber) { this.receiptNumber = receiptNumber; }
+    public String getReceiptIssuedAt() { return receiptIssuedAt; }
+    public void setReceiptIssuedAt(String receiptIssuedAt) { this.receiptIssuedAt = receiptIssuedAt; }
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
 }

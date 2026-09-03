@@ -2433,6 +2433,21 @@
     setTimeout(() => switchView(dashboardInitialView, dashboardInitialFocus), 0);
   }
 
+  const paymentResult = dashboardRouteParams.get("payment");
+  if (paymentResult) {
+    const paymentMessages = {
+      success: "Payment received. Your sessions are now active — the receipt is available under My Payments.",
+      failed: "We could not confirm your payment. If you were charged, it will be reconciled shortly; otherwise please try again.",
+      cancelled: "Payment cancelled. You can pay any time from My Payments.",
+    };
+    setTimeout(() => {
+      alert(paymentMessages[paymentResult] || "Payment update received.");
+      switchView("payments");
+    }, 0);
+    const cleanUrl = window.location.pathname + (dashboardInitialView ? `?view=${encodeURIComponent(dashboardInitialView)}` : "");
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+
     const enforceRoleVisibility = (role) => {
       const studentItems = document.querySelectorAll(".student-only");
       const coachItems   = document.querySelectorAll(".coach-only");
@@ -4767,16 +4782,17 @@
       if (download) download.dataset.paymentId = paymentId;
       if (content) {
         const amount = Number(receipt.totalAmount || 0).toFixed(2);
+        const cell = (v) => (v !== null && v !== undefined && v !== "" ? String(v) : "—");
         content.innerHTML = [
-          ["Student name", receipt.studentName],
-          ["Month", receipt.month],
-          ["Session count", receipt.sessionCount],
-          ["Total amount", `RM ${amount}`],
+          ["Receipt no.", receipt.receiptNumber],
+          ["Received from", receipt.studentName],
+          ["Description", `${receipt.month || "Coaching"} — ${receipt.sessionCount || 0} sessions`],
+          ["Total paid", `RM ${amount}`],
+          ["Payment method", receipt.paymentMethod],
           ["Payment status", receipt.status],
           ["Paid date", receipt.paidAt ? String(receipt.paidAt).slice(0, 19).replace("T", " ") : "—"],
-          ["Stripe Checkout Session ID", receipt.stripeCheckoutSessionId || "—"],
-          ["Stripe Payment Intent ID", receipt.stripePaymentIntentId || "—"]
-        ].map(([label, value]) => `<div class="receipt-row"><span>${escapeHtml(label)}</span><span>${escapeHtml(value || "—")}</span></div>`).join("");
+          ["Gateway reference", receipt.stripePaymentIntentId]
+        ].map(([label, value]) => `<div class="receipt-row"><span>${escapeHtml(label)}</span><span>${escapeHtml(cell(value))}</span></div>`).join("");
       }
       document.getElementById("receiptOverlay")?.classList.remove("hidden");
     } catch (err) {

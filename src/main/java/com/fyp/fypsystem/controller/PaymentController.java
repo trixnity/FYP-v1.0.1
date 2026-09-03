@@ -19,7 +19,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payments")
-@CrossOrigin(origins = "*")
 public class PaymentController {
 
     private final PaymentRepository paymentRepo;
@@ -64,7 +63,10 @@ public class PaymentController {
         Payment payment = paymentRepo.findById(id).orElse(null);
         if (payment == null) return ResponseEntity.notFound().build();
         if (!canAccess(user, payment)) return ResponseEntity.status(403).body(err("Forbidden"));
+        if (!"PAID".equalsIgnoreCase(payment.getStatus()))
+            return ResponseEntity.status(409).body(err("A receipt is available only after the payment is completed"));
 
+        payment = paymentService.ensureReceiptNumber(payment);
         return ResponseEntity.ok(receiptMap(payment));
     }
 
@@ -77,34 +79,42 @@ public class PaymentController {
         Payment payment = paymentRepo.findById(id).orElse(null);
         if (payment == null) return ResponseEntity.notFound().build();
         if (!canAccess(user, payment)) return ResponseEntity.status(403).body(err("Forbidden"));
+        if (!"PAID".equalsIgnoreCase(payment.getStatus()))
+            return ResponseEntity.status(409).body(err("A receipt is available only after the payment is completed"));
+
+        payment = paymentService.ensureReceiptNumber(payment);
 
         try {
             byte[] pdf = paymentReportService.generateReceiptPdf(payment);
+            String filename = (payment.getReceiptNumber() != null ? payment.getReceiptNumber() : "educhess-payment-" + id) + ".pdf";
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_PDF)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=educhess-payment-" + id + ".pdf")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
                     .body(pdf);
         } catch (IOException ex) {
             return ResponseEntity.status(500).body(err("Could not generate PDF receipt"));
         }
     }
 
+    /**
+     * Admin-only: record a payment that was settled outside the gateway (cash, bank transfer).
+     * Students pay through Stripe Checkout via {@code POST /{id}/checkout}.
+     */
     @PostMapping("/{id}/pay")
-    public ResponseEntity<?> pay(@RequestHeader("Authorization") String auth,
-                                 @PathVariable Long id) {
+    public ResponseEntity<?> recordOfflinePayment(@RequestHeader("Authorization") String auth,
+                                                  @PathVariable Long id,
+                                                  @RequestParam(value = "method", required = false) String method) {
         User user = resolve(auth);
         if (user == null) return ResponseEntity.status(401).body(err("Unauthorized"));
+        if (user.getRole() != Role.ADMIN)
+            return ResponseEntity.status(403).body(err("Admin access required"));
 
         Payment payment = paymentRepo.findById(id).orElse(null);
         if (payment == null) return ResponseEntity.notFound().build();
-        if (!payment.getStudentId().equals(user.getId()))
-            return ResponseEntity.status(403).body(err("This payment is not yours"));
         if ("PAID".equals(payment.getStatus()))
             return ResponseEntity.badRequest().body(err("Already paid"));
 
-        payment = paymentService.markPaidManually(payment);
-
-        return ResponseEntity.ok(payment);
+        return ResponseEntity.ok(paymentService.markPaidManually(payment, method));
     }
 
     @PostMapping("/{id}/checkout")
@@ -128,9 +138,41 @@ public class PaymentController {
             ));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(err(ex.getMessage()));
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(503).body(err(ex.getMessage()));
         } catch (StripeException ex) {
             return ResponseEntity.status(502).body(err("Stripe checkout failed: " + ex.getMessage()));
         }
+    }
+
+    /** Stripe server-to-server webhook. Public route; the signature header is the auth. */
+    @PostMapping("/webhook")
+    public ResponseEntity<String> stripeWebhook(@RequestBody String payload,
+                                                @RequestHeader(value = "Stripe-Signature", required = false) String signature) {
+        if (!paymentService.webhookConfigured()) {
+            return ResponseEntity.status(503).body("webhook secret not configured");
+        }
+        if (signature == null || signature.isBlank()) {
+            return ResponseEntity.badRequest().body("missing Stripe-Signature header");
+        }
+        String sessionId;
+        try {
+            sessionId = paymentService.extractPaidCheckoutSessionId(payload, signature).orElse(null);
+        } catch (com.stripe.exception.SignatureVerificationException ex) {
+            return ResponseEntity.badRequest().body("invalid signature");
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body("could not parse event");
+        }
+        if (sessionId != null) {
+            try {
+                paymentService.markPaidFromCheckoutSession(sessionId);
+            } catch (Exception ex) {
+                // 200 anyway: a retry will not help a data problem, and the success
+                // redirect is a second confirmation path.
+                return ResponseEntity.ok("received; confirmation deferred");
+            }
+        }
+        return ResponseEntity.ok("ok");
     }
 
     @GetMapping("/checkout/success")
@@ -170,12 +212,15 @@ public class PaymentController {
     private Map<String, Object> receiptMap(Payment payment) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", payment.getId());
+        map.put("receiptNumber", payment.getReceiptNumber());
         map.put("studentName", payment.getStudentName());
         map.put("month", payment.getMonth());
         map.put("sessionCount", payment.getSessionCount());
         map.put("totalAmount", payment.getTotalAmount());
         map.put("status", payment.getStatus());
         map.put("paidAt", payment.getPaidAt());
+        map.put("receiptIssuedAt", payment.getReceiptIssuedAt());
+        map.put("paymentMethod", payment.getPaymentMethod());
         map.put("stripeCheckoutSessionId", payment.getStripeCheckoutSessionId());
         map.put("stripePaymentIntentId", payment.getStripePaymentIntentId());
         return map;

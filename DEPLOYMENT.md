@@ -24,7 +24,13 @@ buildpack does not apply.
 
 ### 0.3 Set variables on the web service
 
-Use Railway reference syntax so the values track the database service:
+**Minimum to boot** (set these before the first deploy): `DATABASE_URL`,
+`DATABASE_USERNAME`, `DATABASE_PASSWORD`, `JWT_SECRET`. The app starts without any
+Stripe or `APP_BASE_URL` values — payments are an optional integration and only the
+Checkout button is disabled until they are set. So: deploy → generate the domain
+(§0.4) → come back and add `APP_BASE_URL` + the Stripe vars → redeploy.
+
+Use Railway reference syntax so the DB values track the database service:
 
 | Variable | Value |
 | --- | --- |
@@ -33,15 +39,20 @@ Use Railway reference syntax so the values track the database service:
 | `DATABASE_PASSWORD` | `${{MySQL.MYSQLPASSWORD}}` |
 | `JWT_SECRET` | a long random string (`openssl rand -base64 48`) |
 | `SPRING_PROFILES_ACTIVE` | `prod` (already defaulted in the image; set to override) |
-| `APP_BASE_URL` | your public URL, e.g. `https://educhess-fyp.up.railway.app` |
+| `APP_BASE_URL` | your public URL once known, e.g. `https://educhess-fyp.up.railway.app` (add after §0.4) |
 | `STOCKFISH_PATH` | leave unset (image default `/usr/games/stockfish`) |
-| `STRIPE_SECRET_KEY`, `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL` | optional; Stripe is disabled if unset |
+| `STRIPE_SECRET_KEY` | `sk_test_...` (sandbox) or `sk_live_...`. Checkout is disabled if unset. |
+| `STRIPE_WEBHOOK_SECRET` | `whsec_...` from the Stripe webhook you create (see §0.6). Without it, payments only confirm when the browser returns from Checkout. |
+| `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL` | optional; derived from `APP_BASE_URL` if unset |
+| `RECEIPT_ISSUER_NAME`, `RECEIPT_ISSUER_REG_NO`, `RECEIPT_ISSUER_ADDRESS`, `RECEIPT_ISSUER_EMAIL`, `RECEIPT_ISSUER_PHONE` | printed on the PDF receipt. Fill these for a receipt that is usable as a record of payment. |
+| `RECEIPT_TAX_NOTE` | optional free-text line on the receipt (e.g. a tax-relief reference). You are responsible for its accuracy — the system does not verify tax deductibility. |
 | `PUZZLE_AI_BASE_URL` | optional; Puzzle AI disabled if unset |
 | `PUZZLE_VISION_SCRIPT`, `PUZZLE_VISION_MODEL` | **leave unset** — the YOLO/OpenCV pipeline is not in the container |
 
 ### 0.4 Networking & health
 
-- **Settings → Networking → Generate Domain** to get a public URL, then update `APP_BASE_URL`.
+- **Settings → Networking → Generate Domain** to get a public URL, then set `APP_BASE_URL`
+  to it and redeploy.
 - Health check is `GET /` (configured in `railway.json`). The app only becomes healthy
   once MySQL is reachable, so add the database and its variables before the first deploy.
 
@@ -50,6 +61,34 @@ Use Railway reference syntax so the values track the database service:
 `PUZZLE_UPLOAD_STORAGE_DIR` / `PUZZLE_RECOGNITION_STORAGE_DIR` default to `uploads/...`
 inside the container and are lost on redeploy. For durable storage, add a **Volume**
 in Railway (Settings → Volumes), mount it at e.g. `/data`, and set both dirs under `/data`.
+
+### 0.6 Payments (Stripe) and receipts
+
+Students pay through **Stripe Checkout** (`POST /api/payments/{id}/checkout` → redirect to
+`checkout.stripe.com`). Stripe **test mode** is the sandbox — no separate setup.
+
+1. **Get keys:** Stripe Dashboard → Developers → API keys → copy the **test** secret key
+   into `STRIPE_SECRET_KEY`. Set `APP_BASE_URL` to your Railway domain.
+2. **Create the webhook:** Developers → Webhooks → Add endpoint
+   - URL: `https://<your-domain>/api/payments/webhook`
+   - Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`
+   - Copy the **Signing secret** (`whsec_...`) into `STRIPE_WEBHOOK_SECRET`.
+   The webhook is what confirms a payment if the buyer closes the tab before returning.
+   The success redirect (`/api/payments/checkout/success`) also confirms, and both paths
+   are idempotent.
+3. **Test the flow:** in the app, click **Pay Now**, use card `4242 4242 4242 4242`,
+   any future expiry, any CVC. You are redirected back and the payment shows **PAID**.
+   For FPX (Malaysian online banking) enable it in the Stripe Dashboard and use the test
+   bank flow — no code change needed.
+4. **Local webhook testing:** `stripe listen --forward-to localhost:8080/api/payments/webhook`
+   (Stripe CLI) prints a `whsec_...` to use as `STRIPE_WEBHOOK_SECRET` in dev.
+
+**Receipts.** Once PAID, `GET /api/payments/{id}/receipt` returns JSON and
+`GET /api/payments/{id}/receipt/pdf` returns a PDF with an immutable receipt number
+(`EDU-<year>-<id>`), the issuer block from the `RECEIPT_ISSUER_*` vars, an itemised
+line, totals, and the payment method. **Malaysian e-Invoice (MyInvois/LHDN) is not
+integrated** — the PDF is a conventional official receipt, not a validated e-Invoice.
+`POST /api/payments/{id}/pay` records an off-gateway payment and is **admin-only**.
 
 ---
 

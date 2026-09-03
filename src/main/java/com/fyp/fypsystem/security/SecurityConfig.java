@@ -42,6 +42,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/analysis").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/payments/checkout/success",
                                  "/api/payments/checkout/cancel").permitAll()
+                // Stripe server-to-server webhook — authenticated by signature header, not JWT
+                .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
                 // Everything else needs a valid JWT
                 .anyRequest().authenticated()
             )
