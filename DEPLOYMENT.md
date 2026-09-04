@@ -1,14 +1,15 @@
 # EduChess FYP Deployment Guide
 
-Recommended: **Railway (Docker)**. The Render + Aiven notes are kept below as an alternative.
+Target host: **Railway**, deploying the `Dockerfile`. §2 covers moving to any other
+Docker host.
 
 ---
 
-## 0. Deploy to Railway (recommended)
+## 0. Deploy to Railway
 
 Railway builds the multi-stage `Dockerfile` (Stockfish is baked into the image) on its
-own build machines, so the 512 MB build-memory limit that breaks Render's free Java
-buildpack does not apply.
+own build machines. The build runs in the container, so the app's fat-JAR packaging is
+never constrained by the runtime instance size.
 
 ### 0.1 Create the project
 
@@ -113,59 +114,21 @@ Local configuration lives in `src/main/resources/application-dev.properties` and
 - local Stripe callback URLs
 - local upload and recognition storage paths
 
-## 2. Render deployment (alternative)
+## 2. Deploying to another host
 
-> Render's free Java buildpack (`render.yaml`, `env: java`) builds on a 512 MB instance
-> and often fails with an out-of-memory error, and it cannot install the Stockfish
-> binary. If you stay on Render, switch the service to **Docker** (`env: docker`) so it
-> uses the `Dockerfile` like Railway does.
+Any platform that builds a `Dockerfile` works the same way as Railway (§0): point it at
+the repo, let it build the image, and provide the environment variables from §0.3 and
+§0.6. The container reads `PORT`, installs Stockfish itself, and defaults to the `prod`
+profile. For a managed MySQL such as Aiven, set `DATABASE_URL` to its JDBC URL including
+`sslMode=REQUIRED`:
 
-### Render service setup
-1. Create a new Web Service on Render.
-2. Connect your Git repository.
-3. Use `render.yaml` in the repo to define the service.
-
-### Render build and start commands
-- Build: `./mvnw clean package -DskipTests`
-- Start: `java -jar target/*.jar`
-- Health check path: `/`
-
-### Render environment variables
-Set these variables in the Render dashboard:
-- `DATABASE_URL`
-- `DATABASE_USERNAME`
-- `DATABASE_PASSWORD`
-- `JWT_SECRET`
-- `APP_BASE_URL` (e.g. `https://your-app.onrender.com`)
-- `STRIPE_SECRET_KEY`
-- `STRIPE_SUCCESS_URL` (optional if APP_BASE_URL is set)
-- `STRIPE_CANCEL_URL` (optional if APP_BASE_URL is set)
-- `PUZZLE_AI_BASE_URL` (optional; if unset, Puzzle AI is disabled)
-- `STOCKFISH_PATH` (optional; defaults to `/usr/games/stockfish` in the Docker runtime)
-- `PUZZLE_VISION_SCRIPT` (optional; if using vision pipeline)
-
-> Recommended Render value: `STOCKFISH_PATH=/usr/games/stockfish`
-- `PUZZLE_VISION_MODEL` (optional; if using vision pipeline)
-- `PUZZLE_UPLOAD_STORAGE_DIR` (optional)
-- `PUZZLE_RECOGNITION_STORAGE_DIR` (optional)
-- `PORT` (optional; defaults to `8080`)
-
-## 3. Aiven MySQL connection
-Use environment variables provided by Aiven.
-
-For Render, set:
-- `DATABASE_URL` as the JDBC URL from Aiven, including `sslMode=REQUIRED`
-- `DATABASE_USERNAME` as the Aiven database user
-- `DATABASE_PASSWORD` as the Aiven database password
-
-Example Aiven JDBC URL:
 ```text
 jdbc:mysql://your-host:3306/your-db?useSSL=true&requireSSL=true&sslMode=REQUIRED&serverTimezone=UTC
 ```
 
 ## 4. Production profile and environment variables
 The production configuration is in `src/main/resources/application-prod.properties`.
-Render automatically uses the `prod` profile when `SPRING_PROFILES_ACTIVE=prod` is set.
+The container sets `SPRING_PROFILES_ACTIVE=prod` by default (see the `Dockerfile`).
 
 If you want to activate production explicitly, set:
 ```text
@@ -174,7 +137,7 @@ SPRING_PROFILES_ACTIVE=prod
 
 ## 5. Build for production
 
-On Render or locally with production profile:
+Railway builds this for you from the `Dockerfile`. To build the JAR locally:
 ```powershell
 ./mvnw clean package -DskipTests
 ```
@@ -194,4 +157,5 @@ java -jar target/fyp-0.0.1-SNAPSHOT.jar
 - The app preserves static frontend pages under `src/main/resources/static/`.
 - Static routes such as `/`, `/login.html`, `/dashboard.html`, `/analysis.html`, `/puzzle-library.html`, `/know-our-coaches.html`, and `/admin-class-applications.html` are served by Spring Boot static resource handling.
 - Do not hardcode secrets or local database credentials in production.
-- Use Aiven for the managed MySQL instance and Render environment variables for production settings.
+- Provide all production settings as environment variables on the host (Railway's
+  MySQL service, or a managed instance such as Aiven).

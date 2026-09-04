@@ -28,5 +28,4 @@ uploads
 server.err.log
 
 # Other deploy configs
-render.yaml
 skills-lock.json
