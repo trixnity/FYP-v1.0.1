@@ -28,5 +28,6 @@ COPY --from=builder /workspace/target/*.jar app.jar
 
 EXPOSE 8080
 
-# Railway/Render inject PORT. MaxRAMPercentage keeps the JVM inside the container limit.
-ENTRYPOINT ["sh", "-c", "java -XX:MaxRAMPercentage=75.0 -Dserver.port=${PORT:-8080} -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -jar app.jar"]
+# The host injects PORT. MaxRAMPercentage + SerialGC keep the JVM inside a small
+# (~512 MB) free instance.
+ENTRYPOINT ["sh", "-c", "java -XX:MaxRAMPercentage=70.0 -XX:+UseSerialGC -Dserver.port=${PORT:-8080} -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-prod} -jar app.jar"]
