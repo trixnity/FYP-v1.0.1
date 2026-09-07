@@ -38,6 +38,17 @@ server.err.log
 .claude/*
 !.claude/settings.json
 
+### Secrets — never commit ###
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+secrets.properties
+application-local.properties
+
 ### Obsidian vault ###
 docs/vault/.journal-state
 docs/vault/.obsidian/workspace.json
